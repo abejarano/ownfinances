@@ -17,14 +17,17 @@ final routerProvider = Provider<GoRouter>((ref) {
   final completed = ref.watch(onboardingCompletedProvider);
 
   return GoRouter(
-    initialLocation: "/dashboard",
+    initialLocation: "/login",
     redirect: (context, state) {
-      final isOnboarding = state.fullPath == "/onboarding";
-      final isAuthRoute =
-          state.fullPath == "/login" || state.fullPath == "/register";
+      final location = state.uri.path;
+      final isOnboarding = location == "/onboarding";
+      final isAuthRoute = location == "/login" || location == "/register";
 
-      if (!completed && !isOnboarding) {
-        return "/onboarding";
+      if (!completed) {
+        if (!isOnboarding && !isAuthRoute) {
+          return "/onboarding";
+        }
+        return null;
       }
       if (completed && isOnboarding) {
         return isAuthed ? "/dashboard" : "/login";

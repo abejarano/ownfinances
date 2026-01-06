@@ -6,17 +6,18 @@ class AuthState {
   final AuthStatus status;
   final AuthSession? session;
   final String? message;
+  static const _unset = Object();
 
   const AuthState({required this.status, this.session, this.message});
 
   AuthState copyWith({
     AuthStatus? status,
-    AuthSession? session,
+    Object? session = _unset,
     String? message,
   }) {
     return AuthState(
       status: status ?? this.status,
-      session: session ?? this.session,
+      session: session == _unset ? this.session : session as AuthSession?,
       message: message,
     );
   }
