@@ -1,0 +1,13 @@
+{
+  "name": "ownfinances",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "bun --cwd apps/api dev",
+    "dev:flutter:web": "cd apps/flutter && flutter run -d chrome",
+    "dev:flutter": "cd apps/flutter && flutter run"
+  }
+}
