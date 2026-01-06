@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { openapi } from "@elysiajs/openapi";
+import { jwt } from "@elysiajs/jwt";
 import pkg from "../../package.json";
 import { env } from "../shared/env";
 import { registerRoutes } from "../http/routes";
@@ -9,6 +10,12 @@ import { getMongoClient } from "./mongo";
 export function buildApp(deps: AppDeps) {
   const app = new Elysia()
     .use(openapi())
+    .use(
+      jwt({
+        name: "jwt",
+        secret: env.JWT_SECRET,
+      }),
+    )
     .get("/health", async () => {
       const client = await getMongoClient();
       const ping = await client.db().command({ ping: 1 });
@@ -20,7 +27,7 @@ export function buildApp(deps: AppDeps) {
       env: env.NODE_ENV,
     }));
 
-  registerRoutes(app, deps, env.USER_ID_DEFAULT);
+  registerRoutes(app, deps);
 
   return app;
 }

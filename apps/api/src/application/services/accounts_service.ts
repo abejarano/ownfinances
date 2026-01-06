@@ -4,12 +4,9 @@ import type { AccountMongoRepository } from "../../repositories/account_reposito
 import { ObjectId } from "mongodb";
 
 export class AccountsService {
-  constructor(
-    private readonly accounts: AccountMongoRepository,
-    private readonly userId: string,
-  ) {}
+  constructor(private readonly accounts: AccountMongoRepository) {}
 
-  async create(payload: Partial<AccountPrimitives>) {
+  async create(userId: string, payload: Partial<AccountPrimitives>) {
     const error = this.validate(payload, false);
     if (error) return { error };
 
@@ -18,7 +15,7 @@ export class AccountsService {
     const account = new Account({
       id: newId,
       accountId: newId,
-      userId: this.userId,
+      userId,
       name: payload.name!,
       type: payload.type!,
       currency: payload.currency ?? "BRL",
@@ -31,9 +28,9 @@ export class AccountsService {
     return { account: account.toPrimitives() };
   }
 
-  async update(accountId: string, payload: Partial<AccountPrimitives>) {
+  async update(userId: string, accountId: string, payload: Partial<AccountPrimitives>) {
     const existing = await this.accounts.one({
-      userId: this.userId,
+      userId,
       accountId,
     });
     if (!existing) {
@@ -57,8 +54,8 @@ export class AccountsService {
     return { account: account.toPrimitives() };
   }
 
-  async remove(accountId: string) {
-    const deleted = await this.accounts.delete(this.userId, accountId);
+  async remove(userId: string, accountId: string) {
+    const deleted = await this.accounts.delete(userId, accountId);
     if (!deleted) {
       return { error: "Cuenta no encontrada", status: 404 };
     }

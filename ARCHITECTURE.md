@@ -239,6 +239,11 @@ GET /categories/:id devuelve CategoryPrimitives
 
 GET /categories devuelve Paginate<CategoryPrimitives>
 
+## 7.1 Regla de userId
+
+- `USER_ID_DEFAULT` solo se usa en `dev/seed.ts`.
+- Todas las rutas de dominio usan `ctx.userId` desde middleware JWT.
+
 ## 8. Anti-patrones (prohibidos)
 
 “God file” tipo index.ts con todo adentro.

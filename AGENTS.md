@@ -91,6 +91,8 @@ La forma oficial de usar `@abejarano/ts-mongodb-criteria` en este repo es:
 - Los listados deben ser `repo.list(criteria)` y retornar `Paginate<T>`.
 - IDs de dominio son `<entidad>Id`, las entidades incluyen `id?: string` y `getId()` retorna `id` para `persist`.
 - Repos exponen `upsert(entity)` y `one(filter)` (no `create/update/findById`).
+- NUNCA usar `USER_ID_DEFAULT` fuera de `dev/seed.ts`; los handlers toman `userId` del middleware JWT.
+- Con Elysia, priorizar paquetes oficiales del framework (ej: `@elysiajs/jwt`) sobre librerías genéricas externas.
 
 Ejemplo (patrón obligatorio):
 

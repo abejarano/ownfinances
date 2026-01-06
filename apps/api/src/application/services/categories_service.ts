@@ -4,12 +4,9 @@ import type { CategoryMongoRepository } from "../../repositories/category_reposi
 import { ObjectId } from "mongodb";
 
 export class CategoriesService {
-  constructor(
-    private readonly categories: CategoryMongoRepository,
-    private readonly userId: string,
-  ) {}
+  constructor(private readonly categories: CategoryMongoRepository) {}
 
-  async create(payload: Partial<CategoryPrimitives>) {
+  async create(userId: string, payload: Partial<CategoryPrimitives>) {
     const error = this.validate(payload, false);
     if (error) return { error };
 
@@ -18,7 +15,7 @@ export class CategoriesService {
     const category = new Category({
       id: newId,
       categoryId: newId,
-      userId: this.userId,
+      userId,
       name: payload.name!,
       kind: payload.kind!,
       parentId: payload.parentId ?? null,
@@ -33,9 +30,9 @@ export class CategoriesService {
     return { category: category.toPrimitives() };
   }
 
-  async update(categoryId: string, payload: Partial<CategoryPrimitives>) {
+  async update(userId: string, categoryId: string, payload: Partial<CategoryPrimitives>) {
     const existing = await this.categories.one({
-      userId: this.userId,
+      userId,
       categoryId,
     });
     if (!existing) {
@@ -59,8 +56,8 @@ export class CategoriesService {
     return { category: category.toPrimitives() };
   }
 
-  async remove(categoryId: string) {
-    const deleted = await this.categories.delete(this.userId, categoryId);
+  async remove(userId: string, categoryId: string) {
+    const deleted = await this.categories.delete(userId, categoryId);
     if (!deleted) {
       return { error: "Categoria no encontrada", status: 404 };
     }

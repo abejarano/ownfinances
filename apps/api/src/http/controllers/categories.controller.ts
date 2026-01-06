@@ -8,11 +8,10 @@ export class CategoriesController {
   constructor(
     private readonly repo: CategoryMongoRepository,
     private readonly service: CategoriesService,
-    private readonly userId: string,
   ) {}
 
-  list = async ({ query }: { query: Record<string, string | undefined> }) => {
-    const criteria = buildCategoriesCriteria(query, this.userId);
+  list = async ({ query, userId }: { query: Record<string, string | undefined>; userId?: string }) => {
+    const criteria = buildCategoriesCriteria(query, userId ?? "");
     const result = await this.repo.list(criteria);
     return {
       ...result,
@@ -22,22 +21,24 @@ export class CategoriesController {
     };
   };
 
-  create = async ({ body, set }: { body: unknown; set: { status: number } }) => {
+  create = async ({ body, set, userId }: { body: unknown; set: { status: number }; userId?: string }) => {
     const { category, error } = await this.service.create(
+      userId ?? "",
       body as Record<string, unknown>,
     );
     if (error) return badRequest(set, error);
     return category!;
   };
 
-  getById = async ({ params, set }: { params: { id: string }; set: { status: number } }) => {
-    const category = await this.repo.one({ userId: this.userId, categoryId: params.id });
+  getById = async ({ params, set, userId }: { params: { id: string }; set: { status: number }; userId?: string }) => {
+    const category = await this.repo.one({ userId: userId ?? "", categoryId: params.id });
     if (!category) return notFound(set, "Categoria no encontrada");
     return Category.fromPrimitives(category).toPrimitives();
   };
 
-  update = async ({ params, body, set }: { params: { id: string }; body: unknown; set: { status: number } }) => {
+  update = async ({ params, body, set, userId }: { params: { id: string }; body: unknown; set: { status: number }; userId?: string }) => {
     const { category, error, status } = await this.service.update(
+      userId ?? "",
       params.id,
       body as Record<string, unknown>,
     );
@@ -48,8 +49,8 @@ export class CategoriesController {
     return category!;
   };
 
-  remove = async ({ params, set }: { params: { id: string }; set: { status: number } }) => {
-    const { ok, error, status } = await this.service.remove(params.id);
+  remove = async ({ params, set, userId }: { params: { id: string }; set: { status: number }; userId?: string }) => {
+    const { ok, error, status } = await this.service.remove(userId ?? "", params.id);
     if (error) {
       if (status === 404) return notFound(set, error);
       return badRequest(set, error);

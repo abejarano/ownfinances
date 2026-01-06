@@ -2,8 +2,10 @@ import type { AppDeps } from "../../bootstrap/deps";
 import { CategoriesController } from "../controllers/categories.controller";
 import { AccountsController } from "../controllers/accounts.controller";
 import { TransactionsController } from "../controllers/transactions.controller";
+import { requireAuth } from "../middleware/auth.middleware";
+import { registerAuthRoutes } from "./auth.routes";
 
-export function registerRoutes(app: any, deps: AppDeps, userId: string) {
+export function registerRoutes(app: any, deps: AppDeps) {
   let categoriesController: CategoriesController | null = null;
   let accountsController: AccountsController | null = null;
   let transactionsController: TransactionsController | null = null;
@@ -13,7 +15,6 @@ export function registerRoutes(app: any, deps: AppDeps, userId: string) {
       categoriesController = new CategoriesController(
         deps.categoryRepo,
         deps.categoriesService,
-        userId,
       );
     }
     return categoriesController;
@@ -24,7 +25,6 @@ export function registerRoutes(app: any, deps: AppDeps, userId: string) {
       accountsController = new AccountsController(
         deps.accountRepo,
         deps.accountsService,
-        userId,
       );
     }
     return accountsController;
@@ -35,27 +35,92 @@ export function registerRoutes(app: any, deps: AppDeps, userId: string) {
       transactionsController = new TransactionsController(
         deps.transactionRepo,
         deps.transactionsService,
-        userId,
       );
     }
     return transactionsController;
   };
 
+  registerAuthRoutes(app, deps);
+
   app
-    .get("/categories", (ctx: any) => getCategoriesController().list(ctx))
-    .post("/categories", (ctx: any) => getCategoriesController().create(ctx))
-    .get("/categories/:id", (ctx: any) => getCategoriesController().getById(ctx))
-    .put("/categories/:id", (ctx: any) => getCategoriesController().update(ctx))
-    .delete("/categories/:id", (ctx: any) => getCategoriesController().remove(ctx))
-    .get("/accounts", (ctx: any) => getAccountsController().list(ctx))
-    .post("/accounts", (ctx: any) => getAccountsController().create(ctx))
-    .get("/accounts/:id", (ctx: any) => getAccountsController().getById(ctx))
-    .put("/accounts/:id", (ctx: any) => getAccountsController().update(ctx))
-    .delete("/accounts/:id", (ctx: any) => getAccountsController().remove(ctx))
-    .get("/transactions", (ctx: any) => getTransactionsController().list(ctx))
-    .post("/transactions", (ctx: any) => getTransactionsController().create(ctx))
-    .get("/transactions/:id", (ctx: any) => getTransactionsController().getById(ctx))
-    .put("/transactions/:id", (ctx: any) => getTransactionsController().update(ctx))
-    .delete("/transactions/:id", (ctx: any) => getTransactionsController().remove(ctx))
-    .post("/transactions/:id/clear", (ctx: any) => getTransactionsController().clear(ctx));
+    .get("/categories", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getCategoriesController().list(ctx);
+    })
+    .post("/categories", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getCategoriesController().create(ctx);
+    })
+    .get("/categories/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getCategoriesController().getById(ctx);
+    })
+    .put("/categories/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getCategoriesController().update(ctx);
+    })
+    .delete("/categories/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getCategoriesController().remove(ctx);
+    })
+    .get("/accounts", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getAccountsController().list(ctx);
+    })
+    .post("/accounts", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getAccountsController().create(ctx);
+    })
+    .get("/accounts/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getAccountsController().getById(ctx);
+    })
+    .put("/accounts/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getAccountsController().update(ctx);
+    })
+    .delete("/accounts/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getAccountsController().remove(ctx);
+    })
+    .get("/transactions", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().list(ctx);
+    })
+    .post("/transactions", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().create(ctx);
+    })
+    .get("/transactions/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().getById(ctx);
+    })
+    .put("/transactions/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().update(ctx);
+    })
+    .delete("/transactions/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().remove(ctx);
+    })
+    .post("/transactions/:id/clear", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().clear(ctx);
+    });
 }

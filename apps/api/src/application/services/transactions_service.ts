@@ -8,11 +8,10 @@ export class TransactionsService {
   constructor(
     private readonly transactions: TransactionMongoRepository,
     private readonly accounts: AccountMongoRepository,
-    private readonly userId: string,
   ) {}
 
-  async create(payload: Partial<TransactionPrimitives>) {
-    const error = await this.validatePayload(payload, false);
+  async create(userId: string, payload: Partial<TransactionPrimitives>) {
+    const error = await this.validatePayload(userId, payload, false);
     if (error) return { error };
 
     const now = new Date();
@@ -20,13 +19,13 @@ export class TransactionsService {
     const date = payload.date ? new Date(payload.date) : new Date();
     const currency =
       payload.currency ??
-      (await this.resolveCurrency(payload)) ??
+      (await this.resolveCurrency(userId, payload)) ??
       "BRL";
 
     const transaction = new Transaction({
       id: newId,
       transactionId: newId,
-      userId: this.userId,
+      userId,
       type: payload.type!,
       date,
       amount: payload.amount!,
@@ -46,8 +45,8 @@ export class TransactionsService {
     return { transaction: transaction.toPrimitives() };
   }
 
-  async update(id: string, payload: Partial<TransactionPrimitives>) {
-    const existing = await this.transactions.one({ userId: this.userId, transactionId: id });
+  async update(userId: string, id: string, payload: Partial<TransactionPrimitives>) {
+    const existing = await this.transactions.one({ userId, transactionId: id });
     if (!existing) {
       return { error: "Transaccion no encontrada", status: 404 };
     }
@@ -62,7 +61,7 @@ export class TransactionsService {
       updatedAt: new Date(),
     };
 
-    const error = await this.validatePayload(merged, true);
+    const error = await this.validatePayload(userId, merged, true);
     if (error) return { error };
 
     if (merged.status === "cleared" && !merged.clearedAt) {
@@ -73,12 +72,12 @@ export class TransactionsService {
     }
 
     await this.transactions.upsert(Transaction.fromPrimitives(merged));
-    const updated = await this.transactions.one({ userId: this.userId, transactionId: id });
+    const updated = await this.transactions.one({ userId, transactionId: id });
     return { transaction: updated! };
   }
 
-  async clear(id: string) {
-    const existing = await this.transactions.one({ userId: this.userId, transactionId: id });
+  async clear(userId: string, id: string) {
+    const existing = await this.transactions.one({ userId, transactionId: id });
     if (!existing) {
       return { error: "Transaccion no encontrada", status: 404 };
     }
@@ -92,11 +91,12 @@ export class TransactionsService {
     });
 
     await this.transactions.upsert(cleared);
-    const updated = await this.transactions.one({ userId: this.userId, transactionId: id });
+    const updated = await this.transactions.one({ userId, transactionId: id });
     return { transaction: updated! };
   }
 
   private async validatePayload(
+    userId: string,
     payload: Partial<TransactionPrimitives>,
     isUpdate: boolean,
   ): Promise<string | null> {
@@ -143,7 +143,7 @@ export class TransactionsService {
 
     if (payload.fromAccountId) {
       const account = await this.accounts.one({
-        userId: this.userId,
+        userId,
         accountId: payload.fromAccountId,
       });
       if (!account) {
@@ -152,7 +152,7 @@ export class TransactionsService {
     }
     if (payload.toAccountId) {
       const account = await this.accounts.one({
-        userId: this.userId,
+        userId,
         accountId: payload.toAccountId,
       });
       if (!account) {
@@ -163,24 +163,24 @@ export class TransactionsService {
     return null;
   }
 
-  private async resolveCurrency(payload: Partial<TransactionPrimitives>) {
+  private async resolveCurrency(userId: string, payload: Partial<TransactionPrimitives>) {
     if (payload.type === "income" && payload.toAccountId) {
       const account = await this.accounts.one({
-        userId: this.userId,
+        userId,
         accountId: payload.toAccountId,
       });
       return account?.currency;
     }
     if (payload.type === "expense" && payload.fromAccountId) {
       const account = await this.accounts.one({
-        userId: this.userId,
+        userId,
         accountId: payload.fromAccountId,
       });
       return account?.currency;
     }
     if (payload.type === "transfer" && payload.fromAccountId) {
       const account = await this.accounts.one({
-        userId: this.userId,
+        userId,
         accountId: payload.fromAccountId,
       });
       return account?.currency;

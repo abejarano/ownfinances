@@ -8,11 +8,10 @@ export class AccountsController {
   constructor(
     private readonly repo: AccountMongoRepository,
     private readonly service: AccountsService,
-    private readonly userId: string,
   ) {}
 
-  list = async ({ query }: { query: Record<string, string | undefined> }) => {
-    const criteria = buildAccountsCriteria(query, this.userId);
+  list = async ({ query, userId }: { query: Record<string, string | undefined>; userId?: string }) => {
+    const criteria = buildAccountsCriteria(query, userId ?? "");
     const result = await this.repo.list(criteria);
     return {
       ...result,
@@ -22,22 +21,24 @@ export class AccountsController {
     };
   };
 
-  create = async ({ body, set }: { body: unknown; set: { status: number } }) => {
+  create = async ({ body, set, userId }: { body: unknown; set: { status: number }; userId?: string }) => {
     const { account, error } = await this.service.create(
+      userId ?? "",
       body as Record<string, unknown>,
     );
     if (error) return badRequest(set, error);
     return account!;
   };
 
-  getById = async ({ params, set }: { params: { id: string }; set: { status: number } }) => {
-    const account = await this.repo.one({ userId: this.userId, accountId: params.id });
+  getById = async ({ params, set, userId }: { params: { id: string }; set: { status: number }; userId?: string }) => {
+    const account = await this.repo.one({ userId: userId ?? "", accountId: params.id });
     if (!account) return notFound(set, "Cuenta no encontrada");
     return Account.fromPrimitives(account).toPrimitives();
   };
 
-  update = async ({ params, body, set }: { params: { id: string }; body: unknown; set: { status: number } }) => {
+  update = async ({ params, body, set, userId }: { params: { id: string }; body: unknown; set: { status: number }; userId?: string }) => {
     const { account, error, status } = await this.service.update(
+      userId ?? "",
       params.id,
       body as Record<string, unknown>,
     );
@@ -48,8 +49,8 @@ export class AccountsController {
     return account!;
   };
 
-  remove = async ({ params, set }: { params: { id: string }; set: { status: number } }) => {
-    const { ok, error, status } = await this.service.remove(params.id);
+  remove = async ({ params, set, userId }: { params: { id: string }; set: { status: number }; userId?: string }) => {
+    const { ok, error, status } = await this.service.remove(userId ?? "", params.id);
     if (error) {
       if (status === 404) return notFound(set, error);
       return badRequest(set, error);

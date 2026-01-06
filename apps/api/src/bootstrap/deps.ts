@@ -1,10 +1,12 @@
-import { env } from "../shared/env";
 import { CategoryMongoRepository } from "../repositories/category_repository";
 import { AccountMongoRepository } from "../repositories/account_repository";
 import { TransactionMongoRepository } from "../repositories/transaction_repository";
 import { TransactionsService } from "../application/services/transactions_service";
 import { CategoriesService } from "../application/services/categories_service";
 import { AccountsService } from "../application/services/accounts_service";
+import { UserMongoRepository } from "../infrastructure/repositories/user_mongo_repository";
+import { RefreshTokenMongoRepository } from "../infrastructure/repositories/refresh_token_mongo_repository";
+import { AuthService } from "../application/services/auth.service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -13,12 +15,16 @@ export type AppDeps = {
   readonly transactionsService: TransactionsService;
   readonly categoriesService: CategoriesService;
   readonly accountsService: AccountsService;
+  readonly userRepo: UserMongoRepository;
+  readonly refreshTokenRepo: RefreshTokenMongoRepository;
+  readonly authService: AuthService;
 };
 
 export function buildDeps(): AppDeps {
   let transactionsService: TransactionsService | null = null;
   let categoriesService: CategoriesService | null = null;
   let accountsService: AccountsService | null = null;
+  let authService: AuthService | null = null;
 
   return {
     get categoryRepo() {
@@ -35,7 +41,6 @@ export function buildDeps(): AppDeps {
         transactionsService = new TransactionsService(
           this.transactionRepo,
           this.accountRepo,
-          env.USER_ID_DEFAULT,
         );
       }
       return transactionsService;
@@ -44,7 +49,6 @@ export function buildDeps(): AppDeps {
       if (!categoriesService) {
         categoriesService = new CategoriesService(
           this.categoryRepo,
-          env.USER_ID_DEFAULT,
         );
       }
       return categoriesService;
@@ -53,10 +57,21 @@ export function buildDeps(): AppDeps {
       if (!accountsService) {
         accountsService = new AccountsService(
           this.accountRepo,
-          env.USER_ID_DEFAULT,
         );
       }
       return accountsService;
+    },
+    get userRepo() {
+      return UserMongoRepository.getInstance();
+    },
+    get refreshTokenRepo() {
+      return RefreshTokenMongoRepository.getInstance();
+    },
+    get authService() {
+      if (!authService) {
+        authService = new AuthService(this.userRepo, this.refreshTokenRepo);
+      }
+      return authService;
     },
   };
 }
