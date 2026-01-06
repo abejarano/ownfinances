@@ -27,7 +27,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final message = ref.watch(authMessageProvider);
+    final state = ref.watch(authControllerProvider);
+    final message = state.message;
 
     return Scaffold(
       appBar: AppBar(title: const Text("Entrar")),
@@ -85,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _onLogin() async {
     setState(() => _isLoading = true);
-    final controller = ref.read(authControllerProvider);
+    final controller = ref.read(authControllerProvider.notifier);
     final error = await controller.login(
       _emailController.text.trim(),
       _passwordController.text,
