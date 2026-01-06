@@ -1,10 +1,10 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/ui/components/buttons.dart";
-import "package:ownfinances/ui/components/cards.dart";
-import "package:ownfinances/ui/components/money_input.dart";
-import "package:ownfinances/ui/components/pickers.dart";
-import "package:ownfinances/ui/components/snackbar.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/presentation/components/buttons.dart";
+import "package:ownfinances/core/presentation/components/cards.dart";
+import "package:ownfinances/core/presentation/components/money_input.dart";
+import "package:ownfinances/core/presentation/components/pickers.dart";
+import "package:ownfinances/core/presentation/components/snackbar.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class UiKitScreen extends StatefulWidget {
   const UiKitScreen({super.key});
@@ -54,23 +54,20 @@ class _UiKitScreenState extends State<UiKitScreen> {
           QuickActionCard(
             icon: Icons.receipt_long,
             title: "Registrar gasto",
-            subtitle: "Salió R$ 0,00",
+            subtitle: "Salió R\$ 0,00",
             onTap: () {},
           ),
           const SizedBox(height: AppSpacing.md),
           const InlineSummaryCard(
             title: "Resumo",
-            planned: "R$ 1.500,00",
-            actual: "R$ 900,00",
-            remaining: "R$ 600,00",
+            planned: "R\$ 1.500,00",
+            actual: "R\$ 900,00",
+            remaining: "R\$ 600,00",
           ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
-            onPressed: () => showUndoSnackbar(
-              context,
-              "Transacción eliminada",
-              () {},
-            ),
+            onPressed: () =>
+                showUndoSnackbar(context, "Transacción eliminada", () {}),
             child: const Text("Mostrar Snackbar"),
           ),
         ],

@@ -1,6 +1,10 @@
 import "package:flutter/material.dart";
 
-void showUndoSnackbar(BuildContext context, String message, VoidCallback onUndo) {
+void showUndoSnackbar(
+  BuildContext context,
+  String message,
+  VoidCallback onUndo,
+) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
@@ -10,7 +14,5 @@ void showUndoSnackbar(BuildContext context, String message, VoidCallback onUndo)
 }
 
 void showStandardSnackbar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }

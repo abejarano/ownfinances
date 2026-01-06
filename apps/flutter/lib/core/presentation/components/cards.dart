@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class QuickActionCard extends StatelessWidget {
   final IconData icon;
@@ -29,7 +29,7 @@ class QuickActionCard extends StatelessWidget {
               color: Colors.black.withOpacity(0.05),
               blurRadius: 12,
               offset: const Offset(0, 6),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -45,10 +45,13 @@ class QuickActionCard extends StatelessWidget {
                 children: [
                   Text(title, style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(color: AppColors.muted)),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: AppColors.muted),
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -97,10 +100,7 @@ class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

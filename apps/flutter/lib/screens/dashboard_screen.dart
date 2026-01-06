@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/ui/components/cards.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/presentation/components/cards.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -10,34 +10,28 @@ class DashboardScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text(
-          "Resumo do mês",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text("Resumo do mês", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         const InlineSummaryCard(
           title: "Janeiro 2026",
-          planned: "R$ 3.500,00",
-          actual: "R$ 2.740,00",
-          remaining: "R$ 760,00",
+          planned: "R\$ 3.500,00",
+          actual: "R\$ 2.740,00",
+          remaining: "R\$ 760,00",
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text(
-          "Ações rápidas",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text("Ações rápidas", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_downward,
           title: "Registrar gasto",
-          subtitle: "Salió R$ 0,00",
+          subtitle: "Salió R\$ 0,00",
           onTap: () {},
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_upward,
           title: "Registrar ingreso",
-          subtitle: "Entró R$ 0,00",
+          subtitle: "Entró R\$ 0,00",
           onTap: () {},
         ),
         const SizedBox(height: AppSpacing.sm),

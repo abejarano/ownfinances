@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/ui/components/buttons.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/presentation/components/buttons.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -32,7 +32,7 @@ class TransactionsScreen extends StatelessWidget {
                 return ListTile(
                   title: Text("Cafetería #$index"),
                   subtitle: const Text("Pendiente • 12/01/2026"),
-                  trailing: const Text("- R$ 18,50"),
+                  trailing: const Text("- R\$ 18,50"),
                 );
               },
             ),

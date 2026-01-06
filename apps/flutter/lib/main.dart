@@ -7,9 +7,12 @@ import "package:ownfinances/screens/onboarding_screen.dart";
 import "package:ownfinances/screens/settings_screen.dart";
 import "package:ownfinances/screens/transactions_screen.dart";
 import "package:ownfinances/screens/ui_kit_screen.dart";
+import "package:ownfinances/features/auth/presentation/screens/login_screen.dart";
+import "package:ownfinances/features/auth/presentation/screens/register_screen.dart";
+import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/state/app_state.dart";
-import "package:ownfinances/ui/components/app_scaffold.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/presentation/components/app_scaffold.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 void main() {
   runApp(const ProviderScope(child: OwnFinancesApp()));
@@ -32,15 +35,27 @@ class OwnFinancesApp extends ConsumerWidget {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final completed = ref.watch(onboardingCompletedProvider);
+  ref.watch(authControllerProvider);
+  final session = ref.watch(authSessionProvider);
+  final isAuthed = session != null;
 
   return GoRouter(
     initialLocation: "/dashboard",
     redirect: (context, state) {
       final isOnboarding = state.fullPath == "/onboarding";
+      final isAuthRoute =
+          state.fullPath == "/login" || state.fullPath == "/register";
+
       if (!completed && !isOnboarding) {
         return "/onboarding";
       }
       if (completed && isOnboarding) {
+        return isAuthed ? "/dashboard" : "/login";
+      }
+      if (!isAuthed && !isAuthRoute) {
+        return "/login";
+      }
+      if (isAuthed && isAuthRoute) {
         return "/dashboard";
       }
       return null;
@@ -53,6 +68,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             ref.read(onboardingCompletedProvider.notifier).state = true;
           },
         ),
+      ),
+      GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: "/register",
+        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: "/ui-kit",

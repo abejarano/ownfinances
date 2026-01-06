@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class CategoryPicker extends StatelessWidget {
   final String label;
@@ -71,11 +71,8 @@ class _PickerField extends StatelessWidget {
         final selected = await showModalBottomSheet<String>(
           context: context,
           showDragHandle: true,
-          builder: (context) => _PickerSheet(
-            title: label,
-            items: items,
-            selected: value,
-          ),
+          builder: (context) =>
+              _PickerSheet(title: label, items: items, selected: value),
         );
         if (selected != null) {
           onSelected(selected);
@@ -137,8 +134,9 @@ class _PickerSheetState extends State<_PickerSheet> {
                   final item = filtered[index];
                   return ListTile(
                     title: Text(item),
-                    trailing:
-                        item == widget.selected ? const Icon(Icons.check) : null,
+                    trailing: item == widget.selected
+                        ? const Icon(Icons.check)
+                        : null,
                     onTap: () => Navigator.of(context).pop(item),
                   );
                 },

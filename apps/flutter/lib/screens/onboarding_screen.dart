@@ -1,14 +1,11 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/ui/components/buttons.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/core/presentation/components/buttons.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class OnboardingScreen extends StatelessWidget {
   final VoidCallback onStart;
 
-  const OnboardingScreen({
-    super.key,
-    required this.onStart,
-  });
+  const OnboardingScreen({super.key, required this.onStart});
 
   @override
   Widget build(BuildContext context) {

@@ -5,8 +5,9 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:http/http.dart" as http;
 import "package:go_router/go_router.dart";
 import "package:ownfinances/state/app_state.dart";
-import "package:ownfinances/ui/components/snackbar.dart";
-import "package:ownfinances/ui/theme/app_theme.dart";
+import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
+import "package:ownfinances/core/presentation/components/snackbar.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -22,13 +23,22 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         ListTile(
           title: const Text("Moneda"),
-          subtitle: const Text("BRL (R$)"),
+          subtitle: const Text("BRL (R\$)"),
           onTap: () {},
         ),
         ListTile(
           title: const Text("Periodo"),
           subtitle: const Text("Mensual"),
           onTap: () {},
+        ),
+        ListTile(
+          title: const Text("Sair"),
+          onTap: () async {
+            await ref.read(authControllerProvider).logout();
+            if (context.mounted) {
+              context.go("/login");
+            }
+          },
         ),
         GestureDetector(
           onLongPress: () => ref.read(devModeProvider.notifier).state = true,
@@ -53,10 +63,7 @@ class SettingsScreen extends ConsumerWidget {
                 final res = await http.get(Uri.parse(url));
                 final parsed = jsonDecode(res.body) as Map<String, dynamic>;
                 if (context.mounted) {
-                  showStandardSnackbar(
-                    context,
-                    "Ping OK: ${parsed["ok"]}",
-                  );
+                  showStandardSnackbar(context, "Ping OK: ${parsed["ok"]}");
                 }
               } catch (_) {
                 if (context.mounted) {
@@ -66,7 +73,7 @@ class SettingsScreen extends ConsumerWidget {
             },
             child: const Text("Ping API"),
           ),
-        ]
+        ],
       ],
     );
   }

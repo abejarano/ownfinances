@@ -6,11 +6,7 @@ class MoneyInput extends StatefulWidget {
   final String label;
   final TextEditingController controller;
 
-  const MoneyInput({
-    super.key,
-    required this.label,
-    required this.controller,
-  });
+  const MoneyInput({super.key, required this.label, required this.controller});
 
   @override
   State<MoneyInput> createState() => _MoneyInputState();
@@ -22,7 +18,7 @@ class _MoneyInputState extends State<MoneyInput> {
   @override
   void initState() {
     super.initState();
-    _format = NumberFormat.simpleCurrency(locale: "pt_BR", name: "R$");
+    _format = NumberFormat.simpleCurrency(locale: "pt_BR", name: "R\$");
   }
 
   @override
