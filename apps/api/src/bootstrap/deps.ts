@@ -7,6 +7,9 @@ import { AccountsService } from "../application/services/accounts_service";
 import { UserMongoRepository } from "../infrastructure/repositories/user_mongo_repository";
 import { RefreshTokenMongoRepository } from "../infrastructure/repositories/refresh_token_mongo_repository";
 import { AuthService } from "../application/services/auth.service";
+import { BudgetMongoRepository } from "../repositories/budget_repository";
+import { BudgetsService } from "../application/services/budgets_service";
+import { ReportsService } from "../application/services/reports_service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -18,6 +21,9 @@ export type AppDeps = {
   readonly userRepo: UserMongoRepository;
   readonly refreshTokenRepo: RefreshTokenMongoRepository;
   readonly authService: AuthService;
+  readonly budgetRepo: BudgetMongoRepository;
+  readonly budgetsService: BudgetsService;
+  readonly reportsService: ReportsService;
 };
 
 export function buildDeps(): AppDeps {
@@ -25,6 +31,8 @@ export function buildDeps(): AppDeps {
   let categoriesService: CategoriesService | null = null;
   let accountsService: AccountsService | null = null;
   let authService: AuthService | null = null;
+  let budgetsService: BudgetsService | null = null;
+  let reportsService: ReportsService | null = null;
 
   return {
     get categoryRepo() {
@@ -72,6 +80,25 @@ export function buildDeps(): AppDeps {
         authService = new AuthService(this.userRepo, this.refreshTokenRepo);
       }
       return authService;
+    },
+    get budgetRepo() {
+      return BudgetMongoRepository.getInstance();
+    },
+    get budgetsService() {
+      if (!budgetsService) {
+        budgetsService = new BudgetsService(this.budgetRepo);
+      }
+      return budgetsService;
+    },
+    get reportsService() {
+      if (!reportsService) {
+        reportsService = new ReportsService(
+          this.budgetRepo,
+          this.categoryRepo,
+          this.transactionRepo,
+        );
+      }
+      return reportsService;
     },
   };
 }

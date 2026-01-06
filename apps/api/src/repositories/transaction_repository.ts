@@ -44,4 +44,8 @@ export class TransactionMongoRepository extends MongoRepository<Transaction> {
       results: pagination.results,
     };
   }
+
+  async search(criteria: Criteria): Promise<TransactionPrimitives[]> {
+    return this.searchByCriteria<TransactionPrimitives>(criteria);
+  }
 }

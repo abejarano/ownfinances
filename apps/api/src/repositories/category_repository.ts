@@ -44,4 +44,8 @@ export class CategoryMongoRepository extends MongoRepository<Category> {
       results: pagination.results,
     };
   }
+
+  async search(criteria: Criteria): Promise<CategoryPrimitives[]> {
+    return this.searchByCriteria<CategoryPrimitives>(criteria);
+  }
 }
