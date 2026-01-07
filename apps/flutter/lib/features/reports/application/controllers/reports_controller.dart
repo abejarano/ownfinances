@@ -1,15 +1,13 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/reports/application/state/reports_state.dart";
-import "package:ownfinances/features/reports/domain/use_cases/get_summary_use_case.dart";
-import "package:ownfinances/features/reports/domain/use_cases/get_balances_use_case.dart";
+import "package:ownfinances/features/reports/domain/repositories/reports_repository.dart";
 
 class ReportsController extends ChangeNotifier {
-  final GetSummaryUseCase getSummaryUseCase;
-  final GetBalancesUseCase getBalancesUseCase;
+  final ReportsRepository repository;
   ReportsState _state = ReportsState.initial();
 
-  ReportsController(this.getSummaryUseCase, this.getBalancesUseCase);
+  ReportsController(this.repository);
 
   ReportsState get state => _state;
 
@@ -17,11 +15,11 @@ class ReportsController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final summary = await getSummaryUseCase.execute(
+      final summary = await repository.summary(
         period: _state.period,
         date: _state.date,
       );
-      final balances = await getBalancesUseCase.execute(
+      final balances = await repository.balances(
         period: _state.period,
         date: _state.date,
       );

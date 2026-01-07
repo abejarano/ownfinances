@@ -1,24 +1,13 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/accounts/application/state/accounts_state.dart";
-import "package:ownfinances/features/accounts/domain/use_cases/create_account_use_case.dart";
-import "package:ownfinances/features/accounts/domain/use_cases/delete_account_use_case.dart";
-import "package:ownfinances/features/accounts/domain/use_cases/list_accounts_use_case.dart";
-import "package:ownfinances/features/accounts/domain/use_cases/update_account_use_case.dart";
+import "package:ownfinances/features/accounts/domain/repositories/account_repository.dart";
 
 class AccountsController extends ChangeNotifier {
-  final ListAccountsUseCase listUseCase;
-  final CreateAccountUseCase createUseCase;
-  final UpdateAccountUseCase updateUseCase;
-  final DeleteAccountUseCase deleteUseCase;
+  final AccountRepository repository;
   AccountsState _state = AccountsState.initial;
 
-  AccountsController(
-    this.listUseCase,
-    this.createUseCase,
-    this.updateUseCase,
-    this.deleteUseCase,
-  );
+  AccountsController(this.repository);
 
   AccountsState get state => _state;
 
@@ -26,7 +15,7 @@ class AccountsController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final result = await listUseCase.execute(isActive: true);
+      final result = await repository.list(isActive: true);
       _state = _state.copyWith(isLoading: false, items: result.results);
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
@@ -41,7 +30,7 @@ class AccountsController extends ChangeNotifier {
     bool isActive = true,
   }) async {
     try {
-      final created = await createUseCase.execute(
+      final created = await repository.create(
         name: name,
         type: type,
         currency: currency,
@@ -65,7 +54,7 @@ class AccountsController extends ChangeNotifier {
     required bool isActive,
   }) async {
     try {
-      final updated = await updateUseCase.execute(
+      final updated = await repository.update(
         id,
         name: name,
         type: type,
@@ -85,7 +74,7 @@ class AccountsController extends ChangeNotifier {
 
   Future<String?> remove(String id) async {
     try {
-      await deleteUseCase.execute(id);
+      await repository.delete(id);
       _state = _state.copyWith(
         items: _state.items.where((item) => item.id != id).toList(),
       );

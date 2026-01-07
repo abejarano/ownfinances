@@ -2,31 +2,16 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/debts/application/state/debts_state.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
-import "package:ownfinances/features/debts/domain/use_cases/list_debts_use_case.dart";
-import "package:ownfinances/features/debts/domain/use_cases/create_debt_use_case.dart";
-import "package:ownfinances/features/debts/domain/use_cases/update_debt_use_case.dart";
-import "package:ownfinances/features/debts/domain/use_cases/delete_debt_use_case.dart";
-import "package:ownfinances/features/debts/domain/use_cases/get_debt_summary_use_case.dart";
-import "package:ownfinances/features/debts/domain/use_cases/create_debt_transaction_use_case.dart";
+import "package:ownfinances/features/debts/domain/repositories/debt_repository.dart";
+import "package:ownfinances/features/debts/domain/repositories/debt_transaction_repository.dart";
 
 class DebtsController extends ChangeNotifier {
-  final ListDebtsUseCase listUseCase;
-  final CreateDebtUseCase createUseCase;
-  final UpdateDebtUseCase updateUseCase;
-  final DeleteDebtUseCase deleteUseCase;
-  final GetDebtSummaryUseCase getSummaryUseCase;
-  final CreateDebtTransactionUseCase createDebtTransactionUseCase;
+  final DebtRepository debtRepository;
+  final DebtTransactionRepository transactionRepository;
 
   DebtsState _state = DebtsState.initial();
 
-  DebtsController(
-    this.listUseCase,
-    this.createUseCase,
-    this.updateUseCase,
-    this.deleteUseCase,
-    this.getSummaryUseCase,
-    this.createDebtTransactionUseCase,
-  );
+  DebtsController(this.debtRepository, this.transactionRepository);
 
   DebtsState get state => _state;
 
@@ -34,11 +19,11 @@ class DebtsController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final items = await listUseCase.execute();
+      final items = await debtRepository.list();
       final summaries = <String, DebtSummary>{};
       for (final debt in items) {
         try {
-          summaries[debt.id] = await getSummaryUseCase.execute(debt.id);
+          summaries[debt.id] = await debtRepository.summary(debt.id);
         } catch (_) {
           // Ignore summary errors per debt to keep list usable.
         }
@@ -64,7 +49,7 @@ class DebtsController extends ChangeNotifier {
     bool? isActive,
   }) async {
     try {
-      final created = await createUseCase.execute(
+      final created = await debtRepository.create(
         name: name,
         type: type,
         currency: currency,
@@ -93,7 +78,7 @@ class DebtsController extends ChangeNotifier {
     bool? isActive,
   }) async {
     try {
-      final updated = await updateUseCase.execute(
+      final updated = await debtRepository.update(
         id: id,
         name: name,
         type: type,
@@ -118,7 +103,7 @@ class DebtsController extends ChangeNotifier {
 
   Future<String?> remove(String id) async {
     try {
-      await deleteUseCase.execute(id);
+      await debtRepository.delete(id);
       final nextSummaries = Map<String, DebtSummary>.from(_state.summaries);
       nextSummaries.remove(id);
       _state = _state.copyWith(
@@ -141,7 +126,7 @@ class DebtsController extends ChangeNotifier {
     String? note,
   }) async {
     try {
-      await createDebtTransactionUseCase.execute(
+      await transactionRepository.create(
         debtId: debtId,
         date: date,
         type: type,
@@ -160,7 +145,7 @@ class DebtsController extends ChangeNotifier {
 
   Future<void> _refreshSummary(String debtId) async {
     try {
-      final summary = await getSummaryUseCase.execute(debtId);
+      final summary = await debtRepository.summary(debtId);
       final next = Map<String, DebtSummary>.from(_state.summaries);
       next[debtId] = summary;
       _state = _state.copyWith(summaries: next);

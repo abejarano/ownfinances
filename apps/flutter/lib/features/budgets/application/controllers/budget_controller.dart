@@ -2,15 +2,13 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/budgets/application/state/budget_state.dart";
 import "package:ownfinances/features/budgets/domain/entities/budget.dart";
-import "package:ownfinances/features/budgets/domain/use_cases/get_current_budget_use_case.dart";
-import "package:ownfinances/features/budgets/domain/use_cases/save_budget_use_case.dart";
+import "package:ownfinances/features/budgets/domain/repositories/budget_repository.dart";
 
 class BudgetController extends ChangeNotifier {
-  final GetCurrentBudgetUseCase currentUseCase;
-  final SaveBudgetUseCase saveUseCase;
+  final BudgetRepository repository;
   BudgetState _state = BudgetState.initial;
 
-  BudgetController(this.currentUseCase, this.saveUseCase);
+  BudgetController(this.repository);
 
   BudgetState get state => _state;
 
@@ -18,7 +16,7 @@ class BudgetController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final current = await currentUseCase.execute(period: period, date: date);
+      final current = await repository.current(period: period, date: date);
       final planned = <String, double>{};
       if (current.budget != null) {
         for (final line in current.budget!.lines) {
@@ -53,7 +51,7 @@ class BudgetController extends ChangeNotifier {
                 BudgetLine(categoryId: entry.key, plannedAmount: entry.value),
           )
           .toList();
-      final saved = await saveUseCase.execute(
+      final saved = await repository.save(
         id: _state.budget?.id,
         period: period,
         startDate: _state.range!.start,

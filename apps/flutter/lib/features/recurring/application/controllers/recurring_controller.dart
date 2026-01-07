@@ -2,34 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:ownfinances/core/infrastructure/api/api_exception.dart';
 import 'package:ownfinances/features/recurring/application/state/recurring_state.dart';
 import 'package:ownfinances/features/recurring/domain/entities/recurring_rule.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/create_recurring_rule_use_case.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/delete_recurring_rule_use_case.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/list_recurring_rules_use_case.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/preview_recurring_rules_use_case.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/run_recurring_rules_use_case.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/split_recurring_rule_use_case.dart';
-import 'package:ownfinances/features/recurring/domain/use_cases/materialize_recurring_instance_use_case.dart';
+import 'package:ownfinances/features/recurring/domain/repositories/recurring_repository.dart';
 
 class RecurringController extends ChangeNotifier {
-  final ListRecurringRulesUseCase listUseCase;
-  final CreateRecurringRuleUseCase createUseCase;
-  final DeleteRecurringRuleUseCase deleteUseCase;
-  final PreviewRecurringRulesUseCase previewUseCase;
-  final RunRecurringRulesUseCase runUseCase;
-  final SplitRecurringRuleUseCase splitUseCase;
-  final MaterializeRecurringInstanceUseCase materializeUseCase;
+  final RecurringRepository repository;
 
   RecurringState _state = RecurringState.initial();
 
-  RecurringController(
-    this.listUseCase,
-    this.createUseCase,
-    this.deleteUseCase,
-    this.previewUseCase,
-    this.runUseCase,
-    this.splitUseCase,
-    this.materializeUseCase,
-  );
+  RecurringController(this.repository);
 
   RecurringState get state => _state;
 
@@ -37,7 +17,7 @@ class RecurringController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final results = await listUseCase();
+      final results = await repository.list();
       _state = _state.copyWith(isLoading: false, items: results);
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
@@ -52,7 +32,7 @@ class RecurringController extends ChangeNotifier {
     ); // Optional loading for create
     notifyListeners();
     try {
-      final created = await createUseCase(payload);
+      final created = await repository.create(payload);
       _state = _state.copyWith(
         isLoading: false,
         items: [created, ..._state.items],
@@ -68,7 +48,7 @@ class RecurringController extends ChangeNotifier {
 
   Future<bool> delete(String id) async {
     try {
-      await deleteUseCase(id);
+      await repository.delete(id);
       _state = _state.copyWith(
         items: _state.items.where((item) => item.id != id).toList(),
       );
@@ -88,7 +68,7 @@ class RecurringController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final result = await previewUseCase(period, date);
+      final result = await repository.preview(period, date);
       _state = _state.copyWith(isLoading: false, previewItems: result);
       notifyListeners();
       return result;
@@ -103,7 +83,7 @@ class RecurringController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final result = await runUseCase(period, date);
+      final result = await repository.run(period, date);
       _state = _state.copyWith(
         isLoading: false,
         previewItems: [],
@@ -126,7 +106,7 @@ class RecurringController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      await materializeUseCase(ruleId, date);
+      await repository.materialize(ruleId, date);
       // We might want to refresh the list or transactions list, but usually this navigated to a form
       _state = _state.copyWith(isLoading: false);
     } catch (error) {
@@ -143,9 +123,9 @@ class RecurringController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      await splitUseCase(ruleId, date, template);
+      await repository.split(ruleId, date, template);
       // Refresh list to show new rule
-      final results = await listUseCase();
+      final results = await repository.list();
       _state = _state.copyWith(isLoading: false, items: results);
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));

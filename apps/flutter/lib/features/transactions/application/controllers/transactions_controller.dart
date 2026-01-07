@@ -3,30 +3,12 @@ import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/transactions/application/state/transactions_state.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
-import "package:ownfinances/features/transactions/domain/use_cases/clear_transaction_use_case.dart";
-import "package:ownfinances/features/transactions/domain/use_cases/create_transaction_use_case.dart";
-import "package:ownfinances/features/transactions/domain/use_cases/delete_transaction_use_case.dart";
-import "package:ownfinances/features/transactions/domain/use_cases/list_transactions_use_case.dart";
-import "package:ownfinances/features/transactions/domain/use_cases/update_transaction_use_case.dart";
-import "package:ownfinances/features/transactions/domain/use_cases/restore_transaction_use_case.dart";
 
 class TransactionsController extends ChangeNotifier {
-  final ListTransactionsUseCase listUseCase;
-  final CreateTransactionUseCase createUseCase;
-  final UpdateTransactionUseCase updateUseCase;
-  final DeleteTransactionUseCase deleteUseCase;
-  final ClearTransactionUseCase clearUseCase;
-  final RestoreTransactionUseCase restoreUseCase;
+  final TransactionRepository repository;
   TransactionsState _state = TransactionsState.initial();
 
-  TransactionsController(
-    this.listUseCase,
-    this.createUseCase,
-    this.updateUseCase,
-    this.deleteUseCase,
-    this.clearUseCase,
-    this.restoreUseCase,
-  );
+  TransactionsController(this.repository);
 
   TransactionsState get state => _state;
 
@@ -34,7 +16,7 @@ class TransactionsController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final result = await listUseCase.execute(filters: _state.filters);
+      final result = await repository.list(filters: _state.filters);
       _state = _state.copyWith(isLoading: false, items: result.results);
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
@@ -50,7 +32,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<Transaction?> create(Map<String, dynamic> payload) async {
     try {
-      final created = await createUseCase.execute(payload);
+      final created = await repository.create(payload);
       _state = _state.copyWith(items: [created, ..._state.items]);
       notifyListeners();
       return created;
@@ -63,7 +45,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<Transaction?> update(String id, Map<String, dynamic> payload) async {
     try {
-      final updated = await updateUseCase.execute(id, payload);
+      final updated = await repository.update(id, payload);
       final next = _state.items
           .map((item) => item.id == id ? updated : item)
           .toList();
@@ -79,7 +61,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<bool> remove(String id) async {
     try {
-      await deleteUseCase.execute(id);
+      await repository.delete(id);
       _state = _state.copyWith(
         items: _state.items.where((item) => item.id != id).toList(),
       );
@@ -94,7 +76,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<Transaction?> clear(String id) async {
     try {
-      final cleared = await clearUseCase.execute(id);
+      final cleared = await repository.clear(id);
       final next = _state.items
           .map((item) => item.id == id ? cleared : item)
           .toList();
@@ -110,7 +92,7 @@ class TransactionsController extends ChangeNotifier {
 
   Future<Transaction?> restore(String id) async {
     try {
-      final restored = await restoreUseCase.execute(id);
+      final restored = await repository.restore(id);
       _state = _state.copyWith(items: [restored, ..._state.items]);
       notifyListeners();
       return restored;

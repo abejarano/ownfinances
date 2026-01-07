@@ -2,31 +2,14 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/goals/application/state/goals_state.dart";
 import "package:ownfinances/features/goals/domain/entities/goal_projection.dart";
-import "package:ownfinances/features/goals/domain/use_cases/list_goals_use_case.dart";
-import "package:ownfinances/features/goals/domain/use_cases/create_goal_use_case.dart";
-import "package:ownfinances/features/goals/domain/use_cases/update_goal_use_case.dart";
-import "package:ownfinances/features/goals/domain/use_cases/delete_goal_use_case.dart";
-import "package:ownfinances/features/goals/domain/use_cases/get_goal_projection_use_case.dart";
-import "package:ownfinances/features/goals/domain/use_cases/create_goal_contribution_use_case.dart";
+import "package:ownfinances/features/goals/domain/repositories/goal_repository.dart";
 
 class GoalsController extends ChangeNotifier {
-  final ListGoalsUseCase listUseCase;
-  final CreateGoalUseCase createUseCase;
-  final UpdateGoalUseCase updateUseCase;
-  final DeleteGoalUseCase deleteUseCase;
-  final GetGoalProjectionUseCase projectionUseCase;
-  final CreateGoalContributionUseCase createContributionUseCase;
+  final GoalRepository repository;
 
   GoalsState _state = GoalsState.initial();
 
-  GoalsController(
-    this.listUseCase,
-    this.createUseCase,
-    this.updateUseCase,
-    this.deleteUseCase,
-    this.projectionUseCase,
-    this.createContributionUseCase,
-  );
+  GoalsController(this.repository);
 
   GoalsState get state => _state;
 
@@ -34,11 +17,11 @@ class GoalsController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final items = await listUseCase.execute();
+      final items = await repository.list();
       final projections = <String, GoalProjection>{};
       for (final goal in items) {
         try {
-          projections[goal.id] = await projectionUseCase.execute(goal.id);
+          projections[goal.id] = await repository.projection(goal.id);
         } catch (_) {
           // Keep screen usable if projection fails for one goal.
         }
@@ -65,7 +48,7 @@ class GoalsController extends ChangeNotifier {
     bool? isActive,
   }) async {
     try {
-      final created = await createUseCase.execute(
+      final created = await repository.create(
         name: name,
         targetAmount: targetAmount,
         currency: currency,
@@ -96,7 +79,7 @@ class GoalsController extends ChangeNotifier {
     bool? isActive,
   }) async {
     try {
-      final updated = await updateUseCase.execute(
+      final updated = await repository.update(
         id: id,
         name: name,
         targetAmount: targetAmount,
@@ -122,7 +105,7 @@ class GoalsController extends ChangeNotifier {
 
   Future<String?> remove(String id) async {
     try {
-      await deleteUseCase.execute(id);
+      await repository.delete(id);
       final next = Map<String, GoalProjection>.from(_state.projections);
       next.remove(id);
       _state = _state.copyWith(
@@ -144,7 +127,7 @@ class GoalsController extends ChangeNotifier {
     String? note,
   }) async {
     try {
-      await createContributionUseCase.execute(
+      await repository.createContribution(
         goalId: goalId,
         date: date,
         amount: amount,
@@ -162,7 +145,7 @@ class GoalsController extends ChangeNotifier {
 
   Future<void> _refreshProjection(String goalId) async {
     try {
-      final projection = await projectionUseCase.execute(goalId);
+      final projection = await repository.projection(goalId);
       final next = Map<String, GoalProjection>.from(_state.projections);
       next[goalId] = projection;
       _state = _state.copyWith(projections: next);

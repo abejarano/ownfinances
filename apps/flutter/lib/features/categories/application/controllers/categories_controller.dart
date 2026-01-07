@@ -1,24 +1,13 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/categories/application/state/categories_state.dart";
-import "package:ownfinances/features/categories/domain/use_cases/create_category_use_case.dart";
-import "package:ownfinances/features/categories/domain/use_cases/delete_category_use_case.dart";
-import "package:ownfinances/features/categories/domain/use_cases/list_categories_use_case.dart";
-import "package:ownfinances/features/categories/domain/use_cases/update_category_use_case.dart";
+import "package:ownfinances/features/categories/domain/repositories/category_repository.dart";
 
 class CategoriesController extends ChangeNotifier {
-  final ListCategoriesUseCase listUseCase;
-  final CreateCategoryUseCase createUseCase;
-  final UpdateCategoryUseCase updateUseCase;
-  final DeleteCategoryUseCase deleteUseCase;
+  final CategoryRepository repository;
   CategoriesState _state = CategoriesState.initial;
 
-  CategoriesController(
-    this.listUseCase,
-    this.createUseCase,
-    this.updateUseCase,
-    this.deleteUseCase,
-  );
+  CategoriesController(this.repository);
 
   CategoriesState get state => _state;
 
@@ -26,7 +15,7 @@ class CategoriesController extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
-      final result = await listUseCase.execute(isActive: true);
+      final result = await repository.list(isActive: true);
       _state = _state.copyWith(isLoading: false, items: result.results);
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
@@ -43,7 +32,7 @@ class CategoriesController extends ChangeNotifier {
     bool isActive = true,
   }) async {
     try {
-      final created = await createUseCase.execute(
+      final created = await repository.create(
         name: name,
         kind: kind,
         parentId: parentId,
@@ -71,7 +60,7 @@ class CategoriesController extends ChangeNotifier {
     required bool isActive,
   }) async {
     try {
-      final updated = await updateUseCase.execute(
+      final updated = await repository.update(
         id,
         name: name,
         kind: kind,
@@ -93,7 +82,7 @@ class CategoriesController extends ChangeNotifier {
 
   Future<String?> remove(String id) async {
     try {
-      await deleteUseCase.execute(id);
+      await repository.delete(id);
       _state = _state.copyWith(
         items: _state.items.where((item) => item.id != id).toList(),
       );
