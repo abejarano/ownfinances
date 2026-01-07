@@ -7,7 +7,7 @@ import "package:ownfinances/features/auth/presentation/screens/login_screen.dart
 import "package:ownfinances/features/auth/presentation/screens/register_screen.dart";
 import "package:ownfinances/features/auth/presentation/screens/splash_screen.dart";
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
-import "package:ownfinances/features/onboarding/presentation/screens/onboarding_screen.dart";
+import "package:ownfinances/features/onboarding/presentation/screens/setup_wizard_screen.dart";
 import "package:ownfinances/features/dashboard/presentation/screens/dashboard_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transactions_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transaction_form_screen.dart";
@@ -71,11 +71,7 @@ GoRouter createRouter({
     routes: [
       GoRoute(
         path: "/onboarding",
-        builder: (context, state) => OnboardingScreen(
-          onStart: () {
-            context.read<OnboardingController>().complete();
-          },
-        ),
+        builder: (context, state) => const SetupWizardScreen(),
       ),
       GoRoute(
         path: "/splash",

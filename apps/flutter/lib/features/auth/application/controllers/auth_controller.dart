@@ -1,32 +1,18 @@
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
 import "package:ownfinances/features/auth/domain/repositories/auth_repository.dart";
-import "package:ownfinances/features/auth/domain/use_cases/login_use_case.dart";
-import "package:ownfinances/features/auth/domain/use_cases/logout_use_case.dart";
-import "package:ownfinances/features/auth/domain/use_cases/register_use_case.dart";
-import "package:ownfinances/features/auth/domain/use_cases/restore_session_use_case.dart";
 import "package:flutter/material.dart";
 
 class AuthController extends ChangeNotifier {
-  final LoginUseCase loginUseCase;
-  final RegisterUseCase registerUseCase;
-  final LogoutUseCase logoutUseCase;
-  final RestoreSessionUseCase restoreSessionUseCase;
   final AuthRepository repository;
   AuthState _state = AuthState.initial;
 
-  AuthController(
-    this.loginUseCase,
-    this.registerUseCase,
-    this.logoutUseCase,
-    this.restoreSessionUseCase,
-    this.repository,
-  );
+  AuthController(this.repository);
 
   AuthState get state => _state;
   bool get isAuthenticated => _state.session != null;
 
   Future<void> restoreSession() async {
-    final session = await restoreSessionUseCase.execute();
+    final session = await repository.getSession();
     final message = await repository.getMessage();
     if (session != null) {
       _state = _state.copyWith(
@@ -47,7 +33,7 @@ class AuthController extends ChangeNotifier {
   Future<String?> login(String email, String password) async {
     _state = _state.copyWith(status: AuthStatus.loading, message: null);
     notifyListeners();
-    final result = await loginUseCase.execute(email, password);
+    final result = await repository.login(email, password);
     if (result.isSuccess) {
       _state = _state.copyWith(
         status: AuthStatus.authenticated,
@@ -67,7 +53,7 @@ class AuthController extends ChangeNotifier {
   Future<String?> register(String email, String password) async {
     _state = _state.copyWith(status: AuthStatus.loading, message: null);
     notifyListeners();
-    final result = await registerUseCase.execute(email, password);
+    final result = await repository.register(email, password);
     if (result.isSuccess) {
       _state = _state.copyWith(
         status: AuthStatus.authenticated,
@@ -87,7 +73,7 @@ class AuthController extends ChangeNotifier {
   Future<void> logout() async {
     final session = _state.session;
     if (session != null) {
-      await logoutUseCase.execute(session.refreshToken);
+      await repository.logout(session.refreshToken);
     }
     _state = _state.copyWith(status: AuthStatus.unauthenticated, session: null);
     notifyListeners();
