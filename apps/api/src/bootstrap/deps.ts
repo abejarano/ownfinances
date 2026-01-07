@@ -1,18 +1,20 @@
 import { CategoryMongoRepository } from "../repositories/category_repository";
 import { AccountMongoRepository } from "../repositories/account_repository";
 import { TransactionMongoRepository } from "../repositories/transaction_repository";
-import { TransactionsService } from "../application/services/transactions_service";
-import { CategoriesService } from "../application/services/categories_service";
-import { AccountsService } from "../application/services/accounts_service";
-import { UserMongoRepository } from "../infrastructure/repositories/user_mongo_repository";
-import { RefreshTokenMongoRepository } from "../infrastructure/repositories/refresh_token_mongo_repository";
-import { AuthService } from "../application/services/auth.service";
+import { TransactionsService } from "../services/transactions_service";
+import { CategoriesService } from "../services/categories_service";
+import { AccountsService } from "../services/accounts_service";
+import { UserMongoRepository } from "../repositories/user_mongo_repository";
+import { RefreshTokenMongoRepository } from "../repositories/refresh_token_mongo_repository";
+import { AuthService } from "../services/auth_service";
 import { BudgetMongoRepository } from "../repositories/budget_repository";
-import { BudgetsService } from "../application/services/budgets_service";
-import { ReportsService } from "../application/services/reports_service";
-import { RecurringRuleMongoRepository } from "../infrastructure/repositories/recurring_rule_repository";
-import { GeneratedInstanceMongoRepository } from "../infrastructure/repositories/generated_instance_repository";
-import { RecurringService } from "../application/services/recurring.service";
+import { BudgetsService } from "../services/budgets_service";
+import { ReportsService } from "../services/reports_service";
+import { RecurringRuleMongoRepository } from "../repositories/recurring_rule_repository";
+import { GeneratedInstanceMongoRepository } from "../repositories/generated_instance_repository";
+import { RecurringService } from "../services/recurring_service";
+import { TransactionTemplateMongoRepository } from "../repositories/transaction_template_repository";
+import { TemplateService } from "../services/template_service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -30,6 +32,8 @@ export type AppDeps = {
   readonly recurringRuleRepo: RecurringRuleMongoRepository;
   readonly generatedInstanceRepo: GeneratedInstanceMongoRepository;
   readonly recurringService: RecurringService;
+  readonly templateRepo: TransactionTemplateMongoRepository;
+  readonly templateService: TemplateService;
 };
 
 export function buildDeps(): AppDeps {
@@ -40,6 +44,7 @@ export function buildDeps(): AppDeps {
   let budgetsService: BudgetsService | null = null;
   let reportsService: ReportsService | null = null;
   let recurringService: RecurringService | null = null;
+  let templateService: TemplateService | null = null;
 
   return {
     get categoryRepo() {
@@ -55,24 +60,20 @@ export function buildDeps(): AppDeps {
       if (!transactionsService) {
         transactionsService = new TransactionsService(
           this.transactionRepo,
-          this.accountRepo,
+          this.accountRepo
         );
       }
       return transactionsService;
     },
     get categoriesService() {
       if (!categoriesService) {
-        categoriesService = new CategoriesService(
-          this.categoryRepo,
-        );
+        categoriesService = new CategoriesService(this.categoryRepo);
       }
       return categoriesService;
     },
     get accountsService() {
       if (!accountsService) {
-        accountsService = new AccountsService(
-          this.accountRepo,
-        );
+        accountsService = new AccountsService(this.accountRepo);
       }
       return accountsService;
     },
@@ -102,7 +103,7 @@ export function buildDeps(): AppDeps {
         reportsService = new ReportsService(
           this.budgetRepo,
           this.categoryRepo,
-          this.transactionRepo,
+          this.transactionRepo
         );
       }
       return reportsService;
@@ -118,10 +119,19 @@ export function buildDeps(): AppDeps {
         recurringService = new RecurringService(
           this.recurringRuleRepo,
           this.generatedInstanceRepo,
-          this.transactionRepo,
+          this.transactionRepo
         );
       }
       return recurringService;
+    },
+    get templateRepo() {
+      return TransactionTemplateMongoRepository.getInstance();
+    },
+    get templateService() {
+      if (!templateService) {
+        templateService = new TemplateService(this.templateRepo);
+      }
+      return templateService;
     },
   };
 }

@@ -1,286 +1,174 @@
-# ARCHITECTURE.md — Clean Architecture (Personal Finance)
+# ARCHITECTURE.md — Desquadra API (Bun + Elysia + Mongo)
 
-Este proyecto debe mantenerse **Clean Architecture**.
-La meta es evitar “God files”, evitar lógica en handlers, y asegurar que el dominio sea estable.
-
----
-
-## 1) Principios (Clean Architecture)
-
-### 1.1 Regla de dependencias (la más importante)
-
-Las dependencias SIEMPRE apuntan hacia adentro:
-
-**HTTP / Framework (Elysia)**  
-→ **Controllers (Interface Adapters)**  
-→ **Application Services (Use Cases)**  
-→ **Domain (Entities + Rules)**
-
-- El **Domain** no depende de nada externo (ni Mongo, ni Elysia, ni libs de infra).
-- **Application** conoce interfaces de repositorios, pero NO implementaciones concretas.
-- **Infrastructure** implementa repositorios (Mongo) y se conecta a DB.
-- **HTTP** solo orquesta: request → use case → response.
+Objetivo: API estable, multi-tenant real, Clean Architecture estricta, contratos consistentes y UX-friendly.
 
 ---
 
-## 2) Estructura de carpetas (OBLIGATORIA)
+## 0) Reglas de producto (NO negociables)
+
+- UX sin contabilidad: términos simples, errores humanos (pt-BR).
+- Budgets guardan SOLO planned. Actual/remaining siempre se recalcula desde transactions.
+- Undo real: soft delete + restore.
+- Multi-tenant: todo filtrado por userId desde JWT.
+- Fecha de transacción es "YYYY-MM-DD" (string local) para evitar timezone bugs.
+- MVP: BRL-only para reportes (no sumar monedas distintas).
+
+---
+
+## 1) Clean Architecture (dependencias)
+
+HTTP (Elysia)
+→ Controllers (Interface Adapters)
+→ Application Services (Use Cases)
+→ Models (Entities + Rules + Interfaces)
+← Infrastructure (Mongo Repos)
+
+Regla #1: Models no depende de nada externo.
+Regla #2: Valores fijos se definen con `enum`; `type` se usa para shapes.
+Regla #3: AggregateRoot usa `static create(...)`; no se instancia con `new` ni se crea `id` manual.
+Regla #4: IDs se generan dentro del modelo (services no generan ids).
+Regla #5: IDs deben ser `createMongoId()` (24 hex) para compatibilidad con MongoRepository.
+
+---
+
+## 2) Estructura obligatoria
 
 apps/api/src/
-main.ts # entrypoint minimal: crea app y listen
-bootstrap/
-app.ts # configura Elysia + rutas + plugins
-mongo.ts # connect MongoClient + shutdown hooks
-deps.ts # DI simple: instancia repos + services
-http/
-routes/ # define endpoints (Elysia)
-controllers/ # controllers: parse/validate input + llama use cases
-criteria/ # query -> Criteria (ts-mongodb-criteria)
-presenters/ # mapea domain -> response (toPrimitives)
-errors.ts # helpers: badRequest/notFound
-application/
-services/ # use cases: reglas, defaults, validación cross-entity
-domain/
-category/
-account/
-transaction/
-... # entities, value objects, interfaces de repos
-infrastructure/
-repositories/ # MongoRepository<T> implementations
-dev/
-seed.ts # seeds solo dev
-
-markdown
-Copiar código
-
-> Nota: el folder `infrastructure/` puede llamarse `repositories/` si ya existe, pero debe representar **infra** (Mongo).  
-> Lo importante: **HTTP nunca debe contener lógica de dominio ni queries Mongo directas.**
-
----
-
-## 3) Responsabilidades por capa
-
-### 3.1 Domain
-
-Contiene:
-
-- Entidades (`Category`, `Account`, `Transaction`)
-- Tipos y Value Objects (ej: `CategoryKind`, `TransactionType`)
-- Interfaces de repositorio (ej: `ICategoryRepository`)
-
-Prohibido en Domain:
-
-- `MongoClient`, `Elysia`, `Criteria`, `Filters`, `.env`, `process`, crypto randomUUID (puede estar en factory outside)
-
-### 3.2 Application (Use Cases / Services)
-
-Contiene:
-
-- Reglas de negocio “reales” (ej: validación create/update con merge)
-- Defaults (fecha=hoy, currency por cuenta)
-- Coordinación entre repos (ej: validar que accountId exista)
-- Operaciones atómicas: create/update/delete/clear
-- Casos de uso por entidad (ej: `CategoriesService`, `AccountsService`, `TransactionsService`)
-
-Prohibido en Application:
-
-- conocimiento de HTTP/Elysia (no `set.status`, no `query`, no `params`)
-- construir `Criteria` a partir de query string
-
-### 3.3 Infrastructure (Mongo)
-
-Contiene:
-
-- Implementaciones concretas de repositorios
-- Acceso a MongoDB
-
-Regla obligatoria para esta app:
-
-- Repositorios deben extender `MongoRepository<T>` de `@abejarano/ts-mongodb-criteria`
-
-### 3.4 HTTP (Routes/Controllers)
-
-Contiene:
-
-- Rutas Elysia
-- Controllers con:
-  - parse de query/body/params
-  - validación “de forma” (required fields básicos, tipos)
-  - creación de `Criteria` usando mappers en `http/criteria`
-  - llama services y devuelve response
-
-Prohibido en HTTP:
-
-- lógica de negocio (ej: “si es expense requiere categoryId”)
-- queries Mongo directas
-- seeds
-- construir pipelines de agregación (eso es infra o application)
+  main.ts
+  bootstrap/
+    app.ts
+    deps.ts
+    mongo.ts
+  http/
+    routes/
+    controllers/
+    middleware/
+    criteria/
+    presenters/
+    errors.ts
+  application/
+    services/
+  models/
+    auth/
+    category/
+    account/
+    transaction/
+    budget/
+    report/
+    ...
+  repositories/
+  dev/
+    seed.ts
+  contracts/
+    openapi.snapshot.json (generado)
 
 ---
 
-## 4) Regla crítica: Presupuesto NO se “rebaja”
+## 3) Contrato de respuestas (OBLIGATORIO)
 
-`budgets` guarda SOLO `planned`.
+### 3.1 Éxito
+- GET list: Paginate<Primitives>
+- GET by id / POST / PUT: Primitives
+- Acciones: { ok: true } o payload explícito
 
-La ejecución se calcula desde `transactions`:
-
-- `actual` = sum(transactions) por periodo + categoría
-- `remaining` = planned - actual
-- create/update/delete transacción cambia reportes por recálculo, NO por mutación del budget
-
----
-
-## 5) Regla obligatoria: uso de @abejarano/ts-mongodb-criteria
-
-### 5.1 El patrón correcto es Repository + MongoRepository<T>
-
-La forma oficial es implementar repositorios así:
-
-- Los IDs de dominio deben ser `<entidad>Id` (ej: `categoryId`, `accountId`, `transactionId`).
-- Las entidades deben incluir `id?: string` y `getId()` debe retornar ese `id` para `persist`.
-- Repositorios exponen `upsert(entity)` (usa `persist`) y `one(filter)`. No usar `create/update/findById`.
-
-```ts
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
-import { IMovementBankRepository, MovementBank } from "@/domain/movement/...";
-
-export class MovementBankMongoRepository
-  extends MongoRepository<MovementBank>
-  implements IMovementBankRepository
+Paginate<T> (shape estable):
 {
-  collectionName(): string {
-    return "movement_banks";
-  }
-
-  async list(criteria: Criteria): Promise<Paginate<MovementBank>> {
-    const documents = await this.searchByCriteria<MovementBank>(criteria);
-    const pagination = await this.paginate(documents);
-
-    return {
-      ...pagination,
-      results: pagination.results.map((doc) =>
-        MovementBank.fromPrimitives({ ...doc, id: doc._id })
-      ),
-    };
-  }
-
-  async one(filter: object): Promise<MovementBank | undefined> {
-    const collection = await this.collection();
-    const result = await collection.findOne(filter);
-
-    if (!result) {
-      return undefined;
-    }
-
-    return BankStaMovementBanktement.fromPrimitives(result as any);
-  }
-
-  async upsert(movement: MovementBank): Promise<void> {
-    await this.persist(movement.getMovementBankId(), movement);
-  }
+  "results": T[],
+  "page": number,
+  "limit": number,
+  "total": number,
+  "pages": number
 }
-```
 
-### 5.2 Listados con Criteria
+### 3.2 Error (siempre igual)
+{
+  "error": string,
+  "code"?: string
+}
 
-Todo endpoint GET listable debe usar repo.list(criteria) y retornar Paginate<T>.
-
-El mapping query -> Criteria vive en http/criteria/\*.
-
-Prohibido usar collection.find() en handlers para listados.
-
-Si algún filtro complejo (ej: OR compuesto) no está soportado por la lib:
-
-se encapsula en el repositorio (infra)
-
-se documenta en ADR
-
-handlers siguen llamando al repo (no construyen queries Mongo).
-
-## 6. Flujo típico (ejemplo)
-
-Create Transaction (ejemplo de flujo)
-Route: POST /transactions (Elysia)
-
-Controller:
-
-valida shape básico del payload
-
-llama TransactionsService.create(userId, payload)
-
-Service (Application):
-
-aplica defaults (date hoy, currency por cuenta)
-
-valida reglas (income/expense/transfer)
-
-valida existencia de cuentas
-
-crea entidad
-
-llama repo.create(entity)
-
-Repo (Infrastructure):
-
-persiste en Mongo
-
-Presenter:
-
-retorna transaction.toPrimitives() (response consistente)
-
-## 7. Reglas de consistencia de respuestas (API contract)
-
-Siempre devolver primitives (DTO), no entidades crudas.
-
-Mismo shape en create/get/list.
-
-Ej:
-
-GET /categories/:id devuelve CategoryPrimitives
-
-GET /categories devuelve Paginate<CategoryPrimitives>
-
-## 7.1 Regla de userId
-
-- `USER_ID_DEFAULT` solo se usa en `dev/seed.ts`.
-- Todas las rutas de dominio usan `ctx.userId` desde middleware JWT.
-
-## 8. Anti-patrones (prohibidos)
-
-“God file” tipo index.ts con todo adentro.
-
-Validación de update sin merge (permite estados inválidos).
-
-Queries Mongo directas en handlers.
-
-Mezclar seed con producción.
-
-Respuestas inconsistentes (a veces entity, a veces primitives).
-
-## 9. ADR (decisiones)
-
-Toda decisión no obvia debe ir en docs/ADRs/:
-
-OR compuesto en Criteria
-
-incluir/excluir pending en reportes
-
-estrategia de dedupe CSV
-
-yaml
-Copiar código
+Status:
+- 400 validation
+- 401 not authenticated
+- 403 not authorized (si aplica)
+- 404 not found
+- 409 conflict (email already registered)
+- 500 unexpected
 
 ---
 
-## ✅ 2) Patch para `AGENTS.md` (añadir sección “Clean Architecture enforcement”)
+## 4) Modelado: dinero y fechas
 
-Pega esto en AGENTS.md (arriba de backend rules):
+### 4.1 Transaction.date
+- Guardar como string "YYYY-MM-DD" (local date)
+- createdAt/updatedAt: ISO string UTC
 
-```md
-## Clean Architecture (ENFORCEMENT)
+### 4.2 Amount
+Recomendación:
+- usar amountMinor (centavos) como int, y exponer amount en UI con formatter
+Si todavía usas number, documentar ADR y evitar floats peligrosos.
 
-- Está prohibido meter lógica de negocio en `main.ts`, `index.ts` o en rutas.
-- `main.ts` solo debe bootstrapping (createApp + listen).
-- Controllers orquestan; Services contienen reglas; Repos acceden a Mongo.
-- `http/criteria/*` es el único lugar donde se transforma query params -> Criteria.
-- Repos Mongo deben extender `MongoRepository<T>` (ts-mongodb-criteria). No inventar otro p
-```
+---
+
+## 5) Seguridad mínima
+
+- Access token ~15min
+- Refresh token ~30d, guardado hasheado, rotation obligatoria
+- CORS habilitado para Flutter web
+- Rate limit en /auth/* (básico)
+- No loggear tokens/PII
+
+---
+
+## 6) Repositorios y Criteria (OBLIGATORIO)
+
+- Repos Mongo viven en `/src/repositories` y extienden MongoRepository<T> de @abejarano/ts-mongodb-criteria
+- La libreria ya trae `one`, `list` y `upsert`: se usan esos metodos y no se crean `findBy...`
+- No crear interfaces de repositorio propias cuando se usa el repo Mongo directamente
+- Listados siempre con Criteria/Paginate (usar `list`, nunca `search`)
+- OR compuesto solo si la lib lo soporta; si no:
+  - workaround dentro del repo
+  - ADR obligatoria
+
+## 6.1) Validacion (TypeBox)
+
+- Cada nuevo endpoint debe evaluarse si requiere validate con TypeBox.
+- La validacion de request vive en el router, no en services.
+- No usar `unknown` en tipos; contratos de request siempre tipados.
+- Los casos de uso (services) viven en `/src/application/services`.
+
+---
+
+## 7) Reportes (reglas)
+
+- /reports/summary por defecto usa status=cleared
+- permite includePending=true
+- budgets: planned only
+- remaining = planned - actual (negativo si superado)
+
+Agregar:
+- /reports/accounts/balances (por cuenta y moneda)
+- opcional: /reports/categories/top
+
+---
+
+## 8) Undo (soft delete)
+
+- DELETE /transactions/:id set deletedAt
+- POST /transactions/:id/restore limpia deletedAt
+- list excluye deletedAt por defecto (includeDeleted=true opcional)
+
+---
+
+## 9) OpenAPI (source of truth)
+
+- Generar OpenAPI automáticamente
+- Guardar snapshot en /contracts/openapi.snapshot.json
+- Flutter puede hacer codegen si deseas, pero contrato manda.
+
+---
+
+## 10) Observabilidad
+
+- Logger central
+- Request logs sin datos sensibles
+- Correlation id por request (si es posible)

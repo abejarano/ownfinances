@@ -1,12 +1,14 @@
-import type { Criteria, Paginate } from "@abejarano/ts-mongodb-criteria";
+import type { IRepository } from "@abejarano/ts-mongodb-criteria";
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
-import { Transaction, TransactionPrimitives } from "../domain/transaction";
+import { Transaction, TransactionType } from "../models/transaction";
 
-export class TransactionMongoRepository extends MongoRepository<Transaction> {
+export class TransactionMongoRepository
+  extends MongoRepository<Transaction>
+  implements IRepository<Transaction>
+{
   private static instance: TransactionMongoRepository | null = null;
-
   private constructor() {
-    super();
+    super(Transaction);
   }
 
   static getInstance(): TransactionMongoRepository {
@@ -20,32 +22,51 @@ export class TransactionMongoRepository extends MongoRepository<Transaction> {
     return "transactions";
   }
 
-  async upsert(transaction: Transaction): Promise<void> {
-    await this.persist(transaction.getId(), transaction);
-  }
-
   async delete(userId: string, id: string): Promise<boolean> {
     const collection = await this.collection();
     const result = await collection.deleteOne({ userId, transactionId: id });
     return result.deletedCount > 0;
   }
 
-  async one(filter: object): Promise<TransactionPrimitives | null> {
+  async sumByCategory(
+    userId: string,
+    start: Date,
+    end: Date
+  ): Promise<
+    Array<{ categoryId: string; type: TransactionType; total: number }>
+  > {
     const collection = await this.collection();
-    const doc = await collection.findOne(filter);
-    return doc ? (doc as unknown as TransactionPrimitives) : null;
-  }
+    const results = await collection
+      .aggregate([
+        {
+          $match: {
+            userId,
+            type: { $in: [TransactionType.Income, TransactionType.Expense] },
+            date: { $gte: start, $lte: end },
+            categoryId: { $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: { categoryId: "$categoryId", type: "$type" },
+            total: { $sum: "$amount" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            categoryId: "$_id.categoryId",
+            type: "$_id.type",
+            total: 1,
+          },
+        },
+      ])
+      .toArray();
 
-  async list(criteria: Criteria): Promise<Paginate<TransactionPrimitives>> {
-    const documents = await this.searchByCriteria<TransactionPrimitives>(criteria);
-    const pagination = await this.paginate(documents);
-    return {
-      ...pagination,
-      results: pagination.results,
-    };
-  }
-
-  async search(criteria: Criteria): Promise<TransactionPrimitives[]> {
-    return this.searchByCriteria<TransactionPrimitives>(criteria);
+    return results as Array<{
+      categoryId: string;
+      type: TransactionType;
+      total: number;
+    }>;
   }
 }

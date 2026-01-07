@@ -1,4 +1,4 @@
-import type { RecurringService } from "../../application/services/recurring.service";
+import type { RecurringService } from "../../services/recurring_service";
 
 export class RecurringController {
   constructor(private readonly service: RecurringService) {}
@@ -24,13 +24,16 @@ export class RecurringController {
     return rule.toPrimitives();
   }
 
-  async list(ctx: { userId: string; query: { limit?: string; page?: string } }) {
+  async list(ctx: {
+    userId: string;
+    query: { limit?: string; page?: string };
+  }) {
     const limit = Number(ctx.query.limit || 50);
     const page = Number(ctx.query.page || 1);
     const paginated = await this.service.list(ctx.userId, limit, page);
     return {
       ...paginated,
-      results: paginated.results.map(r => r.toPrimitives())
+      results: paginated.results.map((r) => r.toPrimitives()),
     };
   }
 
@@ -39,7 +42,10 @@ export class RecurringController {
     return { success: true };
   }
 
-  async preview(ctx: { userId: string; query: { period: string; date?: string } }) {
+  async preview(ctx: {
+    userId: string;
+    query: { period: string; date?: string };
+  }) {
     const period = (ctx.query.period as "monthly") || "monthly";
     const date = ctx.query.date ? new Date(ctx.query.date) : new Date();
     return this.service.preview(ctx.userId, period, date);
@@ -51,16 +57,29 @@ export class RecurringController {
     return this.service.run(ctx.userId, period, date);
   }
 
-  async materialize(ctx: { userId: string; params: { id: string }; body: { date: string } }) {
+  async materialize(ctx: {
+    userId: string;
+    params: { id: string };
+    body: { date: string };
+  }) {
     const date = new Date(ctx.body.date);
     const tx = await this.service.materialize(ctx.userId, ctx.params.id, date);
     return tx.toPrimitives();
   }
 
-  async split(ctx: { userId: string; params: { id: string }; body: { date: string; template: any } }) {
+  async split(ctx: {
+    userId: string;
+    params: { id: string };
+    body: { date: string; template: any };
+  }) {
     const date = new Date(ctx.body.date);
     const template = ctx.body.template;
-    const rule = await this.service.split(ctx.userId, ctx.params.id, date, template);
+    const rule = await this.service.split(
+      ctx.userId,
+      ctx.params.id,
+      date,
+      template
+    );
     return rule.toPrimitives();
   }
 }
