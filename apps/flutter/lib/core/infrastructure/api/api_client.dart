@@ -3,6 +3,7 @@ import "dart:convert";
 import "package:http/http.dart" as http;
 import "package:ownfinances/features/auth/domain/entities/auth_models.dart";
 import "package:ownfinances/features/auth/data/datasources/token_storage.dart";
+import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 
 class ApiClient {
   final String baseUrl;
@@ -12,8 +13,11 @@ class ApiClient {
   ApiClient({required this.baseUrl, required this.storage, http.Client? client})
     : _client = client ?? http.Client();
 
-  Future<Map<String, dynamic>> get(String path) async {
-    final response = await _send("GET", path);
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    final response = await _send("GET", path, query: query);
     return _parse(response);
   }
 
@@ -43,6 +47,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     bool retry = true,
+    Map<String, String>? query,
   }) async {
     final session = (await storage.read()).session;
     final headers = <String, String>{
@@ -50,7 +55,7 @@ class ApiClient {
       if (session != null) "Authorization": "Bearer ${session.accessToken}",
     };
 
-    final uri = Uri.parse("$baseUrl$path");
+    final uri = Uri.parse("$baseUrl$path").replace(queryParameters: query);
     final response = await _client
         .send(
           http.Request(method, uri)
@@ -97,6 +102,16 @@ class ApiClient {
   }
 
   Map<String, dynamic> _parse(http.Response response) {
+    if (response.statusCode >= 400) {
+      String message = "Erro inesperado";
+      if (response.body.isNotEmpty) {
+        final payload = jsonDecode(response.body) as Map<String, dynamic>;
+        if (payload["error"] is String) {
+          message = payload["error"] as String;
+        }
+      }
+      throw ApiException(message, response.statusCode);
+    }
     if (response.body.isEmpty) return {};
     return jsonDecode(response.body) as Map<String, dynamic>;
   }

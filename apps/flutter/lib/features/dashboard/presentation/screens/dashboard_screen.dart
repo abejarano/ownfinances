@@ -1,45 +1,96 @@
 import "package:flutter/material.dart";
+import "package:go_router/go_router.dart";
+import "package:provider/provider.dart";
+import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/cards.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/utils/formatters.dart";
+import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
+import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final reportsState = context.watch<ReportsController>().state;
+    final categories = context.watch<CategoriesController>().state.items;
+    final summary = reportsState.summary;
+    final periodLabel = formatMonth(reportsState.date);
+
+    final overspent = summary?.overspentCategories ?? [];
+    final categoryMap = {for (final cat in categories) cat.id: cat.name};
+    final overspentName = overspent.isEmpty
+        ? null
+        : categoryMap[overspent.first];
+
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Resumo do mês", style: Theme.of(context).textTheme.titleMedium),
+        Text("Resumen del mes", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
-        const InlineSummaryCard(
-          title: "Janeiro 2026",
-          planned: "R\$ 3.500,00",
-          actual: "R\$ 2.740,00",
-          remaining: "R\$ 760,00",
+        InlineSummaryCard(
+          title: periodLabel,
+          planned: formatMoney(summary?.totals.plannedExpense ?? 0),
+          actual: formatMoney(summary?.totals.actualExpense ?? 0),
+          remaining: formatMoney(summary?.totals.remainingExpense ?? 0),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          "Neto planificado: ${formatMoney(summary?.totals.plannedNet ?? 0)} • Neto real: ${formatMoney(summary?.totals.actualNet ?? 0)}",
+          style: const TextStyle(color: AppColors.muted),
+        ),
+        if (overspent.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            overspentName == null
+                ? "Te pasaste en ${overspent.length} categorías"
+                : "Te pasaste en $overspentName",
+            style: const TextStyle(color: AppColors.accent),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.sm),
+        SecondaryButton(
+          label: "Ver detalles",
+          onPressed: () => context.go("/budget"),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text("Ações rápidas", style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          "Acciones rápidas",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_downward,
           title: "Registrar gasto",
-          subtitle: "Salió R\$ 0,00",
-          onTap: () {},
+          subtitle: "Salió ${formatMoney(summary?.totals.actualExpense ?? 0)}",
+          onTap: () => context.go("/transactions/new?type=expense"),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_upward,
           title: "Registrar ingreso",
-          subtitle: "Entró R\$ 0,00",
-          onTap: () {},
+          subtitle: "Entró ${formatMoney(summary?.totals.actualIncome ?? 0)}",
+          onTap: () => context.go("/transactions/new?type=income"),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.compare_arrows,
           title: "Transferir",
           subtitle: "Mover entre cuentas",
-          onTap: () {},
+          onTap: () => context.go("/transactions/new?type=transfer"),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text("Gestión", style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        SecondaryButton(
+          label: "Categorías",
+          onPressed: () => context.go("/categories"),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SecondaryButton(
+          label: "Cuentas",
+          onPressed: () => context.go("/accounts"),
         ),
       ],
     );

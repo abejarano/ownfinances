@@ -1,0 +1,103 @@
+import "package:flutter/material.dart";
+import "package:ownfinances/core/infrastructure/api/api_exception.dart";
+import "package:ownfinances/features/accounts/application/state/accounts_state.dart";
+import "package:ownfinances/features/accounts/domain/use_cases/create_account_use_case.dart";
+import "package:ownfinances/features/accounts/domain/use_cases/delete_account_use_case.dart";
+import "package:ownfinances/features/accounts/domain/use_cases/list_accounts_use_case.dart";
+import "package:ownfinances/features/accounts/domain/use_cases/update_account_use_case.dart";
+
+class AccountsController extends ChangeNotifier {
+  final ListAccountsUseCase listUseCase;
+  final CreateAccountUseCase createUseCase;
+  final UpdateAccountUseCase updateUseCase;
+  final DeleteAccountUseCase deleteUseCase;
+  AccountsState _state = AccountsState.initial;
+
+  AccountsController(
+    this.listUseCase,
+    this.createUseCase,
+    this.updateUseCase,
+    this.deleteUseCase,
+  );
+
+  AccountsState get state => _state;
+
+  Future<void> load() async {
+    _state = _state.copyWith(isLoading: true, error: null);
+    notifyListeners();
+    try {
+      final result = await listUseCase.execute(isActive: true);
+      _state = _state.copyWith(isLoading: false, items: result.results);
+    } catch (error) {
+      _state = _state.copyWith(isLoading: false, error: _message(error));
+    }
+    notifyListeners();
+  }
+
+  Future<String?> create({
+    required String name,
+    required String type,
+    String currency = "BRL",
+    bool isActive = true,
+  }) async {
+    try {
+      final created = await createUseCase.execute(
+        name: name,
+        type: type,
+        currency: currency,
+        isActive: isActive,
+      );
+      final next = [..._state.items, created]
+        ..sort((a, b) => a.name.compareTo(b.name));
+      _state = _state.copyWith(items: next);
+      notifyListeners();
+      return null;
+    } catch (error) {
+      return _message(error);
+    }
+  }
+
+  Future<String?> update({
+    required String id,
+    required String name,
+    required String type,
+    required String currency,
+    required bool isActive,
+  }) async {
+    try {
+      final updated = await updateUseCase.execute(
+        id,
+        name: name,
+        type: type,
+        currency: currency,
+        isActive: isActive,
+      );
+      final next =
+          _state.items.map((item) => item.id == id ? updated : item).toList()
+            ..sort((a, b) => a.name.compareTo(b.name));
+      _state = _state.copyWith(items: next);
+      notifyListeners();
+      return null;
+    } catch (error) {
+      return _message(error);
+    }
+  }
+
+  Future<String?> remove(String id) async {
+    try {
+      await deleteUseCase.execute(id);
+      _state = _state.copyWith(
+        items: _state.items.where((item) => item.id != id).toList(),
+      );
+      notifyListeners();
+      return null;
+    } catch (error) {
+      return _message(error);
+    }
+  }
+
+  String _message(Object error) {
+    if (error is ApiException) return error.message;
+    return "Erro inesperado";
+  }
+}

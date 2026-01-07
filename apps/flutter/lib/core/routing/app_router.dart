@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/features/auth/presentation/screens/login_screen.dart";
@@ -7,37 +7,45 @@ import "package:ownfinances/features/auth/presentation/screens/register_screen.d
 import "package:ownfinances/features/onboarding/presentation/screens/onboarding_screen.dart";
 import "package:ownfinances/features/dashboard/presentation/screens/dashboard_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transactions_screen.dart";
+import "package:ownfinances/features/transactions/presentation/screens/transaction_form_screen.dart";
 import "package:ownfinances/features/budgets/presentation/screens/budget_screen.dart";
 import "package:ownfinances/features/settings/presentation/screens/settings_screen.dart";
+import "package:ownfinances/features/categories/presentation/screens/categories_screen.dart";
+import "package:ownfinances/features/accounts/presentation/screens/accounts_screen.dart";
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
-import "package:ownfinances/core/routing/onboarding_state.dart";
+import "package:ownfinances/core/routing/onboarding_controller.dart";
 
-final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authControllerProvider);
-  final isAuthed = authState.session != null;
-  final completed = ref.watch(onboardingCompletedProvider);
-
+GoRouter createRouter({
+  required AuthController authController,
+  required OnboardingController onboardingController,
+}) {
   return GoRouter(
     initialLocation: "/login",
+    refreshListenable: Listenable.merge([authController, onboardingController]),
     redirect: (context, state) {
       final location = state.uri.path;
       final isOnboarding = location == "/onboarding";
       final isAuthRoute = location == "/login" || location == "/register";
+      final isAuthed = authController.isAuthenticated;
+      final completed = onboardingController.completed;
 
-      if (!completed) {
+      if (!isAuthed) {
+        if (!isAuthRoute) {
+          return "/login";
+        }
+        return null;
+      }
+      if (isAuthed && !completed) {
         if (!isOnboarding) {
           return "/onboarding";
         }
         return null;
       }
-      if (completed && isAuthed && isAuthRoute) {
+      if (isAuthed && completed && isOnboarding) {
         return "/dashboard";
       }
-      if (completed && isOnboarding) {
-        return isAuthed ? "/dashboard" : "/login";
-      }
-      if (!isAuthed && !isAuthRoute) {
-        return "/login";
+      if (isAuthed && completed && isAuthRoute) {
+        return "/dashboard";
       }
       return null;
     },
@@ -46,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: "/onboarding",
         builder: (context, state) => OnboardingScreen(
           onStart: () {
-            ref.read(onboardingCompletedProvider.notifier).state = true;
+            context.read<OnboardingController>().complete();
           },
         ),
       ),
@@ -54,6 +62,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: "/register",
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: "/transactions/new",
+        builder: (context, state) => TransactionFormScreen(
+          initialType: state.uri.queryParameters["type"],
+        ),
+      ),
+      GoRoute(
+        path: "/categories",
+        builder: (context, state) => const CategoriesScreen(),
+      ),
+      GoRoute(
+        path: "/accounts",
+        builder: (context, state) => const AccountsScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -105,7 +127,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-});
+}
 
 int _indexFromLocation(String location) {
   if (location.startsWith("/transactions")) return 1;

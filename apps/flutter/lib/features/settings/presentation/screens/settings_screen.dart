@@ -1,14 +1,14 @@
 import "package:flutter/material.dart";
-import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
@@ -25,9 +25,17 @@ class SettingsScreen extends ConsumerWidget {
           onTap: () {},
         ),
         ListTile(
+          title: const Text("Categorias"),
+          onTap: () => context.go("/categories"),
+        ),
+        ListTile(
+          title: const Text("Cuentas"),
+          onTap: () => context.go("/accounts"),
+        ),
+        ListTile(
           title: const Text("Sair"),
           onTap: () async {
-            await ref.read(authControllerProvider.notifier).logout();
+            await context.read<AuthController>().logout();
             if (context.mounted) {
               context.go("/login");
             }

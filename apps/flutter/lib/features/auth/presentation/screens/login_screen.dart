@@ -1,20 +1,20 @@
 import "package:flutter/material.dart";
-import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
+import "package:provider/provider.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
-import "package:ownfinances/core/routing/onboarding_state.dart";
+import "package:ownfinances/core/routing/onboarding_controller.dart";
 
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -28,7 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(authControllerProvider);
+    final state = context.watch<AuthController>().state;
     final message = state.message;
 
     return Scaffold(
@@ -87,7 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _onLogin() async {
     setState(() => _isLoading = true);
-    final controller = ref.read(authControllerProvider.notifier);
+    final controller = context.read<AuthController>();
     final error = await controller.login(
       _emailController.text.trim(),
       _passwordController.text,
@@ -96,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       showStandardSnackbar(context, error);
     }
     if (error == null && mounted) {
-      final completed = ref.read(onboardingCompletedProvider);
+      final completed = context.read<OnboardingController>().completed;
       context.go(completed ? "/dashboard" : "/onboarding");
     }
     if (mounted) {

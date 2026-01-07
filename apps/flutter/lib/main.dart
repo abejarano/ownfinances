@@ -1,23 +1,39 @@
 import "package:flutter/material.dart";
-import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:ownfinances/core/routing/app_router.dart";
+import "package:flutter_localizations/flutter_localizations.dart";
+import "package:provider/provider.dart";
+import "package:intl/date_symbol_data_local.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/di/providers.dart";
+import "package:go_router/go_router.dart";
 
-void main() {
-  runApp(const ProviderScope(child: OwnFinancesApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting("pt_BR");
+  runApp(const OwnFinancesApp());
 }
 
-class OwnFinancesApp extends ConsumerWidget {
+class OwnFinancesApp extends StatelessWidget {
   const OwnFinancesApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-
-    return MaterialApp.router(
-      title: "OwnFinances",
-      theme: AppTheme.light(),
-      routerConfig: router,
+  Widget build(BuildContext context) {
+    return AppProviders(
+      child: Builder(
+        builder: (context) {
+          final router = context.watch<GoRouter>();
+          return MaterialApp.router(
+            title: "OwnFinances",
+            theme: AppTheme.light(),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [Locale("pt", "BR")],
+            routerConfig: router,
+          );
+        },
+      ),
     );
   }
 }

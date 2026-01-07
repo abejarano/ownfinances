@@ -1,20 +1,20 @@
 import "package:flutter/material.dart";
-import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
+import "package:provider/provider.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
-import "package:ownfinances/core/routing/onboarding_state.dart";
+import "package:ownfinances/core/routing/onboarding_controller.dart";
 
-class RegisterScreen extends ConsumerStatefulWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -73,7 +73,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _onRegister() async {
     setState(() => _isLoading = true);
-    final controller = ref.read(authControllerProvider.notifier);
+    final controller = context.read<AuthController>();
     final error = await controller.register(
       _emailController.text.trim(),
       _passwordController.text,
@@ -82,7 +82,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       showStandardSnackbar(context, error);
     }
     if (error == null && mounted) {
-      final completed = ref.read(onboardingCompletedProvider);
+      final completed = context.read<OnboardingController>().completed;
       context.go(completed ? "/dashboard" : "/onboarding");
     }
     if (mounted) {
