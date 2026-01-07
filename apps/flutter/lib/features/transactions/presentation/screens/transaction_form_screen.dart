@@ -113,7 +113,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         title: const Text("Registrar"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go("/transactions"),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Stepper(

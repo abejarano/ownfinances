@@ -122,7 +122,13 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Nueva Recurrencia")),
+      appBar: AppBar(
+        title: const Text("Nueva Recurrencia"),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.pop(),
+        ),
+      ),
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),

@@ -5,7 +5,7 @@ export class RecurringController {
 
   async create(ctx: { userId: string; body: any }) {
     const { body, userId } = ctx;
-    return this.service.create(userId, {
+    const rule = await this.service.create(userId, {
       frequency: body.frequency,
       interval: body.interval || 1,
       startDate: new Date(body.startDate),
@@ -21,12 +21,17 @@ export class RecurringController {
         tags: body.template.tags,
       },
     });
+    return rule.toPrimitives();
   }
 
   async list(ctx: { userId: string; query: { limit?: string; page?: string } }) {
     const limit = Number(ctx.query.limit || 50);
     const page = Number(ctx.query.page || 1);
-    return this.service.list(ctx.userId, limit, page);
+    const paginated = await this.service.list(ctx.userId, limit, page);
+    return {
+      ...paginated,
+      results: paginated.results.map(r => r.toPrimitives())
+    };
   }
 
   async delete(ctx: { userId: string; params: { id: string } }) {
@@ -48,14 +53,14 @@ export class RecurringController {
 
   async materialize(ctx: { userId: string; params: { id: string }; body: { date: string } }) {
     const date = new Date(ctx.body.date);
-    await this.service.materialize(ctx.userId, ctx.params.id, date);
-    return { success: true };
+    const tx = await this.service.materialize(ctx.userId, ctx.params.id, date);
+    return tx.toPrimitives();
   }
 
   async split(ctx: { userId: string; params: { id: string }; body: { date: string; template: any } }) {
     const date = new Date(ctx.body.date);
     const template = ctx.body.template;
-    await this.service.split(ctx.userId, ctx.params.id, date, template);
-    return { success: true };
+    const rule = await this.service.split(ctx.userId, ctx.params.id, date, template);
+    return rule.toPrimitives();
   }
 }

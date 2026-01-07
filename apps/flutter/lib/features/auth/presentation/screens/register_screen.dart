@@ -82,8 +82,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       showStandardSnackbar(context, error);
     }
     if (error == null && mounted) {
-      final completed = context.read<OnboardingController>().completed;
-      context.go(completed ? "/dashboard" : "/onboarding");
+      final onboardingParams = context.read<OnboardingController>();
+      await onboardingParams.load(); // Refresh state
+      final completed = onboardingParams.completed;
+      if (mounted) {
+        context.go(completed ? "/dashboard" : "/onboarding");
+      }
     }
     if (mounted) {
       setState(() => _isLoading = false);
