@@ -7,7 +7,7 @@
     "start": "bun src/index.ts"
   },
   "dependencies": {
-    "@abejarano/ts-mongodb-criteria": "^1.5.1",
+    "@abejarano/ts-mongodb-criteria": "^1.5.2",
     "@elysiajs/cors": "^1.4.1",
     "@elysiajs/jwt": "^1.4.0",
     "@elysiajs/openapi": "^1.0.0",

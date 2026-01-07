@@ -66,6 +66,19 @@ import "package:ownfinances/features/templates/data/datasources/template_remote_
 import "package:ownfinances/features/templates/data/repositories/template_repository_impl.dart";
 import "package:ownfinances/features/templates/domain/repositories/template_repository.dart";
 import "package:ownfinances/features/templates/application/controllers/templates_controller.dart";
+import "package:ownfinances/features/debts/data/datasources/debt_remote_data_source.dart";
+import "package:ownfinances/features/debts/data/datasources/debt_transaction_remote_data_source.dart";
+import "package:ownfinances/features/debts/data/repositories/debt_repository_impl.dart";
+import "package:ownfinances/features/debts/data/repositories/debt_transaction_repository_impl.dart";
+import "package:ownfinances/features/debts/domain/repositories/debt_repository.dart";
+import "package:ownfinances/features/debts/domain/repositories/debt_transaction_repository.dart";
+import "package:ownfinances/features/debts/domain/use_cases/list_debts_use_case.dart";
+import "package:ownfinances/features/debts/domain/use_cases/create_debt_use_case.dart";
+import "package:ownfinances/features/debts/domain/use_cases/update_debt_use_case.dart";
+import "package:ownfinances/features/debts/domain/use_cases/delete_debt_use_case.dart";
+import "package:ownfinances/features/debts/domain/use_cases/get_debt_summary_use_case.dart";
+import "package:ownfinances/features/debts/domain/use_cases/create_debt_transaction_use_case.dart";
+import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -191,6 +204,27 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider<TemplatesController>(
           create: (context) =>
               TemplatesController(context.read<TemplateRepository>())..load(),
+        ),
+        Provider<DebtRepository>(
+          create: (context) =>
+              DebtRepositoryImpl(DebtRemoteDataSource(context.read<ApiClient>())),
+        ),
+        Provider<DebtTransactionRepository>(
+          create: (context) => DebtTransactionRepositoryImpl(
+            DebtTransactionRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
+        ChangeNotifierProvider<DebtsController>(
+          create: (context) => DebtsController(
+            ListDebtsUseCase(context.read<DebtRepository>()),
+            CreateDebtUseCase(context.read<DebtRepository>()),
+            UpdateDebtUseCase(context.read<DebtRepository>()),
+            DeleteDebtUseCase(context.read<DebtRepository>()),
+            GetDebtSummaryUseCase(context.read<DebtRepository>()),
+            CreateDebtTransactionUseCase(
+              context.read<DebtTransactionRepository>(),
+            ),
+          )..load(),
         ),
         ChangeNotifierProvider<OnboardingController>(
           create: (context) {

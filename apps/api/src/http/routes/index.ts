@@ -4,6 +4,8 @@ import { AccountsController } from "../controllers/accounts.controller";
 import { TransactionsController } from "../controllers/transactions.controller";
 import { BudgetsController } from "../controllers/budgets.controller";
 import { ReportsController } from "../controllers/reports.controller";
+import { DebtsController } from "../controllers/debts.controller";
+import { DebtTransactionsController } from "../controllers/debt_transactions.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { registerAuthRoutes } from "./auth.routes";
 import { registerRecurringRoutes } from "./recurring.routes";
@@ -13,6 +15,8 @@ import { validateAccountPayload } from "../validation/accounts.validation";
 import { validateCategoryPayload } from "../validation/categories.validation";
 import { validateBudgetPayload } from "../validation/budgets.validation";
 import { validateTransactionPayload } from "../validation/transactions.validation";
+import { validateDebtPayload } from "../validation/debts.validation";
+import { validateDebtTransactionPayload } from "../validation/debt_transactions.validation";
 
 export function registerRoutes(app: any, deps: AppDeps) {
   let categoriesController: CategoriesController | null = null;
@@ -20,6 +24,8 @@ export function registerRoutes(app: any, deps: AppDeps) {
   let transactionsController: TransactionsController | null = null;
   let budgetsController: BudgetsController | null = null;
   let reportsController: ReportsController | null = null;
+  let debtsController: DebtsController | null = null;
+  let debtTransactionsController: DebtTransactionsController | null = null;
 
   const getCategoriesController = () => {
     if (!categoriesController) {
@@ -66,6 +72,23 @@ export function registerRoutes(app: any, deps: AppDeps) {
       reportsController = new ReportsController(deps.reportsService);
     }
     return reportsController;
+  };
+
+  const getDebtsController = () => {
+    if (!debtsController) {
+      debtsController = new DebtsController(deps.debtRepo, deps.debtsService);
+    }
+    return debtsController;
+  };
+
+  const getDebtTransactionsController = () => {
+    if (!debtTransactionsController) {
+      debtTransactionsController = new DebtTransactionsController(
+        deps.debtTransactionRepo,
+        deps.debtTransactionsService
+      );
+    }
+    return debtTransactionsController;
   };
 
   registerAuthRoutes(app, deps);
@@ -203,5 +226,68 @@ export function registerRoutes(app: any, deps: AppDeps) {
       const authError = await requireAuth(ctx);
       if (authError) return authError;
       return getReportsController().summary(ctx);
+    })
+    .get("/debts", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtsController().list(ctx);
+    })
+    .post("/debts", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateDebtPayload(ctx.body, false);
+      if (error) return badRequest(ctx.set, error);
+      return getDebtsController().create(ctx);
+    })
+    .get("/debts/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtsController().getById(ctx);
+    })
+    .put("/debts/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateDebtPayload(ctx.body, true);
+      if (error) return badRequest(ctx.set, error);
+      return getDebtsController().update(ctx);
+    })
+    .delete("/debts/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtsController().remove(ctx);
+    })
+    .get("/debts/:id/summary", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtsController().summary(ctx);
+    })
+    .get("/debt_transactions", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtTransactionsController().list(ctx);
+    })
+    .post("/debt_transactions", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateDebtTransactionPayload(ctx.body, false);
+      if (error) return badRequest(ctx.set, error);
+      return getDebtTransactionsController().create(ctx);
+    })
+    .get("/debt_transactions/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtTransactionsController().getById(ctx);
+    })
+    .put("/debt_transactions/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateDebtTransactionPayload(ctx.body, true);
+      if (error) return badRequest(ctx.set, error);
+      return getDebtTransactionsController().update(ctx);
+    })
+    .delete("/debt_transactions/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtTransactionsController().remove(ctx);
     });
 }

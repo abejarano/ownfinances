@@ -15,6 +15,10 @@ import { GeneratedInstanceMongoRepository } from "../repositories/generated_inst
 import { RecurringService } from "../services/recurring_service";
 import { TransactionTemplateMongoRepository } from "../repositories/transaction_template_repository";
 import { TemplateService } from "../services/template_service";
+import { DebtMongoRepository } from "../repositories/debt_repository";
+import { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository";
+import { DebtsService } from "../services/debts_service";
+import { DebtTransactionsService } from "../services/debt_transactions_service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -34,6 +38,10 @@ export type AppDeps = {
   readonly recurringService: RecurringService;
   readonly templateRepo: TransactionTemplateMongoRepository;
   readonly templateService: TemplateService;
+  readonly debtRepo: DebtMongoRepository;
+  readonly debtTransactionRepo: DebtTransactionMongoRepository;
+  readonly debtsService: DebtsService;
+  readonly debtTransactionsService: DebtTransactionsService;
 };
 
 export function buildDeps(): AppDeps {
@@ -45,6 +53,8 @@ export function buildDeps(): AppDeps {
   let reportsService: ReportsService | null = null;
   let recurringService: RecurringService | null = null;
   let templateService: TemplateService | null = null;
+  let debtsService: DebtsService | null = null;
+  let debtTransactionsService: DebtTransactionsService | null = null;
 
   return {
     get categoryRepo() {
@@ -132,6 +142,31 @@ export function buildDeps(): AppDeps {
         templateService = new TemplateService(this.templateRepo);
       }
       return templateService;
+    },
+    get debtRepo() {
+      return DebtMongoRepository.getInstance();
+    },
+    get debtTransactionRepo() {
+      return DebtTransactionMongoRepository.getInstance();
+    },
+    get debtsService() {
+      if (!debtsService) {
+        debtsService = new DebtsService(
+          this.debtRepo,
+          this.debtTransactionRepo
+        );
+      }
+      return debtsService;
+    },
+    get debtTransactionsService() {
+      if (!debtTransactionsService) {
+        debtTransactionsService = new DebtTransactionsService(
+          this.debtTransactionRepo,
+          this.debtRepo,
+          this.accountRepo
+        );
+      }
+      return debtTransactionsService;
     },
   };
 }

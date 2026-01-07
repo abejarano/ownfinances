@@ -1,9 +1,4 @@
-import {
-  Criteria,
-  IRepository,
-  MongoRepository,
-  Paginate,
-} from "@abejarano/ts-mongodb-criteria";
+import { IRepository, MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { RecurringRule } from "../models/recurring/recurring_rule";
 
 export class RecurringRuleMongoRepository
@@ -25,6 +20,24 @@ export class RecurringRuleMongoRepository
 
   collectionName(): string {
     return "recurring_rules";
+  }
+
+  async searchActive(userId: string): Promise<RecurringRule[]> {
+    const collection = await this.collection<RecurringRule>();
+    const results = await collection
+      .find({
+        userId,
+        isActive: true,
+      })
+      .sort({ startDate: -1 })
+      .toArray();
+
+    return results.map((doc) => {
+      return RecurringRule.fromPrimitives({
+        ...doc.toPrimitives(),
+        id: doc._id.toString(),
+      });
+    });
   }
 
   async remove(recurringRuleId: string): Promise<void> {

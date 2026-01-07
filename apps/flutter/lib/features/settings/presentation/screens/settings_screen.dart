@@ -33,6 +33,10 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => context.go("/accounts"),
         ),
         ListTile(
+          title: const Text("Deudas"),
+          onTap: () => context.go("/debts"),
+        ),
+        ListTile(
           title: const Text("UI Kit"),
           onTap: () => context.go("/ui-kit"),
         ),

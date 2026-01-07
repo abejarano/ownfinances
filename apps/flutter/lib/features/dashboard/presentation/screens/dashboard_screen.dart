@@ -107,6 +107,11 @@ class DashboardScreen extends StatelessWidget {
         Text("Gestión", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
+          label: "Deudas",
+          onPressed: () => context.go("/debts"),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SecondaryButton(
           label: "Categorías",
           onPressed: () => context.go("/categories"),
         ),

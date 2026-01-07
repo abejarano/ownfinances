@@ -41,11 +41,7 @@ export class RecurringController {
     return this.service.getById(ctx.userId, ctx.params.id);
   }
 
-  async update(ctx: {
-    userId: string;
-    params: { id: string };
-    body: any;
-  }) {
+  async update(ctx: { userId: string; params: { id: string }; body: any }) {
     const { body } = ctx;
     return this.service.update(ctx.userId, ctx.params.id, {
       frequency: body.frequency,
@@ -118,12 +114,12 @@ export class RecurringController {
   }) {
     const date = new Date(ctx.body.date);
     const template = ctx.body.template;
-    const rule = await this.service.split(
+    const { rule } = await this.service.split(
       ctx.userId,
       ctx.params.id,
       date,
       template
     );
-    return rule.toPrimitives();
+    return rule;
   }
 }

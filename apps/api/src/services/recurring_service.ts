@@ -300,26 +300,7 @@ export class RecurringService {
   }
 
   private async getUserRules(userId: string) {
-    const paginated = await this.ruleRepo.list(
-      new Criteria(
-        Filters.fromValues([
-          new Map<string, any>([
-            ["field", "userId"],
-            ["operator", Operator.EQUAL],
-            ["value", userId],
-          ]),
-          new Map<string, any>([
-            ["field", "isActive"],
-            ["operator", Operator.EQUAL],
-            ["value", true],
-          ]),
-        ]),
-        Order.none(),
-        100, // Reasonable max
-        1
-      )
-    );
-    return paginated.results;
+    return this.ruleRepo.searchActive(userId);
   }
 
   private async getInstancesInPeriod(userId: string, start: Date, end: Date) {

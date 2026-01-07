@@ -27,7 +27,7 @@ export class CategoryMongoRepository
     const collection = await this.collection();
     const results = await collection
       .find({ userId })
-      .sort({ _id: -1 })
+      .sort({ createdAt: -1 })
       .toArray();
     return results.map((doc) => {
       const { _id, ...rest } = doc as Record<string, any>;

@@ -72,6 +72,11 @@ new Map([
 
 ## Conexión con Mongo
 
+## Regla del proyecto: no usar `_id` para ordenar/buscar
+- `_id` solo existe para `upsert` interno.
+- Ordenar por campos de negocio (`createdAt`, `startDate`, `name`, etc.).
+- Filtrar por ids explícitos (`categoryId`, `debtId`, `recurringRuleId`, etc.).
+
 ### MongoRepository (si se usa)
 ```ts
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
