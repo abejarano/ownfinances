@@ -17,6 +17,7 @@ import "package:ownfinances/features/templates/presentation/screens/template_lis
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
 import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
+import "package:ownfinances/features/ui_kit/presentation/screens/ui_kit_screen.dart";
 
 GoRouter createRouter({
   required AuthController authController,
@@ -88,6 +89,10 @@ GoRouter createRouter({
       GoRoute(
         path: "/templates",
         builder: (context, state) => const TemplateListScreen(),
+      ),
+      GoRoute(
+        path: "/ui-kit",
+        builder: (context, state) => const UiKitScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) {

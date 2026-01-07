@@ -4,7 +4,7 @@ Este documento es ley. Todo UI debe cumplirlo.
 
 ## A) Principios
 - 3 taps rule: registrar gasto/ingreso en <= 3 interacciones.
-- No contabilidad: evitar jerga (débito/crédito). Usar “Entró / Salió / Transferí”.
+- No contabilidad: evitar jerga (débitos/créditos). Usar “Entró / Salió / Transferí”.
 - Defaults inteligentes: fecha=hoy, última cuenta usada, categoría frecuente, moneda por cuenta.
 - Feedback inmediato: siempre mostrar efecto (restante de categoría, neto del mes, etc.).
 - Una pantalla = una decisión: sin formularios eternos.

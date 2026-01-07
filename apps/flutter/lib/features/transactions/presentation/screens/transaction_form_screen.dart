@@ -388,6 +388,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           payload,
         );
       }
+      await context.read<ReportsController>().load();
       if (mounted) {
         showStandardSnackbar(context, "Transacción actualizada");
         context.pop();

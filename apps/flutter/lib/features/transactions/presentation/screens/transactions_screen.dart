@@ -173,6 +173,7 @@ class TransactionsScreen extends StatelessWidget {
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.startToEnd) {
                       await txController.clear(item.id);
+                      await context.read<ReportsController>().load();
                       return false;
                     }
                     return true;

@@ -33,6 +33,10 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => context.go("/accounts"),
         ),
         ListTile(
+          title: const Text("UI Kit"),
+          onTap: () => context.go("/ui-kit"),
+        ),
+        ListTile(
           title: const Text("Sair"),
           onTap: () async {
             await context.read<AuthController>().logout();

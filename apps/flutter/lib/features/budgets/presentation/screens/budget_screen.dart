@@ -136,6 +136,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
           final line = summaryMap[category.id];
           final actual = line?.actual ?? 0;
           final remaining = line?.remaining ?? 0;
+          final progressPct = line?.progressPct ?? 0;
           return Card(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.sm),
@@ -159,6 +160,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
                           Text("Actual ${formatMoney(actual)}"),
                           Text(
                             "Restante ${formatMoney(remaining)}",
+                            style: const TextStyle(color: AppColors.muted),
+                          ),
+                          Text(
+                            "Progreso ${progressPct.toStringAsFixed(0)}%",
                             style: const TextStyle(color: AppColors.muted),
                           ),
                         ],
