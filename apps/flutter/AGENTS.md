@@ -9,10 +9,27 @@ Objetivo: mantener calidad de código, Clean Architecture, OOP sólido y consist
 - **Cambios pequeños, testeables y con intención clara**.
 - **Nada de lógica de negocio en Widgets**.
 
+
+### 1. **SIEMPRE Revisar Código Existente Antes de Crear Nuevo**
+
+Antes de crear cualquier componente nuevo (filtros, tablas, formularios, etc.), **SIEMPRE** debes:
+
+1. **Buscar componentes similares existentes** en el proyecto
+2. **Visualizar y estudiar** cómo están implementados
+3. **Copiar el patrón y estilo** exactamente
+4. **NO inventar** nuevos estilos o estructuras
+
+### 2. Pasos Obligatorios Antes de Implementar
+
+1. **Buscar (find_by_name o grep_search)**: Componentes similares
+2. **Ver (view_file)**: Implementación completa de ≥2 ejemplos existentes
+3. **Identificar el patrón**: Estructura, estilos, widgets usados
+4. **Implementar igual**: Mismo patrón, ajustando solo lógica específica
+
 ## Stack recomendado (ajustable)
 
-- State management: **Riverpod** (preferible) o BLoC (si ya existe).
-- DI: Riverpod providers o `get_it` (uno solo, no mezclar sin razón).
+- State management: **Provider** (preferible) o BLoC (si ya existe).
+- DI: Provider o `get_it` (uno solo, no mezclar sin razón).
 - HTTP: `dio` o `http` (uno solo).
 - Serialización: `freezed` + `json_serializable`.
 - Lints: `flutter_lints` + reglas adicionales (ver sección Lints).
@@ -29,6 +46,7 @@ Objetivo: mantener calidad de código, Clean Architecture, OOP sólido y consist
   - Entities/ValueObjects inmutables.
   - `copyWith` para cambios.
 - Preferir **composición** sobre herencia (OOP bien aplicado).
+
 
 ## Reglas de arquitectura (obligatorias)
 
@@ -156,3 +174,26 @@ Sugerido añadir en `analysis_options.yaml`:
 - `avoid_dynamic_calls`
 - `unawaited_futures` (si aplica)
 - `public_member_api_docs` (opcional)
+
+## Proceso de Desarrollo
+
+```
+1. Usuario pide nueva feature
+   ↓
+2. BUSCAR componentes similares
+   ↓
+3. VER implementación de ≥2 ejemplos
+   ↓
+4. COPIAR patrón exacto
+   ↓
+5. AJUSTAR solo la lógica específica
+   ↓
+6. Implementar
+```
+
+## Notas Importantes
+
+- La consistencia visual es CRÍTICA
+- No asumas cómo deben verse las cosas
+- Siempre hay un ejemplo existente que seguir
+- Si no estás seguro, PREGUNTA antes de crear
