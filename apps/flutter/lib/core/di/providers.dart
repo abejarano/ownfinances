@@ -2,6 +2,17 @@ import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
+import "package:ownfinances/features/recurring/data/datasources/recurring_remote_data_source.dart";
+import "package:ownfinances/features/recurring/data/repositories/recurring_repository_impl.dart";
+import "package:ownfinances/features/recurring/domain/repositories/recurring_repository.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/create_recurring_rule_use_case.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/delete_recurring_rule_use_case.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/list_recurring_rules_use_case.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/preview_recurring_rules_use_case.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/run_recurring_rules_use_case.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/split_recurring_rule_use_case.dart";
+import "package:ownfinances/features/recurring/domain/use_cases/materialize_recurring_instance_use_case.dart";
+import "package:ownfinances/features/recurring/application/controllers/recurring_controller.dart";
 import "package:ownfinances/features/auth/data/datasources/auth_remote_data_source.dart";
 import "package:ownfinances/features/auth/data/datasources/token_storage.dart";
 import "package:ownfinances/features/auth/data/repositories/auth_repository_impl.dart";
@@ -50,6 +61,11 @@ import "package:ownfinances/features/budgets/application/controllers/budget_cont
 import "package:ownfinances/core/routing/onboarding_controller.dart";
 import "package:ownfinances/core/routing/app_router.dart";
 import "package:ownfinances/core/storage/onboarding_storage.dart";
+
+import "package:ownfinances/features/templates/data/datasources/template_remote_data_source.dart";
+import "package:ownfinances/features/templates/data/repositories/template_repository_impl.dart";
+import "package:ownfinances/features/templates/domain/repositories/template_repository.dart";
+import "package:ownfinances/features/templates/application/controllers/templates_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -148,6 +164,33 @@ class AppProviders extends StatelessWidget {
             GetCurrentBudgetUseCase(context.read<BudgetRepository>()),
             SaveBudgetUseCase(context.read<BudgetRepository>()),
           ),
+        ),
+        Provider<RecurringRepository>(
+          create: (context) => RecurringRepositoryImpl(
+            RecurringRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
+        ChangeNotifierProvider<RecurringController>(
+          create: (context) => RecurringController(
+            ListRecurringRulesUseCase(context.read<RecurringRepository>()),
+            CreateRecurringRuleUseCase(context.read<RecurringRepository>()),
+            DeleteRecurringRuleUseCase(context.read<RecurringRepository>()),
+            PreviewRecurringRulesUseCase(context.read<RecurringRepository>()),
+            RunRecurringRulesUseCase(context.read<RecurringRepository>()),
+            SplitRecurringRuleUseCase(context.read<RecurringRepository>()),
+            MaterializeRecurringInstanceUseCase(
+              context.read<RecurringRepository>(),
+            ),
+          )..load(),
+        ),
+        Provider<TemplateRepository>(
+          create: (context) => TemplateRepositoryImpl(
+            TemplateRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
+        ChangeNotifierProvider<TemplatesController>(
+          create: (context) =>
+              TemplatesController(context.read<TemplateRepository>())..load(),
         ),
         ChangeNotifierProvider<OnboardingController>(
           create: (context) {

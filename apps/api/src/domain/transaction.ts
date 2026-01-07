@@ -20,6 +20,7 @@ export type TransactionPrimitives = {
   clearedAt?: Date | null;
   createdAt: Date;
   updatedAt?: Date;
+  recurringRuleId?: string;
 };
 
 export class Transaction extends AggregateRoot {
@@ -45,4 +46,8 @@ export class Transaction extends AggregateRoot {
   static fromPrimitives(primitives: TransactionPrimitives): Transaction {
     return new Transaction(primitives);
   }
+}
+
+export interface TransactionRepository {
+  upsert(transaction: Transaction): Promise<void>;
 }

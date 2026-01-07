@@ -6,6 +6,7 @@ import { BudgetsController } from "../controllers/budgets.controller";
 import { ReportsController } from "../controllers/reports.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { registerAuthRoutes } from "./auth.routes";
+import { registerRecurringRoutes } from "./recurring.routes";
 
 export function registerRoutes(app: any, deps: AppDeps) {
   let categoriesController: CategoriesController | null = null;
@@ -62,6 +63,7 @@ export function registerRoutes(app: any, deps: AppDeps) {
   };
 
   registerAuthRoutes(app, deps);
+  registerRecurringRoutes(app, deps);
 
   app
     .get("/categories", async (ctx: any) => {

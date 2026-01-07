@@ -7,6 +7,7 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+import "package:ownfinances/features/recurring/presentation/modals/recurrence_preview_modal.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -79,6 +80,28 @@ class DashboardScreen extends StatelessWidget {
           title: "Transferir",
           subtitle: "Mover entre cuentas",
           onTap: () => context.go("/transactions/new?type=transfer"),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text("Recurrencias", style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        QuickActionCard(
+          icon: Icons.calendar_today,
+          title: "Generar del mes",
+          subtitle: "Procesar pendientes",
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const RecurrencePreviewModal(),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        QuickActionCard(
+          icon: Icons.add,
+          title: "Crear regla",
+          subtitle: "Programar gasto/ingreso",
+          onTap: () => context.go("/recurring/new"),
         ),
         const SizedBox(height: AppSpacing.lg),
         Text("Gestión", style: Theme.of(context).textTheme.titleMedium),

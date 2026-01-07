@@ -138,6 +138,33 @@ export class MovementBankMongoRepository extends MongoRepository<MovementBank> {
 }
 ```
 
+```
+
+## 8) Regla STRICT de AggregateRoot (ID vs EntityID)
+
+Toda clase que extienda `AggregateRoot` DEBE seguir este patrón estricto:
+
+1.  **Separación de IDs**:
+    -   `id?: string`: Es el `_id` de MongoDB (persistencia). Opcional porque al crear no existe.
+    -   `entityId: string`: ID de negocio/dominio (ej: `userId`, `transactionId`, `ruleId`). Es el que identifica la entidad en la app.
+2.  **Constructor y Primitivos**:
+    -   El tipo `Primitives` debe reflejar esto (`id?` y `entityId`).
+3.  **Repositorios**:
+    -   Las búsquedas por ID de negocio deben ser explícitas (ej: `findOne({ ruleId: ... })`).
+    -   `getId()` del AggregateRoot debería retornar el `id` de Mongo si existe, o manejar la lógica de persistencia.
+
+Ejemplo correcto:
+
+```ts
+export class User extends AggregateRoot {
+  // id?: string; // Mongo ID
+  // userId: string; // Domain ID
+  getId(): string {
+     return this.props.id ?? this.props.userId; // O lo que requiera la lib para persistir
+  }
+}
+```
+
 ## Data Access Layer (DAL) — Repositorios con MongoRepository<T>
 
 Acceso a datos se hace mediante repositorios que extienden:

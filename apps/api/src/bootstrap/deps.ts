@@ -10,6 +10,9 @@ import { AuthService } from "../application/services/auth.service";
 import { BudgetMongoRepository } from "../repositories/budget_repository";
 import { BudgetsService } from "../application/services/budgets_service";
 import { ReportsService } from "../application/services/reports_service";
+import { RecurringRuleMongoRepository } from "../infrastructure/repositories/recurring_rule_repository";
+import { GeneratedInstanceMongoRepository } from "../infrastructure/repositories/generated_instance_repository";
+import { RecurringService } from "../application/services/recurring.service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -24,6 +27,9 @@ export type AppDeps = {
   readonly budgetRepo: BudgetMongoRepository;
   readonly budgetsService: BudgetsService;
   readonly reportsService: ReportsService;
+  readonly recurringRuleRepo: RecurringRuleMongoRepository;
+  readonly generatedInstanceRepo: GeneratedInstanceMongoRepository;
+  readonly recurringService: RecurringService;
 };
 
 export function buildDeps(): AppDeps {
@@ -33,6 +39,7 @@ export function buildDeps(): AppDeps {
   let authService: AuthService | null = null;
   let budgetsService: BudgetsService | null = null;
   let reportsService: ReportsService | null = null;
+  let recurringService: RecurringService | null = null;
 
   return {
     get categoryRepo() {
@@ -99,6 +106,22 @@ export function buildDeps(): AppDeps {
         );
       }
       return reportsService;
+    },
+    get recurringRuleRepo() {
+      return RecurringRuleMongoRepository.getInstance();
+    },
+    get generatedInstanceRepo() {
+      return GeneratedInstanceMongoRepository.getInstance();
+    },
+    get recurringService() {
+      if (!recurringService) {
+        recurringService = new RecurringService(
+          this.recurringRuleRepo,
+          this.generatedInstanceRepo,
+          this.transactionRepo,
+        );
+      }
+      return recurringService;
     },
   };
 }

@@ -12,7 +12,10 @@ import "package:ownfinances/features/budgets/presentation/screens/budget_screen.
 import "package:ownfinances/features/settings/presentation/screens/settings_screen.dart";
 import "package:ownfinances/features/categories/presentation/screens/categories_screen.dart";
 import "package:ownfinances/features/accounts/presentation/screens/accounts_screen.dart";
+import "package:ownfinances/features/recurring/presentation/screens/recurring_wizard_screen.dart";
+import "package:ownfinances/features/templates/presentation/screens/template_list_screen.dart";
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
+import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
 
 GoRouter createRouter({
@@ -67,6 +70,7 @@ GoRouter createRouter({
         path: "/transactions/new",
         builder: (context, state) => TransactionFormScreen(
           initialType: state.uri.queryParameters["type"],
+          initialTemplate: state.extra as TransactionTemplate?,
         ),
       ),
       GoRoute(
@@ -76,6 +80,14 @@ GoRouter createRouter({
       GoRoute(
         path: "/accounts",
         builder: (context, state) => const AccountsScreen(),
+      ),
+      GoRoute(
+        path: "/recurring/new",
+        builder: (context, state) => const RecurringWizardScreen(),
+      ),
+      GoRoute(
+        path: "/templates",
+        builder: (context, state) => const TemplateListScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) {

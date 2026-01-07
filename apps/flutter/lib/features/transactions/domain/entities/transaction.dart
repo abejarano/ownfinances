@@ -11,6 +11,7 @@ class Transaction {
   final List<String> tags;
   final String status;
   final DateTime? clearedAt;
+  final String? recurringRuleId;
 
   const Transaction({
     required this.id,
@@ -25,6 +26,7 @@ class Transaction {
     required this.tags,
     required this.status,
     required this.clearedAt,
+    this.recurringRuleId,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class Transaction {
       clearedAt: json["clearedAt"] != null
           ? DateTime.tryParse(json["clearedAt"] as String)
           : null,
+      recurringRuleId: json["recurringRuleId"] as String?,
     );
   }
 }

@@ -208,6 +208,9 @@ class TransactionsScreen extends StatelessWidget {
                       _amountPrefix(item.type) + amount,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
+                    onTap: () {
+                      context.push("/transactions/edit", extra: item);
+                    },
                   ),
                 );
               },
