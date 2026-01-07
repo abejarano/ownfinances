@@ -20,12 +20,12 @@ export class AuthService {
     const email = payload.email?.trim().toLowerCase();
     const password = payload.password;
 
-    if (!email) return { error: "Email requerido" };
-    if (!password) return { error: "Password requerido" };
+    if (!email) return { error: "Email obrigatório" };
+    if (!password) return { error: "Senha obrigatória" };
 
     await this.users.ensureIndexes();
     const existing = await this.users.one({ email });
-    if (existing) return { error: "Email ya registrado" };
+    if (existing) return { error: "Email já cadastrado" };
 
     const passwordHash = await argon2.hash(password);
 
@@ -49,14 +49,14 @@ export class AuthService {
     const email = payload.email?.trim().toLowerCase();
     const password = payload.password;
 
-    if (!email || !password) return { error: "Credenciales inválidas" };
+    if (!email || !password) return { error: "Credenciais inválidas" };
 
     const user = await this.users.one({ email });
-    if (!user) return { error: "Credenciales inválidas" };
+    if (!user) return { error: "Credenciais inválidas" };
 
     const userPrimitives = user.toPrimitives();
     const valid = await argon2.verify(userPrimitives.passwordHash, password);
-    if (!valid) return { error: "Credenciales inválidas" };
+    if (!valid) return { error: "Credenciais inválidas" };
 
     const updated: UserPrimitives = {
       ...userPrimitives,
@@ -81,22 +81,22 @@ export class AuthService {
     ip?: string;
   }) {
     if (!payload.refreshToken) {
-      return { error: "Sesión expirada, entra de nuevo" };
+      return { error: "Sessão expirada, entre novamente" };
     }
 
     const tokenHash = hashToken(payload.refreshToken);
     const existing = await this.refreshTokens.one({ tokenHash });
     if (!existing) {
-      return { error: "Sesión expirada, entra de nuevo" };
+      return { error: "Sessão expirada, entre novamente" };
     }
 
     const existingPrimitives = existing.toPrimitives();
     if (existingPrimitives.revokedAt) {
-      return { error: "Sesión expirada, entra de nuevo" };
+      return { error: "Sessão expirada, entre novamente" };
     }
 
     if (existingPrimitives.expiresAt < new Date()) {
-      return { error: "Sesión expirada, entra de nuevo" };
+      return { error: "Sessão expirada, entre novamente" };
     }
 
     const revoked = RefreshToken.fromPrimitives({
@@ -119,13 +119,13 @@ export class AuthService {
 
   async logout(payload: { refreshToken?: string }) {
     if (!payload.refreshToken) {
-      return { error: "Sesión expirada, entra de nuevo" };
+      return { error: "Sessão expirada, entre novamente" };
     }
 
     const tokenHash = hashToken(payload.refreshToken);
     const existing = await this.refreshTokens.one({ tokenHash });
     if (!existing) {
-      return { error: "Sesión expirada, entra de nuevo" };
+      return { error: "Sessão expirada, entre novamente" };
     }
 
     const existingPrimitives = existing.toPrimitives();
@@ -141,7 +141,7 @@ export class AuthService {
 
   async getMe(userId: string) {
     const user = await this.users.one({ userId });
-    if (!user) return { error: "Sesión expirada, entra de nuevo" };
+    if (!user) return { error: "Sessão expirada, entre novamente" };
     return { user: toUserResponse(user.toPrimitives()) };
   }
 

@@ -30,5 +30,5 @@ export async function requireAuth(ctx: AuthContext) {
 }
 
 function respondUnauthorized(ctx: AuthContext) {
-  return unauthorizedResponse(ctx.set, "Sesión expirada, entra de nuevo");
+  return unauthorizedResponse(ctx.set, "Sessão expirada, entre novamente");
 }

@@ -112,6 +112,11 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
+          label: "Metas",
+          onPressed: () => context.go("/goals"),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        SecondaryButton(
           label: "Categorías",
           onPressed: () => context.go("/categories"),
         ),

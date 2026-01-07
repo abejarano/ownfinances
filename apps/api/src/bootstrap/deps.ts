@@ -19,6 +19,10 @@ import { DebtMongoRepository } from "../repositories/debt_repository";
 import { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository";
 import { DebtsService } from "../services/debts_service";
 import { DebtTransactionsService } from "../services/debt_transactions_service";
+import { GoalMongoRepository } from "../repositories/goal_repository";
+import { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository";
+import { GoalsService } from "../services/goals_service";
+import { GoalContributionsService } from "../services/goal_contributions_service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -42,6 +46,10 @@ export type AppDeps = {
   readonly debtTransactionRepo: DebtTransactionMongoRepository;
   readonly debtsService: DebtsService;
   readonly debtTransactionsService: DebtTransactionsService;
+  readonly goalRepo: GoalMongoRepository;
+  readonly goalContributionRepo: GoalContributionMongoRepository;
+  readonly goalsService: GoalsService;
+  readonly goalContributionsService: GoalContributionsService;
 };
 
 export function buildDeps(): AppDeps {
@@ -55,6 +63,8 @@ export function buildDeps(): AppDeps {
   let templateService: TemplateService | null = null;
   let debtsService: DebtsService | null = null;
   let debtTransactionsService: DebtTransactionsService | null = null;
+  let goalsService: GoalsService | null = null;
+  let goalContributionsService: GoalContributionsService | null = null;
 
   return {
     get categoryRepo() {
@@ -167,6 +177,32 @@ export function buildDeps(): AppDeps {
         );
       }
       return debtTransactionsService;
+    },
+    get goalRepo() {
+      return GoalMongoRepository.getInstance();
+    },
+    get goalContributionRepo() {
+      return GoalContributionMongoRepository.getInstance();
+    },
+    get goalsService() {
+      if (!goalsService) {
+        goalsService = new GoalsService(
+          this.goalRepo,
+          this.goalContributionRepo,
+          this.transactionRepo
+        );
+      }
+      return goalsService;
+    },
+    get goalContributionsService() {
+      if (!goalContributionsService) {
+        goalContributionsService = new GoalContributionsService(
+          this.goalContributionRepo,
+          this.goalRepo,
+          this.accountRepo
+        );
+      }
+      return goalContributionsService;
     },
   };
 }

@@ -56,9 +56,9 @@ export function validateAuthRegisterPayload(
 ): string | null {
   if (registerCompiler.Check(payload)) return null;
   for (const error of registerCompiler.Errors(payload)) {
-    if (error.path === "/email") return "Email requerido";
-    if (error.path === "/password") return "Password requerido";
-    if (error.path === "/name") return "Nombre invalido";
+    if (error.path === "/email") return "Email obrigatório";
+    if (error.path === "/password") return "Senha obrigatória";
+    if (error.path === "/name") return "Nome invalido";
   }
   return "Payload invalido";
 }
@@ -68,8 +68,8 @@ export function validateAuthLoginPayload(
 ): string | null {
   if (loginCompiler.Check(payload)) return null;
   for (const error of loginCompiler.Errors(payload)) {
-    if (error.path === "/email") return "Credenciales inválidas";
-    if (error.path === "/password") return "Credenciales inválidas";
+    if (error.path === "/email") return "Credenciais inválidas";
+    if (error.path === "/password") return "Credenciais inválidas";
   }
   return "Payload invalido";
 }
@@ -79,7 +79,8 @@ export function validateAuthRefreshPayload(
 ): string | null {
   if (refreshCompiler.Check(payload)) return null;
   for (const error of refreshCompiler.Errors(payload)) {
-    if (error.path === "/refreshToken") return "Sesión expirada, entra de nuevo";
+    if (error.path === "/refreshToken")
+      return "Sessão expirada, entre novamente";
   }
   return "Payload invalido";
 }
@@ -89,7 +90,8 @@ export function validateAuthLogoutPayload(
 ): string | null {
   if (logoutCompiler.Check(payload)) return null;
   for (const error of logoutCompiler.Errors(payload)) {
-    if (error.path === "/refreshToken") return "Sesión expirada, entra de nuevo";
+    if (error.path === "/refreshToken")
+      return "Sessão expirada, entre novamente";
   }
   return "Payload invalido";
 }

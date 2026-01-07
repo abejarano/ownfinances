@@ -79,6 +79,16 @@ import "package:ownfinances/features/debts/domain/use_cases/delete_debt_use_case
 import "package:ownfinances/features/debts/domain/use_cases/get_debt_summary_use_case.dart";
 import "package:ownfinances/features/debts/domain/use_cases/create_debt_transaction_use_case.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
+import "package:ownfinances/features/goals/data/datasources/goal_remote_data_source.dart";
+import "package:ownfinances/features/goals/data/repositories/goal_repository_impl.dart";
+import "package:ownfinances/features/goals/domain/repositories/goal_repository.dart";
+import "package:ownfinances/features/goals/domain/use_cases/list_goals_use_case.dart";
+import "package:ownfinances/features/goals/domain/use_cases/create_goal_use_case.dart";
+import "package:ownfinances/features/goals/domain/use_cases/update_goal_use_case.dart";
+import "package:ownfinances/features/goals/domain/use_cases/delete_goal_use_case.dart";
+import "package:ownfinances/features/goals/domain/use_cases/get_goal_projection_use_case.dart";
+import "package:ownfinances/features/goals/domain/use_cases/create_goal_contribution_use_case.dart";
+import "package:ownfinances/features/goals/application/controllers/goals_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -224,6 +234,20 @@ class AppProviders extends StatelessWidget {
             CreateDebtTransactionUseCase(
               context.read<DebtTransactionRepository>(),
             ),
+          )..load(),
+        ),
+        Provider<GoalRepository>(
+          create: (context) =>
+              GoalRepositoryImpl(GoalRemoteDataSource(context.read<ApiClient>())),
+        ),
+        ChangeNotifierProvider<GoalsController>(
+          create: (context) => GoalsController(
+            ListGoalsUseCase(context.read<GoalRepository>()),
+            CreateGoalUseCase(context.read<GoalRepository>()),
+            UpdateGoalUseCase(context.read<GoalRepository>()),
+            DeleteGoalUseCase(context.read<GoalRepository>()),
+            GetGoalProjectionUseCase(context.read<GoalRepository>()),
+            CreateGoalContributionUseCase(context.read<GoalRepository>()),
           )..load(),
         ),
         ChangeNotifierProvider<OnboardingController>(

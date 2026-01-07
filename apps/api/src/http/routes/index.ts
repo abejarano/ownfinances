@@ -6,6 +6,7 @@ import { BudgetsController } from "../controllers/budgets.controller";
 import { ReportsController } from "../controllers/reports.controller";
 import { DebtsController } from "../controllers/debts.controller";
 import { DebtTransactionsController } from "../controllers/debt_transactions.controller";
+import { GoalsController } from "../controllers/goals.controller";
 import { requireAuth } from "../middleware/auth.middleware";
 import { registerAuthRoutes } from "./auth.routes";
 import { registerRecurringRoutes } from "./recurring.routes";
@@ -17,6 +18,8 @@ import { validateBudgetPayload } from "../validation/budgets.validation";
 import { validateTransactionPayload } from "../validation/transactions.validation";
 import { validateDebtPayload } from "../validation/debts.validation";
 import { validateDebtTransactionPayload } from "../validation/debt_transactions.validation";
+import { validateGoalPayload } from "../validation/goals.validation";
+import { validateGoalContributionPayload } from "../validation/goal_contributions.validation";
 
 export function registerRoutes(app: any, deps: AppDeps) {
   let categoriesController: CategoriesController | null = null;
@@ -26,6 +29,7 @@ export function registerRoutes(app: any, deps: AppDeps) {
   let reportsController: ReportsController | null = null;
   let debtsController: DebtsController | null = null;
   let debtTransactionsController: DebtTransactionsController | null = null;
+  let goalsController: GoalsController | null = null;
 
   const getCategoriesController = () => {
     if (!categoriesController) {
@@ -89,6 +93,18 @@ export function registerRoutes(app: any, deps: AppDeps) {
       );
     }
     return debtTransactionsController;
+  };
+
+  const getGoalsController = () => {
+    if (!goalsController) {
+      goalsController = new GoalsController(
+        deps.goalRepo,
+        deps.goalsService,
+        deps.goalContributionsService,
+        deps.goalContributionRepo
+      );
+    }
+    return goalsController;
   };
 
   registerAuthRoutes(app, deps);
@@ -289,5 +305,64 @@ export function registerRoutes(app: any, deps: AppDeps) {
       const authError = await requireAuth(ctx);
       if (authError) return authError;
       return getDebtTransactionsController().remove(ctx);
+    })
+    .get("/goals", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getGoalsController().list(ctx);
+    })
+    .post("/goals", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateGoalPayload(ctx.body, false);
+      if (error) return badRequest(ctx.set, error);
+      return getGoalsController().create(ctx);
+    })
+    .get("/goals/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getGoalsController().getById(ctx);
+    })
+    .put("/goals/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateGoalPayload(ctx.body, true);
+      if (error) return badRequest(ctx.set, error);
+      return getGoalsController().update(ctx);
+    })
+    .delete("/goals/:id", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getGoalsController().remove(ctx);
+    })
+    .get("/goals/:id/projection", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getGoalsController().projection(ctx);
+    })
+    .get("/goals/:id/contributions", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      ctx.query = { ...ctx.query, goalId: ctx.params.id };
+      return getGoalsController().listContributions(ctx);
+    })
+    .post("/goals/:id/contributions", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateGoalContributionPayload(ctx.body, false);
+      if (error) return badRequest(ctx.set, error);
+      return getGoalsController().createContribution(ctx);
+    })
+    .put("/goals/:id/contributions/:contributionId", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      const error = validateGoalContributionPayload(ctx.body, true);
+      if (error) return badRequest(ctx.set, error);
+      return getGoalsController().updateContribution(ctx);
+    })
+    .delete("/goals/:id/contributions/:contributionId", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getGoalsController().removeContribution(ctx);
     });
 }

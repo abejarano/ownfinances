@@ -69,4 +69,23 @@ export class TransactionMongoRepository
       total: number;
     }>;
   }
+
+  async sumByGoalTag(userId: string, goalId: string): Promise<number> {
+    const collection = await this.collection();
+    const results = await collection
+      .aggregate([
+        {
+          $match: {
+            userId,
+            tags: { $in: [goalId] },
+            type: { $in: [TransactionType.Income, TransactionType.Expense] },
+          },
+        },
+        { $group: { _id: "$userId", total: { $sum: "$amount" } } },
+      ])
+      .toArray();
+
+    if (results.length === 0) return 0;
+    return results[0].total as number;
+  }
 }

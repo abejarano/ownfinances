@@ -3,7 +3,10 @@ import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/features/auth/presentation/screens/login_screen.dart";
+
 import "package:ownfinances/features/auth/presentation/screens/register_screen.dart";
+import "package:ownfinances/features/auth/presentation/screens/splash_screen.dart";
+import "package:ownfinances/features/auth/application/state/auth_state.dart";
 import "package:ownfinances/features/onboarding/presentation/screens/onboarding_screen.dart";
 import "package:ownfinances/features/dashboard/presentation/screens/dashboard_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transactions_screen.dart";
@@ -19,6 +22,7 @@ import "package:ownfinances/features/templates/domain/entities/transaction_templ
 import "package:ownfinances/core/routing/onboarding_controller.dart";
 import "package:ownfinances/features/ui_kit/presentation/screens/ui_kit_screen.dart";
 import "package:ownfinances/features/debts/presentation/screens/debts_screen.dart";
+import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
 
 GoRouter createRouter({
   required AuthController authController,
@@ -31,10 +35,20 @@ GoRouter createRouter({
       final location = state.uri.path;
       final isOnboarding = location == "/onboarding";
       final isAuthRoute = location == "/login" || location == "/register";
-      final isAuthed = authController.isAuthenticated;
+      final authStatus = authController.state.status;
+      final isUnauthenticated = authStatus == AuthStatus.unauthenticated;
+      final isAuthed = authStatus == AuthStatus.authenticated;
       final completed = onboardingController.completed;
 
-      if (!isAuthed) {
+      if (authStatus == AuthStatus.initial) {
+        return "/splash";
+      }
+
+      if (location == "/splash" && authStatus != AuthStatus.initial) {
+        return isAuthed ? "/dashboard" : "/login";
+      }
+
+      if (isUnauthenticated) {
         if (!isAuthRoute) {
           return "/login";
         }
@@ -62,6 +76,10 @@ GoRouter createRouter({
             context.read<OnboardingController>().complete();
           },
         ),
+      ),
+      GoRoute(
+        path: "/splash",
+        builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(path: "/login", builder: (context, state) => const LoginScreen()),
       GoRoute(
@@ -95,10 +113,8 @@ GoRouter createRouter({
         path: "/ui-kit",
         builder: (context, state) => const UiKitScreen(),
       ),
-      GoRoute(
-        path: "/debts",
-        builder: (context, state) => const DebtsScreen(),
-      ),
+      GoRoute(path: "/debts", builder: (context, state) => const DebtsScreen()),
+      GoRoute(path: "/goals", builder: (context, state) => const GoalsScreen()),
       ShellRoute(
         builder: (context, state, child) {
           final location = state.uri.toString();

@@ -98,7 +98,7 @@ export class AuthController {
 
   async me({ userId, set }: { userId?: string; set: { status: number } }) {
     if (!userId) {
-      return unauthorized(set, "Sesión expirada, entra de nuevo");
+      return unauthorized(set, "Sessão expirada, entre novamente");
     }
     const result = await this.authService.getMe(userId);
     if (result.error) return unauthorized(set, result.error);
