@@ -5,6 +5,7 @@ import "package:ownfinances/features/auth/application/controllers/auth_controlle
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/routing/onboarding_state.dart";
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -93,6 +94,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
     if (error != null && mounted) {
       showStandardSnackbar(context, error);
+    }
+    if (error == null && mounted) {
+      final completed = ref.read(onboardingCompletedProvider);
+      context.go(completed ? "/dashboard" : "/onboarding");
     }
     if (mounted) {
       await controller.clearMessage();

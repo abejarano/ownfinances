@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { openapi } from "@elysiajs/openapi";
 import { jwt } from "@elysiajs/jwt";
+import { cors } from "@elysiajs/cors";
 import pkg from "../../package.json";
 import { env } from "../shared/env";
 import { registerRoutes } from "../http/routes";
@@ -9,6 +10,13 @@ import { getMongoClient } from "./mongo";
 
 export function buildApp(deps: AppDeps) {
   const app = new Elysia()
+    .use(
+      cors({
+        origin: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      }),
+    )
     .use(openapi())
     .use(
       jwt({

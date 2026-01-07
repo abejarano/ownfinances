@@ -10,6 +10,7 @@ import "package:ownfinances/features/transactions/presentation/screens/transacti
 import "package:ownfinances/features/budgets/presentation/screens/budget_screen.dart";
 import "package:ownfinances/features/settings/presentation/screens/settings_screen.dart";
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
+import "package:ownfinances/core/routing/onboarding_state.dart";
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -24,19 +25,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuthRoute = location == "/login" || location == "/register";
 
       if (!completed) {
-        if (!isOnboarding && !isAuthRoute) {
+        if (!isOnboarding) {
           return "/onboarding";
         }
         return null;
+      }
+      if (completed && isAuthed && isAuthRoute) {
+        return "/dashboard";
       }
       if (completed && isOnboarding) {
         return isAuthed ? "/dashboard" : "/login";
       }
       if (!isAuthed && !isAuthRoute) {
         return "/login";
-      }
-      if (isAuthed && isAuthRoute) {
-        return "/dashboard";
       }
       return null;
     },
@@ -136,5 +137,3 @@ void _goToIndex(BuildContext context, int index) {
       return;
   }
 }
-
-final onboardingCompletedProvider = StateProvider<bool>((ref) => false);
