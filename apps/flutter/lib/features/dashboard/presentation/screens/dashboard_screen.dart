@@ -86,7 +86,7 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.calendar_today,
-          title: "Generar del mes",
+          title: "Generar gastos del mes",
           subtitle: "Procesar pendientes",
           onTap: () {
             showModalBottomSheet(

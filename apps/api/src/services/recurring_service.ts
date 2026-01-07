@@ -57,7 +57,7 @@ export class RecurringService {
   }
 
   async delete(userId: string, recurringRuleId: string) {
-    const rule = await this.ruleRepo.byId(recurringRuleId);
+    const rule = await this.ruleRepo.one({ recurringRuleId });
     if (!rule || rule.userId !== userId) {
       return { error: "Recurrencia no encontrada", status: 404 };
     }
@@ -83,7 +83,7 @@ export class RecurringService {
   }
 
   async getById(userId: string, recurringRuleId: string) {
-    const rule = await this.ruleRepo.byId(recurringRuleId);
+    const rule = await this.ruleRepo.one({ recurringRuleId });
     if (!rule || rule.userId !== userId) {
       return { error: "Recurrencia no encontrada", status: 404 };
     }
@@ -95,7 +95,7 @@ export class RecurringService {
     recurringRuleId: string,
     payload: RecurringRuleUpdatePayload,
   ) {
-    const rule = await this.ruleRepo.byId(recurringRuleId);
+    const rule = await this.ruleRepo.one({ recurringRuleId });
     if (!rule || rule.userId !== userId) {
       return { error: "Recurrencia no encontrada", status: 404 };
     }
@@ -199,7 +199,7 @@ export class RecurringService {
     date: Date,
     overrideTemplate?: RecurringRulePrimitives["template"]
   ) {
-    const rule = await this.ruleRepo.byId(recurringRuleId);
+    const rule = await this.ruleRepo.one({ recurringRuleId });
     if (!rule || rule.userId !== userId) throw new Error("Rule not found");
 
     // Check if already materialized
@@ -266,7 +266,7 @@ export class RecurringService {
     splitDate: Date,
     newTemplate: RecurringTemplatePayload
   ) {
-    const rule = await this.ruleRepo.byId(recurringRuleId);
+    const rule = await this.ruleRepo.one({ recurringRuleId });
     if (!rule || rule.userId !== userId) throw new Error("Rule not found");
 
     // 1. Update existing rule end date to splitDate - 1 day
@@ -354,6 +354,7 @@ export class RecurringService {
 
     // If start date is in future beyond window, no dates
     if (current > windowEnd) return [];
+    if (rule.endDate && rule.endDate < windowStart) return [];
 
     // Advance current to be at least windowStart or close to it
     // For simplicity, we just iterate from startDate. Optimization possible for yearly.
@@ -361,6 +362,7 @@ export class RecurringService {
     // Safety break
     let safety = 0;
     while (current <= windowEnd && safety < 1000) {
+      if (rule.endDate && current > rule.endDate) break;
       if (current >= windowStart) {
         dates.push(new Date(current));
       }

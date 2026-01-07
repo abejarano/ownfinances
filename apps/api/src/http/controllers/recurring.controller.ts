@@ -5,7 +5,7 @@ export class RecurringController {
 
   async create(ctx: { userId: string; body: any }) {
     const { body, userId } = ctx;
-    const rule = await this.service.create(userId, {
+    const { rule } = await this.service.create(userId, {
       frequency: body.frequency,
       interval: body.interval || 1,
       startDate: new Date(body.startDate),
@@ -21,7 +21,7 @@ export class RecurringController {
         tags: body.template.tags,
       },
     });
-    return rule.toPrimitives();
+    return rule;
   }
 
   async list(ctx: {
@@ -35,6 +35,37 @@ export class RecurringController {
       ...paginated,
       results: paginated.results.map((r) => r.toPrimitives()),
     };
+  }
+
+  async getById(ctx: { userId: string; params: { id: string } }) {
+    return this.service.getById(ctx.userId, ctx.params.id);
+  }
+
+  async update(ctx: {
+    userId: string;
+    params: { id: string };
+    body: any;
+  }) {
+    const { body } = ctx;
+    return this.service.update(ctx.userId, ctx.params.id, {
+      frequency: body.frequency,
+      interval: body.interval,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+      isActive: body.isActive,
+      template: body.template
+        ? {
+            type: body.template.type,
+            amount: Number(body.template.amount),
+            currency: body.template.currency || "BRL",
+            categoryId: body.template.categoryId,
+            fromAccountId: body.template.fromAccountId,
+            toAccountId: body.template.toAccountId,
+            note: body.template.note,
+            tags: body.template.tags,
+          }
+        : undefined,
+    });
   }
 
   async delete(ctx: { userId: string; params: { id: string } }) {
@@ -51,9 +82,22 @@ export class RecurringController {
     return this.service.preview(ctx.userId, period, date);
   }
 
-  async run(ctx: { userId: string; body: { period: string; date?: string } }) {
-    const period = (ctx.body.period as "monthly") || "monthly";
-    const date = ctx.body.date ? new Date(ctx.body.date) : new Date();
+  async run(ctx: {
+    userId: string;
+    body?: { period?: string; date?: string };
+    query?: { period?: string; date?: string };
+  }) {
+    const queryPeriod = (ctx as { query?: { period?: string } }).query?.period;
+    const queryDate = (ctx as { query?: { date?: string } }).query?.date;
+    const period =
+      (queryPeriod as "monthly") ||
+      (ctx.body?.period as "monthly") ||
+      "monthly";
+    const date = queryDate
+      ? new Date(queryDate)
+      : ctx.body?.date
+      ? new Date(ctx.body.date)
+      : new Date();
     return this.service.run(ctx.userId, period, date);
   }
 

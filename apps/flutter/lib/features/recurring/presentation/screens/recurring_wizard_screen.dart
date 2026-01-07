@@ -92,6 +92,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
       "frequency": _frequency,
       "interval": _interval,
       "startDate": _startDate.toIso8601String(),
+      "endDate": _endDate?.toIso8601String(),
       "template": {
         "amount": _amount,
         "type": _type,
@@ -145,7 +146,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
             if (_currentStep > 0) const SizedBox(width: 16),
             Expanded(
               child: PrimaryButton(
-                label: _currentStep == 3 ? "Crear Rule" : "Siguiente",
+                label: _currentStep == 3 ? "Crear recurrencia" : "Siguiente",
                 onPressed: _nextPage,
               ),
             ),
@@ -167,7 +168,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Paso 1: Frecuencia",
+            "¿Cada cuánto pasa?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
@@ -194,7 +195,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
             ),
           ),
           ListTile(
-            title: const Text("Primer Vencimiento"),
+            title: const Text("¿desde cuándo?"),
             subtitle: Text(formatDate(_startDate)),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
@@ -237,7 +238,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Paso 2: Monto y Tipo",
+            "¿Qué monto normalmente?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
@@ -288,13 +289,13 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Paso 3: Detalles",
+            "¿De qué cuenta sale?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
           if (_type != "income")
             AccountPicker(
-              label: "Cuenta de Salida",
+              label: "¿De qué cuenta sale?",
               items: accs,
               value: _fromAccountId,
               onSelected: (i) => setState(() => _fromAccountId = i.id),
@@ -302,7 +303,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 16),
           if (_type == "income" || _type == "transfer")
             AccountPicker(
-              label: "Cuenta de Entrada",
+              label: "¿En qué cuenta entra?",
               items: accs,
               value: _toAccountId,
               onSelected: (i) => setState(() => _toAccountId = i.id),
@@ -310,7 +311,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 16),
           if (_type != "transfer")
             CategoryPicker(
-              label: "Categoría",
+              label: "¿En qué categoría?",
               items: cats,
               value: _categoryId,
               onSelected: (i) => setState(() => _categoryId = i.id),
