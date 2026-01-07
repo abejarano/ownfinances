@@ -46,11 +46,13 @@ import "package:ownfinances/features/transactions/domain/use_cases/create_transa
 import "package:ownfinances/features/transactions/domain/use_cases/delete_transaction_use_case.dart";
 import "package:ownfinances/features/transactions/domain/use_cases/list_transactions_use_case.dart";
 import "package:ownfinances/features/transactions/domain/use_cases/update_transaction_use_case.dart";
+import "package:ownfinances/features/transactions/domain/use_cases/restore_transaction_use_case.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/reports/data/datasources/reports_remote_data_source.dart";
 import "package:ownfinances/features/reports/data/repositories/reports_repository_impl.dart";
 import "package:ownfinances/features/reports/domain/repositories/reports_repository.dart";
 import "package:ownfinances/features/reports/domain/use_cases/get_summary_use_case.dart";
+import "package:ownfinances/features/reports/domain/use_cases/get_balances_use_case.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/budgets/data/datasources/budget_remote_data_source.dart";
 import "package:ownfinances/features/budgets/data/repositories/budget_repository_impl.dart";
@@ -165,6 +167,7 @@ class AppProviders extends StatelessWidget {
             UpdateTransactionUseCase(context.read<TransactionRepository>()),
             DeleteTransactionUseCase(context.read<TransactionRepository>()),
             ClearTransactionUseCase(context.read<TransactionRepository>()),
+            RestoreTransactionUseCase(context.read<TransactionRepository>()),
           )..load(),
         ),
         Provider<ReportsRepository>(
@@ -175,6 +178,7 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider<ReportsController>(
           create: (context) => ReportsController(
             GetSummaryUseCase(context.read<ReportsRepository>()),
+            GetBalancesUseCase(context.read<ReportsRepository>()),
           )..load(),
         ),
         Provider<BudgetRepository>(

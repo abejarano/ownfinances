@@ -65,18 +65,18 @@ export function validateTransactionPayload(
       data?.type &&
       !Object.values(TransactionType).includes(data.type as TransactionType)
     ) {
-      return "Tipo de transaccion invalido";
+      return "Tipo de transacao invalido";
     }
     if (!isUpdate && !data?.type) {
-      return "Falta el tipo de transaccion";
+      return "Falta o tipo de transacao";
     }
     if (!isUpdate && data?.amount === undefined) {
-      return "Falta el monto";
+      return "Falta o valor";
     }
     for (const error of compiler.Errors(payload)) {
-      if (error.path === "/type") return "Tipo de transaccion invalido";
-      if (error.path === "/amount") return "Falta el monto";
-      if (error.path === "/status") return "Estado invalido";
+      if (error.path === "/type") return "Tipo de transacao invalido";
+      if (error.path === "/amount") return "Falta o valor";
+      if (error.path === "/status") return "Status invalido";
     }
     return "Payload invalido";
   }
@@ -95,22 +95,22 @@ export function validateTransactionPayload(
     data.type &&
     !Object.values(TransactionType).includes(data.type as TransactionType)
   ) {
-    return "Tipo de transaccion invalido";
+    return "Tipo de transacao invalido";
   }
   if (data.amount !== undefined && data.amount <= 0) {
-    return "El monto debe ser mayor que 0";
+    return "O valor deve ser maior que 0";
   }
   if (!isUpdate && data.amount === undefined) {
-    return "Falta el monto";
+    return "Falta o valor";
   }
   if (data.status && data.status !== "pending" && data.status !== "cleared") {
-    return "Estado invalido";
+    return "Status invalido";
   }
 
   if (data.date) {
     const date = new Date(data.date);
     if (Number.isNaN(date.getTime())) {
-      return "Fecha invalida";
+      return "Data invalida";
     }
   }
 

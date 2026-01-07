@@ -36,7 +36,7 @@ class GoalsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Tus metas",
+                    "Suas metas",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -134,46 +134,46 @@ class GoalsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    goal == null ? "Nueva meta" : "Editar meta",
+                    goal == null ? "Nova meta" : "Editar meta",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   if (step == 0) ...[
                     Text(
-                      "Para que es?",
+                      "Para que e?",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     TextField(
                       controller: nameController,
                       decoration: const InputDecoration(
-                        labelText: "Nombre de la meta",
+                        labelText: "Nome da meta",
                       ),
                     ),
                   ],
                   if (step == 1) ...[
                     Text(
-                      "Cuanto quieres juntar?",
+                      "Quanto quer juntar?",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     MoneyInput(
-                      label: "Monto objetivo",
+                      label: "Valor alvo",
                       controller: targetController,
                     ),
                   ],
                   if (step == 2) ...[
                     Text(
-                      "Para cuando?",
+                      "Para quando?",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text("Fecha objetivo (opcional)"),
+                      title: const Text("Data alvo (opcional)"),
                       subtitle: Text(
                         targetDate == null
-                            ? "Sin fecha"
+                            ? "Sem data"
                             : formatDate(targetDate!),
                       ),
                       trailing: const Icon(Icons.calendar_today),
@@ -197,21 +197,21 @@ class GoalsScreen extends StatelessWidget {
                       ),
                     const SizedBox(height: AppSpacing.sm),
                     MoneyInput(
-                      label: "Aporte mensual (opcional)",
+                      label: "Aporte mensal (opcional)",
                       controller: monthlyController,
                     ),
                   ],
                   if (step == 3) ...[
                     Text(
-                      "Desde que cuenta ahorras?",
+                      "De qual conta voce poupa?",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     if (accountItems.isEmpty)
-                      const Text("No tienes cuentas activas.")
+                      const Text("Voce nao tem contas ativas.")
                     else
                       AccountPicker(
-                        label: "Cuenta (opcional)",
+                        label: "Conta (opcional)",
                         items: accountItems,
                         value: accountId,
                         onSelected: (item) =>
@@ -231,14 +231,14 @@ class GoalsScreen extends StatelessWidget {
                       if (step > 0)
                         Expanded(
                           child: SecondaryButton(
-                            label: "Atras",
+                            label: "Voltar",
                             onPressed: () => setState(() => step -= 1),
                           ),
                         ),
                       if (step > 0) const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: PrimaryButton(
-                          label: step == 3 ? "Guardar" : "Listo",
+                          label: step == 3 ? "Salvar" : "Pronto",
                           onPressed: isSaving
                               ? null
                               : () async {
@@ -256,14 +256,14 @@ class GoalsScreen extends StatelessWidget {
                                   if (name.isEmpty) {
                                     showStandardSnackbar(
                                       context,
-                                      "Falta el nombre",
+                                      "Falta o nome",
                                     );
                                     return;
                                   }
                                   if (targetAmount <= 0) {
                                     showStandardSnackbar(
                                       context,
-                                      "El monto debe ser mayor que 0",
+                                      "O valor deve ser maior que 0",
                                     );
                                     return;
                                   }
@@ -374,13 +374,13 @@ class GoalsScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  MoneyInput(label: "Monto", controller: amountController),
+                  MoneyInput(label: "Valor", controller: amountController),
                   const SizedBox(height: AppSpacing.sm),
                   if (accountItems.isEmpty)
-                    const Text("No tienes cuentas activas.")
+                    const Text("Voce nao tem contas ativas.")
                   else
                     AccountPicker(
-                      label: "Cuenta",
+                      label: "Conta",
                       items: accountItems,
                       value: accountId,
                       onSelected: (item) => setState(() => accountId = item.id),
@@ -411,7 +411,7 @@ class GoalsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
-                    label: "Guardar",
+                    label: "Salvar",
                     onPressed: accountItems.isEmpty
                         ? null
                         : () => Navigator.of(context).pop(true),
@@ -429,7 +429,7 @@ class GoalsScreen extends StatelessWidget {
     final amount = parseMoney(amountController.text.trim());
     if (amount <= 0) {
       if (context.mounted) {
-        showStandardSnackbar(context, "El monto debe ser mayor que 0");
+        showStandardSnackbar(context, "O valor deve ser maior que 0");
       }
       return;
     }
@@ -529,7 +529,7 @@ class _GoalCard extends StatelessWidget {
               ),
             if (projection?.targetDateEstimated != null)
               Text(
-                "Fecha estimada ${formatDate(projection!.targetDateEstimated!)}",
+                "Data estimada ${formatDate(projection!.targetDateEstimated!)}",
                 style: const TextStyle(color: AppColors.muted),
               ),
             if (goal.targetDate != null)
@@ -549,7 +549,7 @@ class _GoalCard extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: SecondaryButton(
-                    label: "Ver detalles",
+                    label: "Ver detalhes",
                     onPressed: onEdit,
                   ),
                 ),

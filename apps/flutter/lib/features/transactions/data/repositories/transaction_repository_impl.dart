@@ -43,4 +43,10 @@ class TransactionRepositoryImpl implements TransactionRepository {
     final result = await remote.clear(id);
     return Transaction.fromJson(result);
   }
+
+  @override
+  Future<Transaction> restore(String id) async {
+    final result = await remote.restore(id);
+    return Transaction.fromJson(result);
+  }
 }

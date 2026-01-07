@@ -55,7 +55,8 @@ export function registerRoutes(app: any, deps: AppDeps) {
     if (!transactionsController) {
       transactionsController = new TransactionsController(
         deps.transactionRepo,
-        deps.transactionsService
+        deps.transactionsService,
+        deps.reportsService
       );
     }
     return transactionsController;
@@ -204,6 +205,11 @@ export function registerRoutes(app: any, deps: AppDeps) {
       if (authError) return authError;
       return getTransactionsController().clear(ctx);
     })
+    .post("/transactions/:id/restore", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().restore(ctx);
+    })
     .get("/budgets", async (ctx: any) => {
       const authError = await requireAuth(ctx);
       if (authError) return authError;
@@ -242,6 +248,11 @@ export function registerRoutes(app: any, deps: AppDeps) {
       const authError = await requireAuth(ctx);
       if (authError) return authError;
       return getReportsController().summary(ctx);
+    })
+    .get("/reports/balances", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getReportsController().balances(ctx);
     })
     .get("/debts", async (ctx: any) => {
       const authError = await requireAuth(ctx);

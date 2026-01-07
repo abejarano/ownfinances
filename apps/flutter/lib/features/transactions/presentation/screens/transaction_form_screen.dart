@@ -17,6 +17,7 @@ import "package:ownfinances/features/recurring/application/controllers/recurring
 import "package:ownfinances/features/templates/application/controllers/templates_controller.dart";
 import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
+import "package:ownfinances/features/categories/domain/entities/category.dart";
 
 class TransactionFormScreen extends StatefulWidget {
   final String? initialType;
@@ -126,14 +127,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             child: Row(
               children: [
                 PrimaryButton(
-                  label: _step == 2 ? "Guardar" : "Listo",
+                  label: _step == 2 ? "Salvar" : "Avancar",
                   onPressed: _step == 2 ? _save : details.onStepContinue,
                   fullWidth: false,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 if (_step > 0)
                   SecondaryButton(
-                    label: "Atrás",
+                    label: "Voltar",
                     onPressed: details.onStepCancel,
                     fullWidth: false,
                   ),
@@ -155,7 +156,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   onTap: () => _setType("expense"),
                 ),
                 _TypeCard(
-                  label: "Registrar ingreso",
+                  label: "Registrar receita",
                   selected: _type == "income",
                   onTap: () => _setType("income"),
                 ),
@@ -168,16 +169,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ),
           ),
           Step(
-            title: const Text("Monto"),
+            title: const Text("Valor"),
             isActive: _step >= 1,
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                MoneyInput(label: "Monto", controller: _amountController),
+                MoneyInput(label: "Valor", controller: _amountController),
                 const SizedBox(height: AppSpacing.md),
                 if (_type != "income")
                   AccountPicker(
-                    label: "Cuenta de salida",
+                    label: "Conta de saida",
                     items: accountItems,
                     value: _fromAccountId,
                     onSelected: (item) =>
@@ -186,7 +187,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 if (_type == "income" || _type == "transfer") ...[
                   const SizedBox(height: AppSpacing.md),
                   AccountPicker(
-                    label: "Cuenta de entrada",
+                    label: "Conta de entrada",
                     items: accountItems,
                     value: _toAccountId,
                     onSelected: (item) =>
@@ -196,7 +197,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 if (_type != "transfer") ...[
                   const SizedBox(height: AppSpacing.md),
                   CategoryPicker(
-                    label: "Categoría",
+                    label: "Categoria",
                     items: categoryItems,
                     value: _categoryId,
                     onSelected: (item) => setState(() => _categoryId = item.id),
@@ -213,7 +214,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               children: [
                 if (summaryLine != null)
                   InlineSummaryCard(
-                    title: "Categoría seleccionada",
+                    title: "Categoria selecionada",
                     planned: formatMoney(summaryLine.planned),
                     actual: formatMoney(summaryLine.actual),
                     remaining: formatMoney(summaryLine.remaining),
@@ -221,18 +222,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 const SizedBox(height: AppSpacing.md),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text("Fecha"),
+                  title: const Text("Data"),
                   subtitle: Text(formatDate(_date)),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: _pickDate,
                 ),
                 DropdownButtonFormField<String>(
                   value: _status,
-                  decoration: const InputDecoration(labelText: "Estado"),
+                  decoration: const InputDecoration(labelText: "Status"),
                   items: const [
                     DropdownMenuItem(
                       value: "pending",
-                      child: Text("Pendiente"),
+                      child: Text("Pendente"),
                     ),
                     DropdownMenuItem(
                       value: "cleared",
@@ -246,7 +247,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text("Repetir (Recurrencia)"),
+                  title: const Text("Repetir (Recorrencia)"),
                   value: _isRecurring,
                   onChanged: (v) => setState(() => _isRecurring = v),
                 ),
@@ -258,7 +259,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       items: const [
                         DropdownMenuItem(
                           value: "monthly",
-                          child: Text("Mensual"),
+                          child: Text("Mensal"),
                         ),
                         DropdownMenuItem(
                           value: "weekly",
@@ -269,12 +270,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       onChanged: (v) =>
                           setState(() => _recurrenceFrequency = v!),
                       decoration: const InputDecoration(
-                        labelText: "Frecuencia",
+                        labelText: "Frequencia",
                       ),
                     ),
                   ),
                 SwitchListTile(
-                  title: const Text("Guardar como Plantilla"),
+                  title: const Text("Salvar como modelo"),
                   value: _saveAsTemplate,
                   onChanged: (v) => setState(() => _saveAsTemplate = v),
                 ),
@@ -282,7 +283,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   TextField(
                     controller: _templateNameController,
                     decoration: const InputDecoration(
-                      labelText: "Nombre de la plantilla (Ej: Uber Casa)",
+                      labelText: "Nome do modelo (Ex: Uber Casa)",
                     ),
                   ),
                 TextField(
@@ -294,7 +295,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 TextField(
                   controller: _tagsController,
                   decoration: const InputDecoration(
-                    labelText: "Tags (separadas por coma)",
+                    labelText: "Tags (separadas por virgula)",
                   ),
                 ),
               ],
@@ -341,25 +342,25 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _save() async {
     final amount = parseMoney(_amountController.text);
     if (amount <= 0) {
-      showStandardSnackbar(context, "El monto debe ser mayor que 0");
+      showStandardSnackbar(context, "O valor deve ser maior que 0");
       return;
     }
     if (_type == "transfer") {
       if (_fromAccountId == null || _toAccountId == null) {
-        showStandardSnackbar(context, "Falta elegir una cuenta");
+        showStandardSnackbar(context, "Falta escolher uma conta");
         return;
       }
     } else {
       if (_categoryId == null) {
-        showStandardSnackbar(context, "Falta elegir una categoría");
+        showStandardSnackbar(context, "Falta escolher uma categoria");
         return;
       }
       if (_type == "expense" && _fromAccountId == null) {
-        showStandardSnackbar(context, "Falta elegir una cuenta");
+        showStandardSnackbar(context, "Falta escolher uma conta");
         return;
       }
       if (_type == "income" && _toAccountId == null) {
-        showStandardSnackbar(context, "Falta elegir una cuenta");
+        showStandardSnackbar(context, "Falta escolher uma conta");
         return;
       }
     }
@@ -390,7 +391,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       }
       await context.read<ReportsController>().load();
       if (mounted) {
-        showStandardSnackbar(context, "Transacción actualizada");
+        showStandardSnackbar(context, "Transacao atualizada");
         context.pop();
       }
       return;
@@ -436,12 +437,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       final controller = context.read<RecurringController>();
       final created = await controller.create(recurringPayload);
       if (mounted && created != null) {
-        showStandardSnackbar(context, "Regla de recurrencia creada");
+        showStandardSnackbar(context, "Regra de recorrencia criada");
         context.go("/transactions");
       } else if (mounted) {
         showStandardSnackbar(
           context,
-          controller.state.error ?? "Error al crear recurrencia",
+          controller.state.error ?? "Erro ao criar recorrencia",
         );
       }
       return;
@@ -461,8 +462,31 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     final summary = context.read<ReportsController>().state.summary;
     if (_type == "expense" && _categoryId != null && summary != null) {
-      // Summary logic
-      // ...
+      final summaryMap = {
+        for (final item in summary.byCategory) item.categoryId: item,
+      };
+      final line = summaryMap[_categoryId];
+      final categoryName = context
+          .read<CategoriesController>()
+          .state
+          .items
+          .firstWhere(
+            (cat) => cat.id == _categoryId,
+            orElse: () => const Category(id: "", name: "", kind: ""),
+          )
+          .name;
+      if (line != null) {
+        final remaining = formatMoney(line.remaining);
+        final name = categoryName.isEmpty ? "categoria" : categoryName;
+        showStandardSnackbar(
+          context,
+          "Gasto registrado. Restam $remaining em $name este mes.",
+        );
+      } else {
+        showStandardSnackbar(context, "Registrado");
+      }
+    } else {
+      showStandardSnackbar(context, "Registrado");
     }
 
     if (context.mounted) {
@@ -476,16 +500,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       builder: (context) => AlertDialog(
         title: const Text("Editar repetición"),
         content: const Text(
-          "Esta transacción es parte de una serie. ¿Cómo quieres aplicar los cambios?",
+          "Esta transacao faz parte de uma serie. Como quer aplicar as mudancas?",
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, "this"),
-            child: const Text("Solo esta"),
+            child: const Text("So esta"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, "future"),
-            child: const Text("Esta y futuras"),
+            child: const Text("Esta e futuras"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, "all"),
@@ -531,7 +555,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     } else if (mode == "all") {
       showStandardSnackbar(
         context,
-        "Editar todas no implementado aún. Editando solo esta.",
+        "Editar todas ainda nao implementado. Editando so esta.",
       );
       await context.read<TransactionsController>().update(
         widget.initialTransaction!.id,

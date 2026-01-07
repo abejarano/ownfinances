@@ -31,4 +31,6 @@ abstract class TransactionRepository {
   Future<void> delete(String id);
 
   Future<Transaction> clear(String id);
+
+  Future<Transaction> restore(String id);
 }

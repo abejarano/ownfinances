@@ -8,6 +8,7 @@ import "package:ownfinances/features/transactions/domain/use_cases/create_transa
 import "package:ownfinances/features/transactions/domain/use_cases/delete_transaction_use_case.dart";
 import "package:ownfinances/features/transactions/domain/use_cases/list_transactions_use_case.dart";
 import "package:ownfinances/features/transactions/domain/use_cases/update_transaction_use_case.dart";
+import "package:ownfinances/features/transactions/domain/use_cases/restore_transaction_use_case.dart";
 
 class TransactionsController extends ChangeNotifier {
   final ListTransactionsUseCase listUseCase;
@@ -15,6 +16,7 @@ class TransactionsController extends ChangeNotifier {
   final UpdateTransactionUseCase updateUseCase;
   final DeleteTransactionUseCase deleteUseCase;
   final ClearTransactionUseCase clearUseCase;
+  final RestoreTransactionUseCase restoreUseCase;
   TransactionsState _state = TransactionsState.initial();
 
   TransactionsController(
@@ -23,6 +25,7 @@ class TransactionsController extends ChangeNotifier {
     this.updateUseCase,
     this.deleteUseCase,
     this.clearUseCase,
+    this.restoreUseCase,
   );
 
   TransactionsState get state => _state;
@@ -98,6 +101,19 @@ class TransactionsController extends ChangeNotifier {
       _state = _state.copyWith(items: next);
       notifyListeners();
       return cleared;
+    } catch (error) {
+      _state = _state.copyWith(error: _message(error));
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<Transaction?> restore(String id) async {
+    try {
+      final restored = await restoreUseCase.execute(id);
+      _state = _state.copyWith(items: [restored, ..._state.items]);
+      notifyListeners();
+      return restored;
     } catch (error) {
       _state = _state.copyWith(error: _message(error));
       notifyListeners();

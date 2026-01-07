@@ -26,6 +26,7 @@ export type TransactionPrimitives = {
   clearedAt?: Date | null;
   createdAt: Date;
   updatedAt?: Date;
+  deletedAt?: Date | null;
   recurringRuleId?: string;
 };
 
@@ -75,6 +76,7 @@ export class Transaction extends AggregateRoot {
       transactionId: createMongoId(),
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     });
   }
 

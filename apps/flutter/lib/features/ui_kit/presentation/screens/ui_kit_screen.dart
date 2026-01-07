@@ -46,7 +46,7 @@ class _UiKitScreenState extends State<UiKitScreen> {
         children: [
           Text("Copy", style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
-          const Text("Pendiente / Confirmado"),
+          const Text("Pendente / Confirmado"),
           const SizedBox(height: AppSpacing.sm),
           Text("Hoje: ${formatDate(DateTime.now())}"),
           const SizedBox(height: AppSpacing.lg),
@@ -57,7 +57,7 @@ class _UiKitScreenState extends State<UiKitScreen> {
             onPressed: () {
               showStandardSnackbar(
                 context,
-                "Gasto registrado. Te quedan R\$ 120 en Alimentacao este mes.",
+                "Gasto registrado. Restam R\$ 120 em Alimentacao este mes.",
               );
             },
           ),
@@ -67,7 +67,7 @@ class _UiKitScreenState extends State<UiKitScreen> {
             onPressed: () {
               showUndoSnackbar(
                 context,
-                "Transferencia eliminada.",
+                "Transferencia removida.",
                 () {},
               );
             },

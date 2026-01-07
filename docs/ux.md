@@ -14,21 +14,21 @@ Este documento es ley. Todo UI debe cumplirlo.
 ## B) Copy (textos exactos)
 Botones:
 - Registrar gasto
-- Registrar ingreso
+- Registrar receita
 - Transferir
-- Guardar
-- Listo
+- Salvar
+- Pronto
 
 Estados:
 - Pendiente
 - Confirmado
 
 Mensajes:
-- Gasto registrado. Te quedan R$ X en {Categoría} este mes.
+- Gasto registrado. Restam R$ X em {Categoria} este mes.
 
 Errores:
-- Falta elegir una cuenta
-- El monto debe ser mayor que 0
+- Falta escolher uma conta
+- O valor deve ser maior que 0
 
 ## C) Formato de dinero y fechas
 - Moneda BRL por defecto, formato pt-BR en UI (R$ 1.234,56)

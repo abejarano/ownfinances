@@ -45,8 +45,8 @@ export class TransactionsService {
 
   async update(userId: string, id: string, payload: TransactionUpdatePayload) {
     const existing = await this.transactions.one({ userId, transactionId: id });
-    if (!existing) {
-      return { error: "Transaccion no encontrada", status: 404 };
+    if (!existing || existing.toPrimitives().deletedAt) {
+      return { error: "Transacao nao encontrada", status: 404 };
     }
 
     const existingPrimitives = existing.toPrimitives();
@@ -73,15 +73,15 @@ export class TransactionsService {
     await this.transactions.upsert(Transaction.fromPrimitives(merged));
     const updated = await this.transactions.one({ userId, transactionId: id });
     if (!updated) {
-      return { error: "Transaccion no encontrada", status: 404 };
+      return { error: "Transacao nao encontrada", status: 404 };
     }
     return { transaction: updated.toPrimitives() };
   }
 
   async clear(userId: string, id: string) {
     const existing = await this.transactions.one({ userId, transactionId: id });
-    if (!existing) {
-      return { error: "Transaccion no encontrada", status: 404 };
+    if (!existing || existing.toPrimitives().deletedAt) {
+      return { error: "Transacao nao encontrada", status: 404 };
     }
 
     const existingPrimitives = existing.toPrimitives();
@@ -96,7 +96,31 @@ export class TransactionsService {
     await this.transactions.upsert(cleared);
     const updated = await this.transactions.one({ userId, transactionId: id });
     if (!updated) {
-      return { error: "Transaccion no encontrada", status: 404 };
+      return { error: "Transacao nao encontrada", status: 404 };
+    }
+    return { transaction: updated.toPrimitives() };
+  }
+
+  async remove(userId: string, id: string) {
+    const existing = await this.transactions.one({ userId, transactionId: id });
+    if (!existing || existing.toPrimitives().deletedAt) {
+      return { error: "Transacao nao encontrada", status: 404 };
+    }
+    const deleted = await this.transactions.delete(userId, id);
+    if (!deleted) {
+      return { error: "Transacao nao encontrada", status: 404 };
+    }
+    return { ok: true };
+  }
+
+  async restore(userId: string, id: string) {
+    const restored = await this.transactions.restore(userId, id);
+    if (!restored) {
+      return { error: "Transacao nao encontrada", status: 404 };
+    }
+    const updated = await this.transactions.one({ userId, transactionId: id });
+    if (!updated) {
+      return { error: "Transacao nao encontrada", status: 404 };
     }
     return { transaction: updated.toPrimitives() };
   }
@@ -108,19 +132,19 @@ export class TransactionsService {
   ): Promise<string | null> {
     const type = payload.type;
     if (type === TransactionType.Income) {
-      if (!payload.categoryId) return "Falta elegir una categoria";
-      if (!payload.toAccountId) return "Falta elegir una cuenta";
+      if (!payload.categoryId) return "Escolha uma categoria";
+      if (!payload.toAccountId) return "Escolha uma conta";
     }
     if (type === TransactionType.Expense) {
-      if (!payload.categoryId) return "Falta elegir una categoria";
-      if (!payload.fromAccountId) return "Falta elegir una cuenta";
+      if (!payload.categoryId) return "Escolha uma categoria";
+      if (!payload.fromAccountId) return "Escolha uma conta";
     }
     if (type === TransactionType.Transfer) {
       if (!payload.fromAccountId || !payload.toAccountId) {
-        return "Falta elegir cuenta de origen o destino";
+        return "Escolha uma conta";
       }
       if (payload.categoryId) {
-        return "Las transferencias no tienen categoria";
+        return "Transferencias nao tem categoria";
       }
     }
 
@@ -130,7 +154,7 @@ export class TransactionsService {
         accountId: payload.fromAccountId,
       });
       if (!account) {
-        return "Cuenta de origen no encontrada";
+        return "Conta de origem nao encontrada";
       }
     }
     if (payload.toAccountId) {
@@ -139,7 +163,7 @@ export class TransactionsService {
         accountId: payload.toAccountId,
       });
       if (!account) {
-        return "Cuenta de destino no encontrada";
+        return "Conta de destino nao encontrada";
       }
     }
 

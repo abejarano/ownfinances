@@ -72,7 +72,7 @@ class ColorPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final display = value ?? "Sin color";
+    final display = value ?? "Sem cor";
     return InkWell(
       onTap: () async {
         final selected = await showModalBottomSheet<String?>(
@@ -142,7 +142,7 @@ class IconPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = options.where((item) => item.id == value).toList();
-    final display = selected.isEmpty ? "Sin icono" : selected.first.label;
+    final display = selected.isEmpty ? "Sem icone" : selected.first.label;
     final icon = selected.isEmpty ? Icons.help_outline : selected.first.icon;
     return InkWell(
       onTap: () async {
@@ -199,7 +199,7 @@ class _PickerField extends StatelessWidget {
       },
       child: InputDecorator(
         decoration: InputDecoration(labelText: label),
-        child: Text(_labelForValue(items, value) ?? "Seleccionar"),
+        child: Text(_labelForValue(items, value) ?? "Selecionar"),
       ),
     );
   }
@@ -233,7 +233,7 @@ class _ColorPickerSheet extends StatelessWidget {
               runSpacing: AppSpacing.sm,
               children: [
                 _ColorChoice(
-                  label: "Sin color",
+                  label: "Sem cor",
                   selected: selected == null,
                   color: null,
                   onTap: () => Navigator.of(context).pop(""),
@@ -338,7 +338,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Icono", style: Theme.of(context).textTheme.titleMedium),
+            Text("Icone", style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
             TextField(
               decoration: const InputDecoration(
@@ -356,7 +356,7 @@ class _IconPickerSheetState extends State<_IconPickerSheet> {
                   if (index == 0) {
                     return ListTile(
                       leading: const Icon(Icons.clear),
-                      title: const Text("Sin icono"),
+                      title: const Text("Sem icone"),
                       onTap: () => Navigator.of(context).pop(""),
                     );
                   }

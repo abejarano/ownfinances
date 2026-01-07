@@ -48,7 +48,7 @@ class TransactionsScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "Transacciones",
+                  "Transacoes",
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -64,6 +64,18 @@ class TransactionsScreen extends StatelessWidget {
             runSpacing: AppSpacing.sm,
             children: [
               ActionChip(
+                label: const Text("Este mes"),
+                onPressed: () => _setPeriodFilter(context, filters, "current"),
+              ),
+              ActionChip(
+                label: const Text("Mes passado"),
+                onPressed: () => _setPeriodFilter(context, filters, "previous"),
+              ),
+              ActionChip(
+                label: const Text("7 dias"),
+                onPressed: () => _setPeriodFilter(context, filters, "last7"),
+              ),
+              ActionChip(
                 label: Text("Periodo: $currentMonth"),
                 onPressed: () => _pickMonth(context, filters),
               ),
@@ -71,12 +83,12 @@ class TransactionsScreen extends StatelessWidget {
                 width: 160,
                 child: DropdownButtonFormField<String?>(
                   value: filters.status,
-                  decoration: const InputDecoration(labelText: "Estado"),
+                  decoration: const InputDecoration(labelText: "Status"),
                   items: const [
                     DropdownMenuItem(value: null, child: Text("Todos")),
                     DropdownMenuItem(
                       value: "pending",
-                      child: Text("Pendiente"),
+                      child: Text("Pendente"),
                     ),
                     DropdownMenuItem(
                       value: "cleared",
@@ -99,7 +111,7 @@ class TransactionsScreen extends StatelessWidget {
               SizedBox(
                 width: 180,
                 child: CategoryPicker(
-                  label: "Categoría",
+                  label: "Categoria",
                   items: categoryItems,
                   value: filters.categoryId ?? "",
                   onSelected: (item) {
@@ -119,7 +131,7 @@ class TransactionsScreen extends StatelessWidget {
               SizedBox(
                 width: 180,
                 child: AccountPicker(
-                  label: "Cuenta",
+                  label: "Conta",
                   items: accountItems,
                   value: filters.accountId ?? "",
                   onSelected: (item) {
@@ -140,82 +152,83 @@ class TransactionsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Expanded(
-            child: ListView.separated(
-              itemCount: txState.items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final item = txState.items[index];
-                final categoryName = categoryMap[item.categoryId];
-                final fromName = accountMap[item.fromAccountId];
-                final toName = accountMap[item.toAccountId];
-                final title = _titleFor(item.type, categoryName);
-                final subtitle =
-                    "${item.status == "cleared" ? "Confirmado" : "Pendiente"} • ${formatDate(item.date)}";
-                final accountLabel = item.type == "income"
-                    ? (toName ?? "—")
-                    : (fromName ?? "—");
-                final amount = formatMoney(item.amount);
+            child: txState.items.isEmpty
+                ? const Center(child: Text("Nenhuma transacao neste periodo."))
+                : ListView.separated(
+                    itemCount: txState.items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = txState.items[index];
+                      final categoryName = categoryMap[item.categoryId];
+                      final fromName = accountMap[item.fromAccountId];
+                      final toName = accountMap[item.toAccountId];
+                      final title = _titleFor(item.type, categoryName);
+                      final subtitle =
+                          "${item.status == "cleared" ? "Confirmado" : "Pendente"} • ${formatDate(item.date)}";
+                      final accountLabel = item.type == "income"
+                          ? (toName ?? "—")
+                          : (fromName ?? "—");
+                      final amount = formatMoney(item.amount);
 
-                return Dismissible(
-                  key: ValueKey(item.id),
-                  background: _swipeBackground(
-                    Icons.check_circle,
-                    "Confirmar",
-                    AppColors.secondary,
-                    Alignment.centerLeft,
-                  ),
-                  secondaryBackground: _swipeBackground(
-                    Icons.delete,
-                    "Eliminar",
-                    Colors.redAccent,
-                    Alignment.centerRight,
-                  ),
-                  confirmDismiss: (direction) async {
-                    if (direction == DismissDirection.startToEnd) {
-                      await txController.clear(item.id);
-                      await context.read<ReportsController>().load();
-                      return false;
-                    }
-                    return true;
-                  },
-                  onDismissed: (direction) async {
-                    final deleted = item;
-                    final ok = await txController.remove(item.id);
-                    if (!ok && context.mounted) {
-                      showStandardSnackbar(context, "Error al eliminar");
-                      return;
-                    }
-                    await context.read<ReportsController>().load();
-                    if (context.mounted) {
-                      showUndoSnackbar(
-                        context,
-                        "Transacción eliminada",
-                        () async {
-                          final payload = _payloadFromTransaction(deleted);
-                          await txController.create(payload);
-                          await context.read<ReportsController>().load();
+                      return Dismissible(
+                        key: ValueKey(item.id),
+                        background: _swipeBackground(
+                          Icons.check_circle,
+                          "Confirmar",
+                          AppColors.secondary,
+                          Alignment.centerLeft,
+                        ),
+                        secondaryBackground: _swipeBackground(
+                          Icons.delete,
+                          "Excluir",
+                          Colors.redAccent,
+                          Alignment.centerRight,
+                        ),
+                        confirmDismiss: (direction) async {
+                          if (direction == DismissDirection.startToEnd) {
+                            await txController.clear(item.id);
+                            await context.read<ReportsController>().load();
+                            return false;
+                          }
+                          return true;
                         },
+                        onDismissed: (direction) async {
+                          final deleted = item;
+                          final ok = await txController.remove(item.id);
+                          if (!ok && context.mounted) {
+                            showStandardSnackbar(context, "Erro ao remover");
+                            return;
+                          }
+                          await context.read<ReportsController>().load();
+                          if (context.mounted) {
+                            showUndoSnackbar(
+                              context,
+                              "Transacao removida",
+                              () async {
+                                await txController.restore(deleted.id);
+                                await context.read<ReportsController>().load();
+                              },
+                            );
+                          }
+                        },
+                        child: ListTile(
+                          title: Text(title),
+                          subtitle: Text(
+                            item.type == "transfer"
+                                ? "${fromName ?? "—"} → ${toName ?? "—"} • $subtitle"
+                                : "${categoryName ?? "Sem categoria"} • $accountLabel • $subtitle",
+                          ),
+                          trailing: Text(
+                            _amountPrefix(item.type) + amount,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          onTap: () {
+                            context.push("/transactions/edit", extra: item);
+                          },
+                        ),
                       );
-                    }
-                  },
-                  child: ListTile(
-                    title: Text(title),
-                    subtitle: Text(
-                      item.type == "transfer"
-                          ? "${fromName ?? "—"} → ${toName ?? "—"} • $subtitle"
-                          : "${categoryName ?? "Sin categoría"} • $accountLabel • $subtitle",
-                    ),
-                    trailing: Text(
-                      _amountPrefix(item.type) + amount,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    onTap: () {
-                      context.push("/transactions/edit", extra: item);
                     },
                   ),
-                );
-              },
-            ),
           ),
           const SizedBox(height: AppSpacing.md),
           PrimaryButton(
@@ -224,7 +237,7 @@ class TransactionsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           SecondaryButton(
-            label: "Registrar ingreso",
+            label: "Registrar receita",
             onPressed: () => context.go("/transactions/new?type=income"),
           ),
         ],
@@ -233,30 +246,15 @@ class TransactionsScreen extends StatelessWidget {
   }
 
   String _titleFor(String type, String? categoryName) {
-    if (type == "income") return "Entró ${categoryName ?? ""}".trim();
-    if (type == "transfer") return "Transferí";
-    return "Salió ${categoryName ?? ""}".trim();
+    if (type == "income") return "Entrou ${categoryName ?? ""}".trim();
+    if (type == "transfer") return "Transferi";
+    return "Saiu ${categoryName ?? ""}".trim();
   }
 
   String _amountPrefix(String type) {
     if (type == "income") return "+ ";
     if (type == "transfer") return "";
     return "- ";
-  }
-
-  Map<String, dynamic> _payloadFromTransaction(Transaction tx) {
-    return {
-      "type": tx.type,
-      "date": tx.date.toIso8601String(),
-      "amount": tx.amount,
-      "currency": tx.currency,
-      "categoryId": tx.categoryId,
-      "fromAccountId": tx.fromAccountId,
-      "toAccountId": tx.toAccountId,
-      "note": tx.note,
-      "tags": tx.tags.isEmpty ? null : tx.tags,
-      "status": tx.status,
-    };
   }
 
   Widget _swipeBackground(
@@ -294,6 +292,38 @@ class TransactionsScreen extends StatelessWidget {
     if (selected == null) return;
     final start = DateTime(selected.year, selected.month, 1);
     final end = DateTime(selected.year, selected.month + 1, 0, 23, 59, 59);
+    context.read<TransactionsController>().setFilters(
+      TransactionFilters(
+        dateFrom: start,
+        dateTo: end,
+        categoryId: filters.categoryId,
+        accountId: filters.accountId,
+        status: filters.status,
+      ),
+    );
+  }
+
+  void _setPeriodFilter(
+    BuildContext context,
+    TransactionFilters filters,
+    String preset,
+  ) {
+    final now = DateTime.now();
+    DateTime start;
+    DateTime end;
+
+    if (preset == "current") {
+      start = DateTime(now.year, now.month, 1);
+      end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    } else if (preset == "previous") {
+      final previous = DateTime(now.year, now.month - 1, 1);
+      start = previous;
+      end = DateTime(previous.year, previous.month + 1, 0, 23, 59, 59);
+    } else {
+      start = DateTime(now.year, now.month, now.day - 6);
+      end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    }
+
     context.read<TransactionsController>().setFilters(
       TransactionFilters(
         dateFrom: start,

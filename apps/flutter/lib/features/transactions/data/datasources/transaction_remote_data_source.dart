@@ -45,4 +45,8 @@ class TransactionRemoteDataSource {
   Future<Map<String, dynamic>> clear(String id) {
     return apiClient.post("/transactions/$id/clear", {});
   }
+
+  Future<Map<String, dynamic>> restore(String id) {
+    return apiClient.post("/transactions/$id/restore", {});
+  }
 }

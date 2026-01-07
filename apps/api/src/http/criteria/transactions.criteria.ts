@@ -10,6 +10,11 @@ export function buildTransactionsCriteria(
       ["operator", Operator.EQUAL],
       ["value", userId],
     ]),
+    new Map<string, FilterInputValue>([
+      ["field", "deletedAt"],
+      ["operator", Operator.EQUAL],
+      ["value", null],
+    ]),
   ];
 
   if (query.dateFrom && query.dateTo) {

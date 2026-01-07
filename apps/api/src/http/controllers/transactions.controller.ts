@@ -8,11 +8,13 @@ import type {
   TransactionCreatePayload,
   TransactionUpdatePayload,
 } from "../validation/transactions.validation";
+import type { ReportsService } from "../../services/reports_service";
 
 export class TransactionsController {
   constructor(
     private readonly repo: TransactionMongoRepository,
-    private readonly service: TransactionsService
+    private readonly service: TransactionsService,
+    private readonly reports: ReportsService
   ) {}
 
   async list({
@@ -36,17 +38,24 @@ export class TransactionsController {
     body,
     set,
     userId,
+    query,
   }: {
     body: TransactionCreatePayload;
     set: { status: number };
     userId?: string;
+    query?: Record<string, string | undefined>;
   }) {
     const { transaction, error } = await this.service.create(
       userId ?? "",
       body
     );
     if (error) return badRequest(set, error);
-    return transaction!;
+    const impact = await this._impactFor(
+      userId ?? "",
+      transaction!,
+      query
+    );
+    return impact ? { ...transaction!, impact } : transaction!;
   }
 
   async getById({
@@ -62,7 +71,9 @@ export class TransactionsController {
       userId: userId ?? "",
       transactionId: params.id,
     });
-    if (!transaction) return notFound(set, "Transaccion no encontrada");
+    if (!transaction || transaction.toPrimitives().deletedAt) {
+      return notFound(set, "Transacao nao encontrada");
+    }
     return transaction.toPrimitives();
   }
 
@@ -71,11 +82,13 @@ export class TransactionsController {
     body,
     set,
     userId,
+    query,
   }: {
     params: { id: string };
     body: TransactionUpdatePayload;
     set: { status: number };
     userId?: string;
+    query?: Record<string, string | undefined>;
   }) {
     const { transaction, error, status } = await this.service.update(
       userId ?? "",
@@ -86,31 +99,53 @@ export class TransactionsController {
       if (status === 404) return notFound(set, error);
       return badRequest(set, error);
     }
-    return transaction!;
+    const impact = await this._impactFor(
+      userId ?? "",
+      transaction!,
+      query
+    );
+    return impact ? { ...transaction!, impact } : transaction!;
   }
 
   async remove({
     params,
     set,
     userId,
+    query,
   }: {
     params: { id: string };
     set: { status: number };
     userId?: string;
+    query?: Record<string, string | undefined>;
   }) {
-    const deleted = await this.repo.delete(userId ?? "", params.id);
-    if (!deleted) return notFound(set, "Transaccion no encontrada");
-    return { ok: true };
+    const existing = await this.repo.one({
+      userId: userId ?? "",
+      transactionId: params.id,
+    });
+    const { ok, error, status } = await this.service.remove(
+      userId ?? "",
+      params.id
+    );
+    if (error) {
+      if (status === 404) return notFound(set, error);
+      return badRequest(set, error);
+    }
+    const impact = existing
+      ? await this._impactFor(userId ?? "", existing.toPrimitives(), query)
+      : null;
+    return impact ? { ok: ok === true, impact } : { ok: ok === true };
   }
 
   async clear({
     params,
     set,
     userId,
+    query,
   }: {
     params: { id: string };
     set: { status: number };
     userId?: string;
+    query?: Record<string, string | undefined>;
   }) {
     const { transaction, error, status } = await this.service.clear(
       userId ?? "",
@@ -120,6 +155,55 @@ export class TransactionsController {
       if (status === 404) return notFound(set, error);
       return badRequest(set, error);
     }
-    return transaction!;
+    const impact = await this._impactFor(
+      userId ?? "",
+      transaction!,
+      query
+    );
+    return impact ? { ...transaction!, impact } : transaction!;
+  }
+
+  async restore({
+    params,
+    set,
+    userId,
+    query,
+  }: {
+    params: { id: string };
+    set: { status: number };
+    userId?: string;
+    query?: Record<string, string | undefined>;
+  }) {
+    const { transaction, error, status } = await this.service.restore(
+      userId ?? "",
+      params.id
+    );
+    if (error) {
+      if (status === 404) return notFound(set, error);
+      return badRequest(set, error);
+    }
+    const impact = await this._impactFor(
+      userId ?? "",
+      transaction!,
+      query
+    );
+    return impact ? { ...transaction!, impact } : transaction!;
+  }
+
+  private async _impactFor(
+    userId: string,
+    transaction: TransactionPrimitives,
+    query?: Record<string, string | undefined>
+  ) {
+    if (query?.impact !== "true") return null;
+    const period = (query.period as any) ?? "monthly";
+    const date = transaction.date ?? new Date();
+    const summary = await this.reports.summary(userId, period, date);
+    const balances = await this.reports.balances(userId, period, date);
+    return {
+      summary,
+      balances: balances.balances,
+      range: balances.range,
+    };
   }
 }

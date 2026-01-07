@@ -4,8 +4,10 @@ import "package:go_router/go_router.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/accounts/domain/entities/account.dart";
+import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -14,10 +16,15 @@ class AccountsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.read<AccountsController>();
     final state = context.watch<AccountsController>().state;
+    final reportsState = context.watch<ReportsController>().state;
+    final balanceMap = {
+      for (final item in reportsState.balances?.balances ?? [])
+        item.accountId: item.balance,
+    };
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Cuentas"),
+        title: const Text("Contas"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go("/dashboard"),
@@ -37,7 +44,7 @@ class AccountsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Cuentas activas",
+                    "Contas ativas",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -57,9 +64,16 @@ class AccountsScreen extends StatelessWidget {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final item = state.items[index];
+                    final balance = balanceMap[item.id];
+                    final balanceLabel = balance == null
+                        ? "Saldo: —"
+                        : "Saldo: ${formatMoney(balance)}";
                     return ListTile(
                       title: Text(item.name),
-                      subtitle: Text("${item.type} • ${item.currency}"),
+                      subtitle: Text(
+                        "${item.type} • ${item.currency}\n$balanceLabel",
+                      ),
+                      isThreeLine: true,
                       trailing: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () =>
@@ -114,7 +128,7 @@ class AccountsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item == null ? "Nueva cuenta" : "Editar cuenta",
+                item == null ? "Nova conta" : "Editar conta",
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -127,13 +141,13 @@ class AccountsScreen extends StatelessWidget {
                 value: type,
                 decoration: const InputDecoration(labelText: "Tipo"),
                 items: const [
-                  DropdownMenuItem(value: "cash", child: Text("Efectivo")),
+                  DropdownMenuItem(value: "cash", child: Text("Dinheiro")),
                   DropdownMenuItem(value: "bank", child: Text("Banco")),
-                  DropdownMenuItem(value: "wallet", child: Text("Billetera")),
-                  DropdownMenuItem(value: "broker", child: Text("Inversiones")),
+                  DropdownMenuItem(value: "wallet", child: Text("Carteira")),
+                  DropdownMenuItem(value: "broker", child: Text("Investimentos")),
                   DropdownMenuItem(
                     value: "credit_card",
-                    child: Text("Tarjeta"),
+                    child: Text("Cartao"),
                   ),
                 ],
                 onChanged: (value) {
@@ -154,7 +168,7 @@ class AccountsScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
-                label: "Guardar",
+                label: "Salvar",
                 onPressed: () => Navigator.of(context).pop(true),
               ),
             ],
@@ -168,7 +182,7 @@ class AccountsScreen extends StatelessWidget {
     final currency = currencyController.text.trim();
     if (name.isEmpty) {
       if (context.mounted) {
-        showStandardSnackbar(context, "Nombre requerido");
+        showStandardSnackbar(context, "Nome obrigatorio");
       }
       return;
     }

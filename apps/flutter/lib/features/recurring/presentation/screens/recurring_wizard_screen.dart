@@ -43,7 +43,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
       // Validate Amount
       final val = parseMoney(_amountController.text);
       if (val <= 0) {
-        showStandardSnackbar(context, "El monto debe ser mayor que 0");
+        showStandardSnackbar(context, "O valor deve ser maior que 0");
         return;
       }
       _amount = val;
@@ -51,15 +51,15 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
     if (_currentStep == 2) {
       // Validate Category/Account
       if (_type == "expense" && _fromAccountId == null) {
-        showStandardSnackbar(context, "Falta elegir cuenta de salida");
+        showStandardSnackbar(context, "Falta escolher conta de saida");
         return;
       }
       if (_type == "income" && _toAccountId == null) {
-        showStandardSnackbar(context, "Falta elegir cuenta de entrada");
+        showStandardSnackbar(context, "Falta escolher conta de entrada");
         return;
       }
       if (_type != "transfer" && _categoryId == null) {
-        showStandardSnackbar(context, "Falta elegir categoría");
+        showStandardSnackbar(context, "Falta escolher categoria");
         return;
       }
     }
@@ -108,13 +108,13 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
 
     final created = await controller.create(payload);
     if (created != null && mounted) {
-      showStandardSnackbar(context, "Regla creada exitosamente");
+      showStandardSnackbar(context, "Regra criada com sucesso");
       context.pop();
     } else {
       if (mounted) {
         showStandardSnackbar(
           context,
-          controller.state.error ?? "Error creando regla",
+          controller.state.error ?? "Erro ao criar regra",
         );
       }
     }
@@ -124,7 +124,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Nueva Recurrencia"),
+        title: const Text("Nova Recorrencia"),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -141,12 +141,12 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           children: [
             if (_currentStep > 0)
               Expanded(
-                child: SecondaryButton(label: "Atrás", onPressed: _prevPage),
+                child: SecondaryButton(label: "Voltar", onPressed: _prevPage),
               ),
             if (_currentStep > 0) const SizedBox(width: 16),
             Expanded(
               child: PrimaryButton(
-                label: _currentStep == 3 ? "Crear recurrencia" : "Siguiente",
+                label: _currentStep == 3 ? "Criar recorrencia" : "Proximo",
                 onPressed: _nextPage,
               ),
             ),
@@ -168,7 +168,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "¿Cada cuánto pasa?",
+            "Com que frequencia?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
@@ -195,7 +195,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
             ),
           ),
           ListTile(
-            title: const Text("¿desde cuándo?"),
+            title: const Text("Desde quando?"),
             subtitle: Text(formatDate(_startDate)),
             trailing: const Icon(Icons.calendar_today),
             onTap: () async {
@@ -209,9 +209,9 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
             },
           ),
           ListTile(
-            title: const Text("Fecha Fin (Opcional)"),
+            title: const Text("Data fim (Opcional)"),
             subtitle: Text(
-              _endDate == null ? "Sin límite" : formatDate(_endDate!),
+              _endDate == null ? "Sem limite" : formatDate(_endDate!),
             ),
             trailing: const Icon(Icons.event_busy),
             onTap: () async {
@@ -238,7 +238,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "¿Qué monto normalmente?",
+            "Qual valor normalmente?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
@@ -251,7 +251,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
                 onTap: () => setState(() => _type = "expense"),
               ),
               _ChoiceChip(
-                label: "Ingreso",
+                label: "Receita",
                 selected: _type == "income",
                 onTap: () => setState(() => _type = "income"),
               ),
@@ -264,7 +264,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          MoneyInput(label: "Monto", controller: _amountController),
+          MoneyInput(label: "Valor", controller: _amountController),
         ],
       ),
     );
@@ -289,13 +289,13 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "¿De qué cuenta sale?",
+            "De qual conta sai?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
           if (_type != "income")
             AccountPicker(
-              label: "¿De qué cuenta sale?",
+              label: "Conta de saida",
               items: accs,
               value: _fromAccountId,
               onSelected: (i) => setState(() => _fromAccountId = i.id),
@@ -303,7 +303,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 16),
           if (_type == "income" || _type == "transfer")
             AccountPicker(
-              label: "¿En qué cuenta entra?",
+              label: "Conta de entrada",
               items: accs,
               value: _toAccountId,
               onSelected: (i) => setState(() => _toAccountId = i.id),
@@ -311,7 +311,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 16),
           if (_type != "transfer")
             CategoryPicker(
-              label: "¿En qué categoría?",
+              label: "Categoria",
               items: cats,
               value: _categoryId,
               onSelected: (i) => setState(() => _categoryId = i.id),
@@ -320,7 +320,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _noteController,
-            decoration: const InputDecoration(labelText: "Nota (Ej: Alquiler)"),
+            decoration: const InputDecoration(labelText: "Nota (Ex: Aluguel)"),
           ),
         ],
       ),
@@ -351,7 +351,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
 
     if (_interval > 1) {
       frequencyText +=
-          " (a cada $_interval ${_frequency == 'monthly' ? 'meses' : (_frequency == 'weekly' ? 'semamas' : 'anos')})";
+          " (a cada $_interval ${_frequency == 'monthly' ? 'meses' : (_frequency == 'weekly' ? 'semanas' : 'anos')})";
     }
 
     return Padding(
@@ -360,7 +360,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Confirmar Regla",
+            "Confirmar regra",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
@@ -377,16 +377,16 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           ),
           const SizedBox(height: 24),
           _SummaryRow(
-            label: "Frecuencia",
+            label: "Frequencia",
             value: "$_frequency (Cada $_interval)",
           ),
           _SummaryRow(label: "Inicio", value: formatDate(_startDate)),
           _SummaryRow(
-            label: "Fin",
+            label: "Fim",
             value: _endDate == null ? "Indefinido" : formatDate(_endDate!),
           ),
           _SummaryRow(label: "Tipo", value: _type),
-          _SummaryRow(label: "Monto", value: formatMoney(_amount)),
+          _SummaryRow(label: "Valor", value: formatMoney(_amount)),
           _SummaryRow(label: "Nota", value: _noteController.text),
         ],
       ),

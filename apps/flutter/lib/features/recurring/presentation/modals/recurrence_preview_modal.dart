@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ownfinances/features/recurring/application/controllers/recurring_controller.dart';
+import 'package:ownfinances/features/transactions/application/controllers/transactions_controller.dart';
+import 'package:ownfinances/features/reports/application/controllers/reports_controller.dart';
 
 class RecurrencePreviewModal extends StatefulWidget {
   const RecurrencePreviewModal({super.key});
@@ -29,7 +31,7 @@ class _RecurrencePreviewModalState extends State<RecurrencePreviewModal> {
       child: Column(
         children: [
           Text(
-            "Generar Recurrencias",
+            "Gerar recorrencias",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           if (state.isLoading)
@@ -37,7 +39,7 @@ class _RecurrencePreviewModalState extends State<RecurrencePreviewModal> {
           else if (state.previewItems.isEmpty)
             const Expanded(
               child: Center(
-                child: Text("No hay nada pendiente para este mes."),
+                child: Text("Nao ha nada pendente para este mes."),
               ),
             )
           else
@@ -47,7 +49,7 @@ class _RecurrencePreviewModalState extends State<RecurrencePreviewModal> {
                 itemBuilder: (context, index) {
                   final item = state.previewItems[index];
                   return ListTile(
-                    title: Text(item.template.note ?? "Sin nota"),
+                    title: Text(item.template.note ?? "Sem nota"),
                     subtitle: Text(
                       "${item.date.toIso8601String()} - ${item.status}",
                     ),
@@ -62,13 +64,18 @@ class _RecurrencePreviewModalState extends State<RecurrencePreviewModal> {
           ElevatedButton(
             onPressed: state.previewItems.isEmpty
                 ? null
-                : () {
-                    context.read<RecurringController>().run(
+                : () async {
+                    await context.read<RecurringController>().run(
                       "monthly",
                       DateTime.now(),
                     );
+                    await context.read<TransactionsController>().load();
+                    await context.read<ReportsController>().load();
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
                   },
-            child: const Text("Generar Todo"),
+            child: const Text("Gerar tudo"),
           ),
         ],
       ),

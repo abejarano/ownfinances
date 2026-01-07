@@ -39,9 +39,9 @@ export function validateAccountPayload(
   }
 
   for (const error of compiler.Errors(payload)) {
-    if (error.path === "/name") return "Falta el nombre de la cuenta";
-    if (error.path === "/type") return "Tipo de cuenta invalido";
-    if (error.path === "/currency") return "Moneda invalida";
+    if (error.path === "/name") return "Falta o nome da conta";
+    if (error.path === "/type") return "Tipo de conta invalido";
+    if (error.path === "/currency") return "Moeda invalida";
   }
 
   return "Payload invalido";

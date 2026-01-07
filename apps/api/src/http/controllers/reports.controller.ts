@@ -21,4 +21,21 @@ export class ReportsController {
 
     return this.reports.summary(userId ?? "", period, date);
   }
+
+  async balances({
+    query,
+    userId,
+    set,
+  }: {
+    query: Record<string, string | undefined>;
+    userId?: string;
+    set: { status: number };
+  }) {
+    const period = query.period as BudgetPeriodType | undefined;
+    const date = query.date ? new Date(query.date) : new Date();
+    if (!period) return badRequest(set, "Falta el periodo");
+    if (Number.isNaN(date.getTime())) return badRequest(set, "Fecha invalida");
+
+    return this.reports.balances(userId ?? "", period, date);
+  }
 }

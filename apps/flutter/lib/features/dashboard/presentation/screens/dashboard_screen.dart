@@ -28,7 +28,7 @@ class DashboardScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Resumen del mes", style: Theme.of(context).textTheme.titleMedium),
+        Text("Resumo do mes", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         InlineSummaryCard(
           title: periodLabel,
@@ -38,56 +38,59 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          "Neto planificado: ${formatMoney(summary?.totals.plannedNet ?? 0)} • Neto real: ${formatMoney(summary?.totals.actualNet ?? 0)}",
-          style: const TextStyle(color: AppColors.muted),
+          "Neto planejado: ${formatMoney(summary?.totals.plannedNet ?? 0)} • Neto real: ${formatMoney(summary?.totals.actualNet ?? 0)}",
+          style: TextStyle(
+            color:
+                (summary?.totals.actualNet ?? 0) < 0 ? Colors.redAccent : Colors.greenAccent,
+          ),
         ),
         if (overspent.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
             overspentName == null
-                ? "Te pasaste en ${overspent.length} categorías"
-                : "Te pasaste en $overspentName",
+                ? "Estourou ${overspent.length} categorias"
+                : "Estourou $overspentName",
             style: const TextStyle(color: AppColors.accent),
           ),
         ],
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
-          label: "Ver detalles",
+          label: "Ver detalhes",
           onPressed: () => context.go("/budget"),
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          "Acciones rápidas",
+          "Acoes rapidas",
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_downward,
           title: "Registrar gasto",
-          subtitle: "Salió ${formatMoney(summary?.totals.actualExpense ?? 0)}",
+          subtitle: "Saiu ${formatMoney(summary?.totals.actualExpense ?? 0)}",
           onTap: () => context.push("/transactions/new?type=expense"),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_upward,
-          title: "Registrar ingreso",
-          subtitle: "Entró ${formatMoney(summary?.totals.actualIncome ?? 0)}",
+          title: "Registrar receita",
+          subtitle: "Entrou ${formatMoney(summary?.totals.actualIncome ?? 0)}",
           onTap: () => context.push("/transactions/new?type=income"),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.compare_arrows,
           title: "Transferir",
-          subtitle: "Mover entre cuentas",
+          subtitle: "Mover entre contas",
           onTap: () => context.push("/transactions/new?type=transfer"),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text("Recurrencias", style: Theme.of(context).textTheme.titleMedium),
+        Text("Recorrencias", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.calendar_today,
-          title: "Generar gastos del mes",
-          subtitle: "Procesar pendientes",
+          title: "Gerar gastos do mes",
+          subtitle: "Processar pendentes",
           onTap: () {
             showModalBottomSheet(
               context: context,
@@ -99,15 +102,15 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.add,
-          title: "Crear regla",
-          subtitle: "Programar gasto/ingreso",
+          title: "Criar regra",
+          subtitle: "Programar gasto/receita",
           onTap: () => context.push("/recurring/new"),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text("Gestión", style: Theme.of(context).textTheme.titleMedium),
+        Text("Gestao", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
-          label: "Deudas",
+          label: "Dividas",
           onPressed: () => context.go("/debts"),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -117,12 +120,12 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
-          label: "Categorías",
+          label: "Categorias",
           onPressed: () => context.go("/categories"),
         ),
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
-          label: "Cuentas",
+          label: "Contas",
           onPressed: () => context.go("/accounts"),
         ),
       ],

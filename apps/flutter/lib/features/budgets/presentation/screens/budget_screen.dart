@@ -72,7 +72,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Presupuesto", style: Theme.of(context).textTheme.titleMedium),
+        Text("Orcamento", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
@@ -81,7 +81,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 value: period,
                 decoration: const InputDecoration(labelText: "Periodo"),
                 items: const [
-                  DropdownMenuItem(value: "monthly", child: Text("Mensual")),
+                  DropdownMenuItem(value: "monthly", child: Text("Mensal")),
                   DropdownMenuItem(
                     value: "quarterly",
                     child: Text("Trimestral"),
@@ -109,14 +109,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
         ),
         const SizedBox(height: AppSpacing.md),
         InlineSummaryCard(
-          title: "Plan del periodo",
+          title: "Plano do periodo",
           planned: formatMoney(summary?.totals.plannedExpense ?? 0),
           actual: formatMoney(summary?.totals.actualExpense ?? 0),
           remaining: formatMoney(summary?.totals.remainingExpense ?? 0),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          "Plan ingresos: ${formatMoney(summary?.totals.plannedIncome ?? 0)} • Plan gastos: ${formatMoney(summary?.totals.plannedExpense ?? 0)} • Plan neto: ${formatMoney(summary?.totals.plannedNet ?? 0)}",
+          "Plano receitas: ${formatMoney(summary?.totals.plannedIncome ?? 0)} • Plano gastos: ${formatMoney(summary?.totals.plannedExpense ?? 0)} • Plano liquido: ${formatMoney(summary?.totals.plannedNet ?? 0)}",
           style: const TextStyle(color: AppColors.muted),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -149,7 +149,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                     children: [
                       Expanded(
                         child: MoneyInput(
-                          label: "Planificado",
+                          label: "Planejado",
                           controller: controller,
                         ),
                       ),
@@ -157,13 +157,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text("Actual ${formatMoney(actual)}"),
+                          Text("Atual ${formatMoney(actual)}"),
                           Text(
                             "Restante ${formatMoney(remaining)}",
                             style: const TextStyle(color: AppColors.muted),
                           ),
                           Text(
-                            "Progreso ${progressPct.toStringAsFixed(0)}%",
+                            "Progresso ${progressPct.toStringAsFixed(0)}%",
                             style: const TextStyle(color: AppColors.muted),
                           ),
                         ],
@@ -177,7 +177,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         }),
         const SizedBox(height: AppSpacing.md),
         PrimaryButton(
-          label: "Guardar presupuesto",
+          label: "Salvar orcamento",
           onPressed: () async {
             for (final entry in _controllers.entries) {
               context.read<BudgetController>().updatePlanned(
@@ -192,7 +192,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
             }
             await context.read<ReportsController>().load();
             if (context.mounted) {
-              showStandardSnackbar(context, "Presupuesto guardado");
+              showStandardSnackbar(context, "Orcamento salvo");
             }
           },
         ),

@@ -112,6 +112,19 @@ export class ReportsService {
       },
     };
   }
+
+  async balances(userId: string, period: BudgetPeriodType, date: Date) {
+    const range = computePeriodRange(period, date);
+    const balances = await this.transactions.sumByAccount(
+      userId,
+      range.start,
+      range.end
+    );
+    return {
+      range,
+      balances,
+    };
+  }
 }
 
 export function computePeriodRange(period: BudgetPeriodType, date: Date) {

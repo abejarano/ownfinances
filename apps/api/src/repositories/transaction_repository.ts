@@ -24,8 +24,20 @@ export class TransactionMongoRepository
 
   async delete(userId: string, id: string): Promise<boolean> {
     const collection = await this.collection();
-    const result = await collection.deleteOne({ userId, transactionId: id });
-    return result.deletedCount > 0;
+    const result = await collection.updateOne(
+      { userId, transactionId: id, deletedAt: null },
+      { $set: { deletedAt: new Date() } }
+    );
+    return result.modifiedCount > 0;
+  }
+
+  async restore(userId: string, id: string): Promise<boolean> {
+    const collection = await this.collection();
+    const result = await collection.updateOne(
+      { userId, transactionId: id },
+      { $set: { deletedAt: null } }
+    );
+    return result.modifiedCount > 0;
   }
 
   async sumByCategory(
@@ -44,6 +56,8 @@ export class TransactionMongoRepository
             type: { $in: [TransactionType.Income, TransactionType.Expense] },
             date: { $gte: start, $lte: end },
             categoryId: { $ne: null },
+            deletedAt: null,
+            status: "cleared",
           },
         },
         {
@@ -68,6 +82,59 @@ export class TransactionMongoRepository
       type: TransactionType;
       total: number;
     }>;
+  }
+
+  async sumByAccount(
+    userId: string,
+    start: Date,
+    end: Date
+  ): Promise<Array<{ accountId: string; balance: number }>> {
+    const collection = await this.collection();
+    const results = await collection
+      .aggregate([
+        {
+          $match: {
+            userId,
+            status: "cleared",
+            deletedAt: null,
+            date: { $gte: start, $lte: end },
+          },
+        },
+        {
+          $project: {
+            entries: {
+              $concatArrays: [
+                {
+                  $cond: [
+                    { $in: ["$type", [TransactionType.Expense, TransactionType.Transfer]] },
+                    [{ accountId: "$fromAccountId", amount: { $multiply: ["$amount", -1] } }],
+                    [],
+                  ],
+                },
+                {
+                  $cond: [
+                    { $in: ["$type", [TransactionType.Income, TransactionType.Transfer]] },
+                    [{ accountId: "$toAccountId", amount: "$amount" }],
+                    [],
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        { $unwind: "$entries" },
+        { $match: { "entries.accountId": { $ne: null } } },
+        {
+          $group: {
+            _id: "$entries.accountId",
+            total: { $sum: "$entries.amount" },
+          },
+        },
+        { $project: { _id: 0, accountId: "$_id", balance: "$total" } },
+      ])
+      .toArray();
+
+    return results as Array<{ accountId: string; balance: number }>;
   }
 
   async sumByGoalTag(userId: string, goalId: string): Promise<number> {

@@ -14,4 +14,14 @@ class ReportsRemoteDataSource {
       query: {"period": period, "date": date.toIso8601String()},
     );
   }
+
+  Future<Map<String, dynamic>> balances({
+    required String period,
+    required DateTime date,
+  }) {
+    return apiClient.get(
+      "/reports/balances",
+      query: {"period": period, "date": date.toIso8601String()},
+    );
+  }
 }

@@ -43,7 +43,7 @@ export function validateCategoryPayload(
   }
 
   for (const error of compiler.Errors(payload)) {
-    if (error.path === "/name") return "Falta el nombre de la categoria";
+    if (error.path === "/name") return "Falta o nome da categoria";
     if (error.path === "/kind") return "Tipo de categoria invalido";
   }
 

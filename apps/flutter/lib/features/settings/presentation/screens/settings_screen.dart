@@ -12,16 +12,16 @@ class SettingsScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Config", style: Theme.of(context).textTheme.titleMedium),
+        Text("Configuracoes", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.md),
         ListTile(
-          title: const Text("Moneda"),
+          title: const Text("Moeda"),
           subtitle: const Text("BRL (R\$)"),
           onTap: () {},
         ),
         ListTile(
           title: const Text("Periodo"),
-          subtitle: const Text("Mensual"),
+          subtitle: const Text("Mensal"),
           onTap: () {},
         ),
         ListTile(
@@ -29,11 +29,11 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => context.go("/categories"),
         ),
         ListTile(
-          title: const Text("Cuentas"),
+          title: const Text("Contas"),
           onTap: () => context.go("/accounts"),
         ),
         ListTile(
-          title: const Text("Deudas"),
+          title: const Text("Dividas"),
           onTap: () => context.go("/debts"),
         ),
         ListTile(

@@ -18,7 +18,7 @@ class CategoriesScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Categorías"),
+        title: const Text("Categorias"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go("/dashboard"),
@@ -38,7 +38,7 @@ class CategoriesScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Categorías activas",
+                    "Categorias ativas",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -84,7 +84,7 @@ class CategoriesScreen extends StatelessWidget {
                               ),
                       ),
                       title: Text(item.name),
-                      subtitle: Text(item.kind == "income" ? "Entró" : "Salió"),
+                      subtitle: Text(item.kind == "income" ? "Entrou" : "Saiu"),
                       trailing: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () =>
@@ -134,7 +134,7 @@ class CategoriesScreen extends StatelessWidget {
             )
             .toList();
         final parentItems = [
-          const PickerItem(id: "", label: "Sin padre"),
+          const PickerItem(id: "", label: "Sem pai"),
           ...categories,
         ];
         return StatefulBuilder(
@@ -154,7 +154,7 @@ class CategoriesScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item == null ? "Nueva categoría" : "Editar categoría",
+                    item == null ? "Nova categoria" : "Editar categoria",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -200,7 +200,7 @@ class CategoriesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   CategoryPicker(
-                    label: "Categoría padre",
+                    label: "Categoria pai",
                     items: parentItems,
                     value: parentId ?? "",
                     onSelected: (item) {
@@ -214,8 +214,8 @@ class CategoriesScreen extends StatelessWidget {
                     value: kind,
                     decoration: const InputDecoration(labelText: "Tipo"),
                     items: const [
-                      DropdownMenuItem(value: "expense", child: Text("Salió")),
-                      DropdownMenuItem(value: "income", child: Text("Entró")),
+                      DropdownMenuItem(value: "expense", child: Text("Saiu")),
+                      DropdownMenuItem(value: "income", child: Text("Entrou")),
                     ],
                     onChanged: (value) {
                       if (value != null) {
@@ -225,7 +225,7 @@ class CategoriesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   ColorPicker(
-                    label: "Color",
+                    label: "Cor",
                     value: color,
                     onSelected: (value) {
                       setModalState(() => color = value);
@@ -233,7 +233,7 @@ class CategoriesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   IconPicker(
-                    label: "Icono",
+                    label: "Icone",
                     value: icon,
                     options: kIconOptions,
                     onSelected: (value) {
@@ -243,13 +243,13 @@ class CategoriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text("Activa"),
+                    title: const Text("Ativa"),
                     value: isActive,
                     onChanged: (value) => setModalState(() => isActive = value),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
-                    label: "Guardar",
+                    label: "Salvar",
                     onPressed: () {
                       Navigator.of(context).pop(true);
                     },
@@ -266,7 +266,7 @@ class CategoriesScreen extends StatelessWidget {
     final name = nameController.text.trim();
     if (name.isEmpty) {
       if (context.mounted) {
-        showStandardSnackbar(context, "Nombre requerido");
+        showStandardSnackbar(context, "Nome obrigatorio");
       }
       return;
     }
