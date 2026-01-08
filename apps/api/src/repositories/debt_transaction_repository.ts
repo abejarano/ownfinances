@@ -1,11 +1,16 @@
 import type { IRepository } from "@abejarano/ts-mongodb-criteria";
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
-import { DebtTransaction, DebtTransactionType } from "../models/debt_transaction";
+import {
+  DebtTransaction,
+  DebtTransactionType,
+} from "../models/debt_transaction";
+import { Collection } from "mongodb";
 
 export class DebtTransactionMongoRepository
   extends MongoRepository<DebtTransaction>
   implements IRepository<DebtTransaction>
 {
+  protected async ensureIndexes(collection: Collection): Promise<void> {}
   private static instance: DebtTransactionMongoRepository | null = null;
   private constructor() {
     super(DebtTransaction);
@@ -13,7 +18,8 @@ export class DebtTransactionMongoRepository
 
   static getInstance(): DebtTransactionMongoRepository {
     if (!DebtTransactionMongoRepository.instance) {
-      DebtTransactionMongoRepository.instance = new DebtTransactionMongoRepository();
+      DebtTransactionMongoRepository.instance =
+        new DebtTransactionMongoRepository();
     }
     return DebtTransactionMongoRepository.instance;
   }

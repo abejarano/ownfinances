@@ -1,6 +1,7 @@
 import type { IRepository } from "@abejarano/ts-mongodb-criteria";
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { User } from "../models/auth/user";
+import { Collection } from "mongodb";
 
 export class UserMongoRepository
   extends MongoRepository<User>
@@ -23,8 +24,7 @@ export class UserMongoRepository
     return "users";
   }
 
-  async ensureIndexes(): Promise<void> {
-    const collection = await this.collection();
+  async ensureIndexes(collection: Collection): Promise<void> {
     await collection.createIndex({ email: 1 }, { unique: true });
   }
 }

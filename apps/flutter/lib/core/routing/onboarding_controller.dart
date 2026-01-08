@@ -14,28 +14,22 @@ class OnboardingController extends ChangeNotifier {
   bool get loaded => _loaded;
 
   Future<void> load() async {
-    // 1. Check local storage (fastest)
     _completed = await storage.readCompleted();
-
-    // 2. If not completed locally, check if user has data on server
-    // This handles the "new device / new browser" case for existing users
-    if (!_completed) {
-      try {
-        final result = await accountRepository.list(isActive: true);
-        if (result.results.isNotEmpty) {
-          _completed = true;
-          // Sync local storage so we don't need to fetch next time
-          await storage.setCompleted(true);
-        }
-      } catch (_) {
-        // If API fails (e.g. no internet), we default to false (show onboarding)
-        // or we could optimistically assume true if we wanted, but false is safer here
-        // preventing stuck states.
-      }
-    }
-
     _loaded = true;
     notifyListeners();
+  }
+
+  Future<bool> checkExistingData() async {
+    try {
+      final result = await accountRepository.list(isActive: true);
+      if (result.results.isNotEmpty) {
+        await complete();
+        return true;
+      }
+    } catch (_) {
+      // Ignore errors
+    }
+    return false;
   }
 
   Future<void> complete() async {

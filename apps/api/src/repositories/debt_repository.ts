@@ -1,11 +1,13 @@
 import type { IRepository } from "@abejarano/ts-mongodb-criteria";
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { Debt } from "../models/debt";
+import { Collection } from "mongodb";
 
 export class DebtMongoRepository
   extends MongoRepository<Debt>
   implements IRepository<Debt>
 {
+  protected async ensureIndexes(collection: Collection): Promise<void> {}
   private static instance: DebtMongoRepository | null = null;
   private constructor() {
     super(Debt);

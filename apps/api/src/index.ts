@@ -3,8 +3,11 @@ import { closeMongoClient } from "./bootstrap/mongo";
 import { buildDeps } from "./bootstrap/deps";
 import { buildApp } from "./bootstrap/app";
 import { seedDevData } from "./dev/seed";
+import { ensureMongoIndexes } from "./bootstrap/indexes";
 
 const deps = buildDeps();
+
+await ensureMongoIndexes(deps);
 
 if (env.NODE_ENV !== "production") {
   await seedDevData(env.USER_ID_DEFAULT, deps.categoryRepo, deps.accountRepo);

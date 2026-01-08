@@ -21,13 +21,31 @@ class SetupWizardScreen extends StatefulWidget {
 
 class _SetupWizardScreenState extends State<SetupWizardScreen> {
   final PageController _pageController = PageController();
-  final TextEditingController _accountNameController =
-      TextEditingController(text: "Banco");
+  final TextEditingController _accountNameController = TextEditingController(
+    text: "Banco",
+  );
   int _step = 0;
   bool _useExamples = false;
   bool _createBudget = true;
   bool _isSaving = false;
   String _accountType = "bank";
+  bool _checkingExisting = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingData();
+  }
+
+  Future<void> _checkExistingData() async {
+    final controller = context.read<OnboardingController>();
+    final hasData = await controller.checkExistingData();
+    if (hasData) {
+      if (mounted) context.go("/dashboard");
+    } else {
+      if (mounted) setState(() => _checkingExisting = false);
+    }
+  }
 
   late final List<_CategorySeed> _baseCategories = [
     _CategorySeed(
@@ -86,20 +104,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_checkingExisting) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final categories = _selectedCategories();
     return Scaffold(
       appBar: AppBar(
         title: const Text("Comecar rapido"),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: _skip,
-        ),
-        actions: [
-          TextButton(
-            onPressed: _skip,
-            child: const Text("Pular"),
-          ),
-        ],
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: _skip),
+        actions: [TextButton(onPressed: _skip, child: const Text("Pular"))],
       ),
       body: PageView(
         controller: _pageController,
@@ -139,10 +152,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           children: [
             if (_step > 0)
               Expanded(
-                child: SecondaryButton(
-                  label: "Voltar",
-                  onPressed: _prevStep,
-                ),
+                child: SecondaryButton(label: "Voltar", onPressed: _prevStep),
               ),
             if (_step > 0) const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -217,8 +227,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       }
 
       final existingByName = {
-        for (final item in categoriesState.items)
-          item.name.toLowerCase(): item,
+        for (final item in categoriesState.items) item.name.toLowerCase(): item,
       };
       final createdCategories = <String, String>{};
       for (final seed in _selectedCategories()) {
@@ -242,8 +251,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         final now = DateTime.now();
         final start = DateTime(now.year, now.month, 1);
         final end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
-        final existingBudget =
-            await budgetRepo.current(period: "monthly", date: now);
+        final existingBudget = await budgetRepo.current(
+          period: "monthly",
+          date: now,
+        );
         if (existingBudget.budget == null) {
           final lines = <BudgetLine>[];
           for (final seed in _selectedCategories()) {
@@ -474,5 +485,4 @@ class _CategorySeed {
     this.planned,
     this.selected = true,
   });
-
 }

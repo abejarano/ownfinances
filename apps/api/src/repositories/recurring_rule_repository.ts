@@ -1,6 +1,7 @@
 import { IRepository, MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { RecurringRule } from "../models/recurring/recurring_rule";
 import type { RecurringRulePrimitives } from "../models/recurring/recurring_rule";
+import { Collection } from "mongodb";
 
 export class RecurringRuleMongoRepository
   extends MongoRepository<RecurringRule>
@@ -21,6 +22,20 @@ export class RecurringRuleMongoRepository
 
   collectionName(): string {
     return "recurring_rules";
+  }
+
+  async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex(
+      { userId: 1, signature: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          isActive: true,
+          signature: { $exists: true },
+        },
+      }
+    );
+    await collection.createIndex({ userId: 1, isActive: 1, startDate: -1 });
   }
 
   async searchActive(userId: string): Promise<RecurringRule[]> {

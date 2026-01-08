@@ -1,5 +1,5 @@
 import type { TransactionPrimitives } from "../models/transaction";
-import { Transaction, TransactionType } from "../models/transaction";
+import { Transaction, TransactionStatus, TransactionType } from "../models/transaction";
 import type { TransactionMongoRepository } from "../repositories/transaction_repository";
 import type { AccountMongoRepository } from "../repositories/account_repository";
 import type {
@@ -22,7 +22,7 @@ export class TransactionsService {
       payload.currency ??
       (await this.resolveCurrency(userId, payload)) ??
       "BRL";
-    const status = payload.status ?? "pending";
+    const status = payload.status ?? TransactionStatus.Pending;
 
     const transaction = Transaction.create({
       userId,
@@ -36,7 +36,7 @@ export class TransactionsService {
       note: payload.note ?? null,
       tags: payload.tags ?? null,
       status,
-      clearedAt: status === "cleared" ? new Date() : null,
+      clearedAt: status === TransactionStatus.Cleared ? new Date() : null,
     });
 
     await this.transactions.upsert(transaction);
@@ -63,10 +63,10 @@ export class TransactionsService {
     const error = await this.validatePayload(userId, merged, true);
     if (error) return { error };
 
-    if (merged.status === "cleared" && !merged.clearedAt) {
+    if (merged.status === TransactionStatus.Cleared && !merged.clearedAt) {
       merged.clearedAt = new Date();
     }
-    if (merged.status === "pending") {
+    if (merged.status === TransactionStatus.Pending) {
       merged.clearedAt = null;
     }
 
@@ -88,7 +88,7 @@ export class TransactionsService {
     const cleared = Transaction.fromPrimitives({
       ...existingPrimitives,
       id: existingPrimitives.id ?? existingPrimitives.transactionId,
-      status: "cleared",
+      status: TransactionStatus.Cleared,
       clearedAt: new Date(),
       updatedAt: new Date(),
     });

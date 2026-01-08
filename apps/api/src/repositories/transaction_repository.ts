@@ -1,6 +1,7 @@
 import type { IRepository } from "@abejarano/ts-mongodb-criteria";
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { Transaction, TransactionType } from "../models/transaction";
+import { Collection } from "mongodb";
 
 export class TransactionMongoRepository
   extends MongoRepository<Transaction>
@@ -20,6 +21,19 @@ export class TransactionMongoRepository
 
   collectionName(): string {
     return "transactions";
+  }
+
+  async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex(
+      { userId: 1, recurringUniqueKey: 1 },
+      {
+        unique: true,
+        partialFilterExpression: {
+          recurringUniqueKey: { $exists: true },
+          deletedAt: null,
+        },
+      }
+    );
   }
 
   async delete(userId: string, id: string): Promise<boolean> {
@@ -44,7 +58,10 @@ export class TransactionMongoRepository
     return result.modifiedCount;
   }
 
-  async deleteManyByAccount(userId: string, accountId: string): Promise<number> {
+  async deleteManyByAccount(
+    userId: string,
+    accountId: string
+  ): Promise<number> {
     const collection = await this.collection();
     const now = new Date();
     const result = await collection.updateMany(
@@ -133,14 +150,29 @@ export class TransactionMongoRepository
               $concatArrays: [
                 {
                   $cond: [
-                    { $in: ["$type", [TransactionType.Expense, TransactionType.Transfer]] },
-                    [{ accountId: "$fromAccountId", amount: { $multiply: ["$amount", -1] } }],
+                    {
+                      $in: [
+                        "$type",
+                        [TransactionType.Expense, TransactionType.Transfer],
+                      ],
+                    },
+                    [
+                      {
+                        accountId: "$fromAccountId",
+                        amount: { $multiply: ["$amount", -1] },
+                      },
+                    ],
                     [],
                   ],
                 },
                 {
                   $cond: [
-                    { $in: ["$type", [TransactionType.Income, TransactionType.Transfer]] },
+                    {
+                      $in: [
+                        "$type",
+                        [TransactionType.Income, TransactionType.Transfer],
+                      ],
+                    },
                     [{ accountId: "$toAccountId", amount: "$amount" }],
                     [],
                   ],

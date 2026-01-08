@@ -180,11 +180,11 @@ class AppProviders extends StatelessWidget {
             return controller;
           },
         ),
-        ProxyProvider2<AuthController, OnboardingController, GoRouter>(
-          update: (context, auth, onboarding, previous) {
+        Provider<GoRouter>(
+          create: (context) {
             return createRouter(
-              authController: auth,
-              onboardingController: onboarding,
+              authController: context.read<AuthController>(),
+              onboardingController: context.read<OnboardingController>(),
             );
           },
         ),

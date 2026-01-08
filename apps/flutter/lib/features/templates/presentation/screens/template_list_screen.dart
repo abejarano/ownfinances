@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ownfinances/core/presentation/components/buttons.dart';
+import 'package:ownfinances/core/presentation/components/snackbar.dart';
 import 'package:ownfinances/features/templates/application/controllers/templates_controller.dart';
+import 'package:ownfinances/features/transactions/application/controllers/transactions_controller.dart';
+import 'package:ownfinances/features/reports/application/controllers/reports_controller.dart';
 
 class TemplateListScreen extends StatelessWidget {
   const TemplateListScreen({super.key});
@@ -43,14 +46,53 @@ class TemplateListScreen extends StatelessWidget {
                     ),
                     title: Text(item.name),
                     subtitle: Text("${item.currency} ${item.amount}"),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      // Navigate to Transaction Form pre-filled
-                      context.push(
-                        "/transactions/new",
-                        extra: item, // Pass the template object
-                      );
-                    },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: "Registrar agora",
+                          icon: const Icon(Icons.play_arrow),
+                          onPressed: () async {
+                            final reports = context.read<ReportsController>();
+                            final period = reports.state.period;
+                            final payload = {
+                              "type": item.type,
+                              "date": DateTime.now().toIso8601String(),
+                              "amount": item.amount,
+                              "currency": item.currency,
+                              "categoryId": item.categoryId,
+                              "fromAccountId": item.fromAccountId,
+                              "toAccountId": item.toAccountId,
+                              "note": item.note,
+                              "tags": item.tags,
+                              "status": "pending",
+                            };
+
+                            final created = await context
+                                .read<TransactionsController>()
+                                .createWithImpact(
+                                  payload: payload,
+                                  period: period,
+                                );
+                            if (created?.impact != null) {
+                              reports.applyImpactFromJson(created!.impact!);
+                            } else {
+                              await reports.load();
+                            }
+                            if (context.mounted) {
+                              showStandardSnackbar(context, "Registrado");
+                            }
+                          },
+                        ),
+                        IconButton(
+                          tooltip: "Editar antes",
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            context.push("/transactions/new", extra: item);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

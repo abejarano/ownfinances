@@ -9,7 +9,7 @@
       "name": "ownfinances-api",
       "version": "0.0.1",
       "dependencies": {
-        "@abejarano/ts-mongodb-criteria": "^1.5.2",
+        "@abejarano/ts-mongodb-criteria": "^1.6.0",
         "@elysiajs/cors": "^1.4.1",
         "@elysiajs/jwt": "^1.4.0",
         "@elysiajs/openapi": "^1.0.0",
@@ -24,7 +24,7 @@
     },
   },
   "packages": {
-    "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.5.2", "", { "peerDependencies": { "mongodb": ">=6" } }, "sha512-JtKchpOMcguhCgaSs4x2DW635MSjJXoZnUJ+Cy4yczsFgiGUsC2HI/OLcB7yoDSdc8Xj/8s23pxTRMl4GQMsWw=="],
+    "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.6.0", "", { "peerDependencies": { "mongodb": ">=6" } }, "sha512-wcNiVpoJxa8NN4oZClg++wyfZOItmMtLACZ6H67AeqyccJRY/3jfkaW+XTYZd3Vy+8o6078vqAgdEm+8RPHJOQ=="],
 
     "@borewit/text-codec": ["@borewit/text-codec@0.2.1", "", {}, "sha512-k7vvKPbf7J2fZ5klGRD9AeKfUvojuZIQ3BT5u7Jfv+puwXkUBUT5PVyMDfJZpy30CBDXGMgw7fguK/lpOMBvgw=="],
 

@@ -7,7 +7,10 @@ export enum TransactionType {
   Transfer = "transfer",
 }
 
-export type TransactionStatus = "pending" | "cleared";
+export enum TransactionStatus {
+  Pending = "pending",
+  Cleared = "cleared",
+}
 
 export type TransactionPrimitives = {
   id?: string;
@@ -28,6 +31,7 @@ export type TransactionPrimitives = {
   updatedAt?: Date;
   deletedAt?: Date | null;
   recurringRuleId?: string;
+  recurringUniqueKey?: string;
 };
 
 export type TransactionCreateProps = {
@@ -56,8 +60,12 @@ export class Transaction extends AggregateRoot {
 
   static create(props: TransactionCreateProps): Transaction {
     const now = new Date();
-    const status = props.status ?? "pending";
-    const clearedAt = status === "cleared" ? props.clearedAt ?? now : null;
+    const status = props.status ?? TransactionStatus.Pending;
+    const clearedAt =
+      status === TransactionStatus.Cleared ? props.clearedAt ?? now : null;
+    const recurringUniqueKey = props.recurringRuleId
+      ? `${props.recurringRuleId}_${props.date.toISOString().split("T")[0]}`
+      : undefined;
 
     return new Transaction({
       userId: props.userId,
@@ -73,6 +81,7 @@ export class Transaction extends AggregateRoot {
       status,
       clearedAt,
       recurringRuleId: props.recurringRuleId,
+      recurringUniqueKey,
       transactionId: createMongoId(),
       createdAt: now,
       updatedAt: now,

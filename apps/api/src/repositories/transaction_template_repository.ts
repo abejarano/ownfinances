@@ -5,11 +5,13 @@ import {
   Paginate,
 } from "@abejarano/ts-mongodb-criteria";
 import { TransactionTemplate } from "../models/template/transaction_template";
+import { Collection } from "mongodb";
 
 export class TransactionTemplateMongoRepository
   extends MongoRepository<TransactionTemplate>
   implements IRepository<TransactionTemplate>
 {
+  protected async ensureIndexes(collection: Collection): Promise<void> {}
   private static instance: TransactionTemplateMongoRepository;
 
   private constructor() {

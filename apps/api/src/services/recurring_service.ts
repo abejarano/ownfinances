@@ -13,7 +13,7 @@ import {
   RecurringRulePrimitives,
   RecurringFrequency,
 } from "../models/recurring/recurring_rule";
-import { Transaction } from "../models/transaction";
+import { Transaction, TransactionStatus } from "../models/transaction";
 import type {
   RecurringRuleCreatePayload,
   RecurringRuleUpdatePayload,
@@ -37,10 +37,7 @@ export class RecurringService {
     private readonly transactionRepo: TransactionMongoRepository
   ) {}
 
-  async create(
-    userId: string,
-    payload: RecurringRuleCreatePayload
-  ) {
+  async create(userId: string, payload: RecurringRuleCreatePayload) {
     const template = this.normalizeTemplate(payload.template);
     const startDate = new Date(payload.startDate);
     startDate.setHours(0, 0, 0, 0);
@@ -78,7 +75,19 @@ export class RecurringService {
       isActive: payload.isActive ?? true,
       lastRunAt: undefined,
     });
-    await this.ruleRepo.upsert(rule);
+    try {
+      await this.ruleRepo.upsert(rule);
+    } catch {
+      const concurrent = await this.ruleRepo.one({
+        userId,
+        signature,
+        isActive: true,
+      });
+      if (concurrent) {
+        return { rule: concurrent.toPrimitives() };
+      }
+      throw new Error("Nao foi possivel criar a recorrencia");
+    }
     const created = rule.toPrimitives();
     await this.ruleRepo.deactivateActiveDuplicatesBySignature({
       userId,
@@ -125,7 +134,7 @@ export class RecurringService {
   async update(
     userId: string,
     recurringRuleId: string,
-    payload: RecurringRuleUpdatePayload,
+    payload: RecurringRuleUpdatePayload
   ) {
     const rule = await this.ruleRepo.one({ recurringRuleId });
     if (!rule || rule.userId !== userId) {
@@ -201,12 +210,17 @@ export class RecurringService {
         toAccountId: item.template.toAccountId,
         note: item.template.note,
         tags: item.template.tags || [],
-        status: "pending", // Always create as pending
+        status: TransactionStatus.Pending, // Always create as pending
         recurringRuleId: item.recurringRuleId,
       });
       const txId = tx.getTransactionId();
 
-      await this.transactionRepo.upsert(tx);
+      try {
+        await this.transactionRepo.upsert(tx);
+      } catch {
+        // If a recurringUniqueKey race happens, skip without duplicating.
+        continue;
+      }
 
       const instance = GeneratedInstance.create(
         item.recurringRuleId,
@@ -214,8 +228,12 @@ export class RecurringService {
         item.date,
         txId
       );
-      await this.instanceRepo.upsert(instance);
-      count++;
+      try {
+        await this.instanceRepo.upsert(instance);
+        count++;
+      } catch {
+        // If a uniqueKey race happens, skip without duplicating.
+      }
     }
 
     return { generated: count };
@@ -269,19 +287,14 @@ export class RecurringService {
       toAccountId: template.toAccountId,
       note: template.note,
       tags: template.tags || [],
-      status: "pending",
+      status: TransactionStatus.Pending,
       recurringRuleId: rule.ruleId,
     });
     const txId = tx.getTransactionId();
     await this.transactionRepo.upsert(tx);
 
     // Create Instance Record
-    const instance = GeneratedInstance.create(
-      rule.ruleId,
-      userId,
-      date,
-      txId
-    );
+    const instance = GeneratedInstance.create(rule.ruleId, userId, date, txId);
     await this.instanceRepo.upsert(instance);
 
     return tx;
@@ -395,7 +408,7 @@ export class RecurringService {
   }
 
   private normalizeTemplate(
-    template: RecurringTemplatePayload,
+    template: RecurringTemplatePayload
   ): RecurringRulePrimitives["template"] {
     return {
       ...template,

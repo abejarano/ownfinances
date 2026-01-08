@@ -2,11 +2,13 @@ import type { IRepository } from "@abejarano/ts-mongodb-criteria";
 import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { Category } from "../models/category";
 import type { CategoryPrimitives } from "../models/category";
+import { Collection } from "mongodb";
 
 export class CategoryMongoRepository
   extends MongoRepository<Category>
   implements IRepository<Category>
 {
+  protected async ensureIndexes(collection: Collection): Promise<void> {}
   private static instance: CategoryMongoRepository | null = null;
   private constructor() {
     super(Category);

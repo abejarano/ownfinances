@@ -1,7 +1,6 @@
 import { t } from "elysia";
 import { TypeCompiler } from "elysia/type-system";
-import { TransactionType } from "../../models/transaction";
-import type { TransactionStatus } from "../../models/transaction";
+import { TransactionStatus, TransactionType } from "../../models/transaction";
 
 export type TransactionCreatePayload = {
   type: TransactionType;
@@ -20,10 +19,7 @@ export type TransactionUpdatePayload = Partial<TransactionCreatePayload>;
 
 const TransactionTypeSchema = t.Enum(TransactionType);
 
-const TransactionStatusSchema = t.Union([
-  t.Literal("pending"),
-  t.Literal("cleared"),
-]);
+const TransactionStatusSchema = t.Enum(TransactionStatus);
 
 const DateLikeSchema = t.Union([t.String(), t.Date()]);
 
@@ -103,7 +99,10 @@ export function validateTransactionPayload(
   if (!isUpdate && data.amount === undefined) {
     return "Falta o valor";
   }
-  if (data.status && data.status !== "pending" && data.status !== "cleared") {
+  if (
+    data.status &&
+    !Object.values(TransactionStatus).includes(data.status as TransactionStatus)
+  ) {
     return "Status invalido";
   }
 

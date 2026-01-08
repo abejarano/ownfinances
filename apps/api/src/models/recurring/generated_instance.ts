@@ -3,6 +3,7 @@ import { createMongoId } from "../shared/mongo_id";
 
 export type GeneratedInstancePrimitives = {
   id?: string;
+  generatedInstanceId: string;
   recurringRuleId: string;
   userId: string;
   date: Date;
@@ -13,6 +14,10 @@ export type GeneratedInstancePrimitives = {
 export class GeneratedInstance extends AggregateRoot {
   private constructor(private readonly props: GeneratedInstancePrimitives) {
     super();
+  }
+
+  getId(): string {
+    return this.props.id ?? this.props.generatedInstanceId;
   }
 
   static fromPrimitives(props: GeneratedInstancePrimitives): GeneratedInstance {
@@ -30,7 +35,7 @@ export class GeneratedInstance extends AggregateRoot {
     const uniqueKey = `${recurringRuleId}_${dateStr}`;
 
     return new GeneratedInstance({
-      id: createMongoId(),
+      generatedInstanceId: createMongoId(),
       recurringRuleId,
       userId,
       date,
@@ -41,13 +46,5 @@ export class GeneratedInstance extends AggregateRoot {
 
   toPrimitives(): GeneratedInstancePrimitives {
     return { ...this.props };
-  }
-
-  get id(): string | undefined {
-    return this.props.id;
-  }
-
-  getId(): string {
-    return this.props.id ?? this.props.uniqueKey;
   }
 }

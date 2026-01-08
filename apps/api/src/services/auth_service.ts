@@ -23,7 +23,6 @@ export class AuthService {
     if (!email) return { error: "Email obrigatório" };
     if (!password) return { error: "Senha obrigatória" };
 
-    await this.users.ensureIndexes();
     const existing = await this.users.one({ email });
     if (existing) return { error: "Email já cadastrado" };
 
