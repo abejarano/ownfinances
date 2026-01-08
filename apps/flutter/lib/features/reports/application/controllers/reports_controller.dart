@@ -1,6 +1,8 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/reports/application/state/reports_state.dart";
+import "package:ownfinances/features/reports/domain/entities/report_balances.dart";
+import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
 import "package:ownfinances/features/reports/domain/repositories/reports_repository.dart";
 
 class ReportsController extends ChangeNotifier {
@@ -10,6 +12,27 @@ class ReportsController extends ChangeNotifier {
   ReportsController(this.repository);
 
   ReportsState get state => _state;
+
+  void applyImpactFromJson(Map<String, dynamic> impact) {
+    final summaryRaw = impact["summary"];
+    final balancesRaw = impact["balances"];
+    final summary = summaryRaw is Map<String, dynamic>
+        ? ReportSummary.fromJson(summaryRaw)
+        : null;
+    final balances = balancesRaw is Map<String, dynamic>
+        ? ReportBalances.fromJson(balancesRaw)
+        : null;
+    applyImpact(summary: summary, balances: balances);
+  }
+
+  void applyImpact({ReportSummary? summary, ReportBalances? balances}) {
+    if (summary == null && balances == null) return;
+    _state = _state.copyWith(
+      summary: summary ?? _state.summary,
+      balances: balances ?? _state.balances,
+    );
+    notifyListeners();
+  }
 
   Future<void> load() async {
     _state = _state.copyWith(isLoading: true, error: null);

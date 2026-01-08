@@ -5,7 +5,6 @@ import "package:ownfinances/features/auth/application/controllers/auth_controlle
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
-import "package:ownfinances/core/routing/onboarding_controller.dart";
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -96,8 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showStandardSnackbar(context, error);
     }
     if (error == null && mounted) {
-      final completed = context.read<OnboardingController>().completed;
-      context.go(completed ? "/dashboard" : "/onboarding");
+      context.go("/splash");
     }
     if (mounted) {
       await controller.clearMessage();

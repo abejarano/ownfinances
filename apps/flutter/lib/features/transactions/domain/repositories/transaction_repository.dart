@@ -1,5 +1,7 @@
 import "package:ownfinances/core/models/paginated.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction_delete_response.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction_write_response.dart";
 
 class TransactionFilters {
   final DateTime? dateFrom;
@@ -33,4 +35,30 @@ abstract class TransactionRepository {
   Future<Transaction> clear(String id);
 
   Future<Transaction> restore(String id);
+
+  Future<TransactionWriteResponse> createWithImpact({
+    required Map<String, dynamic> payload,
+    required String period,
+  });
+
+  Future<TransactionWriteResponse> updateWithImpact({
+    required String id,
+    required Map<String, dynamic> payload,
+    required String period,
+  });
+
+  Future<TransactionWriteResponse> clearWithImpact({
+    required String id,
+    required String period,
+  });
+
+  Future<TransactionWriteResponse> restoreWithImpact({
+    required String id,
+    required String period,
+  });
+
+  Future<TransactionDeleteResponse> deleteWithImpact({
+    required String id,
+    required String period,
+  });
 }

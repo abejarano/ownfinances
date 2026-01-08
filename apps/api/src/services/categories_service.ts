@@ -1,13 +1,17 @@
 import type { CategoryPrimitives } from "../models/category";
 import { Category } from "../models/category";
 import type { CategoryMongoRepository } from "../repositories/category_repository";
+import type { TransactionMongoRepository } from "../repositories/transaction_repository";
 import type {
   CategoryCreatePayload,
   CategoryUpdatePayload,
 } from "../http/validation/categories.validation";
 
 export class CategoriesService {
-  constructor(private readonly categories: CategoryMongoRepository) {}
+  constructor(
+    private readonly categories: CategoryMongoRepository,
+    private readonly transactions: TransactionMongoRepository
+  ) {}
 
   async create(userId: string, payload: CategoryCreatePayload) {
     const category = Category.create({
@@ -53,10 +57,19 @@ export class CategoriesService {
   }
 
   async remove(userId: string, categoryId: string) {
+    const existing = await this.categories.one({ userId, categoryId });
+    if (!existing) {
+      return { error: "Categoria no encontrada", status: 404 };
+    }
+
+    const deletedTransactions = await this.transactions.deleteManyByCategory(
+      userId,
+      categoryId
+    );
     const deleted = await this.categories.delete(userId, categoryId);
     if (!deleted) {
       return { error: "Categoria no encontrada", status: 404 };
     }
-    return { ok: true };
+    return { ok: true, deletedTransactions };
   }
 }

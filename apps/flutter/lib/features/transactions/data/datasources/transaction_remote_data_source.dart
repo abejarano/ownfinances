@@ -49,4 +49,59 @@ class TransactionRemoteDataSource {
   Future<Map<String, dynamic>> restore(String id) {
     return apiClient.post("/transactions/$id/restore", {});
   }
+
+  Future<Map<String, dynamic>> createWithImpact(
+    Map<String, dynamic> payload, {
+    required String period,
+  }) {
+    return apiClient.post(
+      "/transactions",
+      payload,
+      query: {"includeImpact": "true", "period": period},
+    );
+  }
+
+  Future<Map<String, dynamic>> updateWithImpact(
+    String id,
+    Map<String, dynamic> payload, {
+    required String period,
+  }) {
+    return apiClient.put(
+      "/transactions/$id",
+      payload,
+      query: {"includeImpact": "true", "period": period},
+    );
+  }
+
+  Future<Map<String, dynamic>> clearWithImpact(
+    String id, {
+    required String period,
+  }) {
+    return apiClient.post(
+      "/transactions/$id/clear",
+      {},
+      query: {"includeImpact": "true", "period": period},
+    );
+  }
+
+  Future<Map<String, dynamic>> restoreWithImpact(
+    String id, {
+    required String period,
+  }) {
+    return apiClient.post(
+      "/transactions/$id/restore",
+      {},
+      query: {"includeImpact": "true", "period": period},
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteWithImpact(
+    String id, {
+    required String period,
+  }) {
+    return apiClient.delete(
+      "/transactions/$id",
+      query: {"includeImpact": "true", "period": period},
+    );
+  }
 }

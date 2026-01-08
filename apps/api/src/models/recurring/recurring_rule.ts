@@ -23,6 +23,7 @@ export type RecurringRulePrimitives = {
   id?: string;
   recurringRuleId: string;
   userId: string;
+  signature: string;
   frequency: RecurringFrequency;
   interval: number;
   startDate: Date;
@@ -34,6 +35,7 @@ export type RecurringRulePrimitives = {
 
 export type RecurringRuleCreateProps = {
   userId: string;
+  signature: string;
   frequency: RecurringFrequency;
   interval: number;
   startDate: Date;
@@ -52,6 +54,7 @@ export class RecurringRule extends AggregateRoot {
     return new RecurringRule({
       recurringRuleId: createMongoId(),
       userId: props.userId,
+      signature: props.signature,
       frequency: props.frequency,
       interval: props.interval,
       startDate: props.startDate,

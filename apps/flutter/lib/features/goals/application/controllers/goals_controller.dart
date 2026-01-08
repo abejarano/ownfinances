@@ -80,7 +80,7 @@ class GoalsController extends ChangeNotifier {
   }) async {
     try {
       final updated = await repository.update(
-        id: id,
+        id,
         name: name,
         targetAmount: targetAmount,
         currency: currency,

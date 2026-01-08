@@ -2,6 +2,8 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/transactions/application/state/transactions_state.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction_delete_response.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction_write_response.dart";
 import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
 
 class TransactionsController extends ChangeNotifier {
@@ -43,11 +45,54 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
+  Future<TransactionWriteResponse?> createWithImpact({
+    required Map<String, dynamic> payload,
+    required String period,
+  }) async {
+    try {
+      final created = await repository.createWithImpact(
+        payload: payload,
+        period: period,
+      );
+      _state = _state.copyWith(items: [created.transaction, ..._state.items]);
+      notifyListeners();
+      return created;
+    } catch (error) {
+      _state = _state.copyWith(error: _message(error));
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<Transaction?> update(String id, Map<String, dynamic> payload) async {
     try {
       final updated = await repository.update(id, payload);
       final next = _state.items
           .map((item) => item.id == id ? updated : item)
+          .toList();
+      _state = _state.copyWith(items: next);
+      notifyListeners();
+      return updated;
+    } catch (error) {
+      _state = _state.copyWith(error: _message(error));
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<TransactionWriteResponse?> updateWithImpact({
+    required String id,
+    required Map<String, dynamic> payload,
+    required String period,
+  }) async {
+    try {
+      final updated = await repository.updateWithImpact(
+        id: id,
+        payload: payload,
+        period: period,
+      );
+      final next = _state.items
+          .map((item) => item.id == id ? updated.transaction : item)
           .toList();
       _state = _state.copyWith(items: next);
       notifyListeners();
@@ -74,6 +119,26 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
+  Future<TransactionDeleteResponse?> removeWithImpact({
+    required String id,
+    required String period,
+  }) async {
+    try {
+      final result = await repository.deleteWithImpact(id: id, period: period);
+      if (result.ok) {
+        _state = _state.copyWith(
+          items: _state.items.where((item) => item.id != id).toList(),
+        );
+      }
+      notifyListeners();
+      return result;
+    } catch (error) {
+      _state = _state.copyWith(error: _message(error));
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<Transaction?> clear(String id) async {
     try {
       final cleared = await repository.clear(id);
@@ -90,10 +155,45 @@ class TransactionsController extends ChangeNotifier {
     }
   }
 
+  Future<TransactionWriteResponse?> clearWithImpact({
+    required String id,
+    required String period,
+  }) async {
+    try {
+      final cleared = await repository.clearWithImpact(id: id, period: period);
+      final next = _state.items
+          .map((item) => item.id == id ? cleared.transaction : item)
+          .toList();
+      _state = _state.copyWith(items: next);
+      notifyListeners();
+      return cleared;
+    } catch (error) {
+      _state = _state.copyWith(error: _message(error));
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<Transaction?> restore(String id) async {
     try {
       final restored = await repository.restore(id);
       _state = _state.copyWith(items: [restored, ..._state.items]);
+      notifyListeners();
+      return restored;
+    } catch (error) {
+      _state = _state.copyWith(error: _message(error));
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<TransactionWriteResponse?> restoreWithImpact({
+    required String id,
+    required String period,
+  }) async {
+    try {
+      final restored = await repository.restoreWithImpact(id: id, period: period);
+      _state = _state.copyWith(items: [restored.transaction, ..._state.items]);
       notifyListeners();
       return restored;
     } catch (error) {

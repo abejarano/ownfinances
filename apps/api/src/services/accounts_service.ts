@@ -1,13 +1,17 @@
 import type { AccountPrimitives } from "../models/account";
 import { Account } from "../models/account";
 import type { AccountMongoRepository } from "../repositories/account_repository";
+import type { TransactionMongoRepository } from "../repositories/transaction_repository";
 import type {
   AccountCreatePayload,
   AccountUpdatePayload,
 } from "../http/validation/accounts.validation";
 
 export class AccountsService {
-  constructor(private readonly accounts: AccountMongoRepository) {}
+  constructor(
+    private readonly accounts: AccountMongoRepository,
+    private readonly transactions: TransactionMongoRepository
+  ) {}
 
   async create(userId: string, payload: AccountCreatePayload) {
     const account = Account.create({
@@ -51,10 +55,19 @@ export class AccountsService {
   }
 
   async remove(userId: string, accountId: string) {
+    const existing = await this.accounts.one({ userId, accountId });
+    if (!existing) {
+      return { error: "Cuenta no encontrada", status: 404 };
+    }
+
+    const deletedTransactions = await this.transactions.deleteManyByAccount(
+      userId,
+      accountId
+    );
     const deleted = await this.accounts.delete(userId, accountId);
     if (!deleted) {
       return { error: "Cuenta no encontrada", status: 404 };
     }
-    return { ok: true };
+    return { ok: true, deletedTransactions };
   }
 }

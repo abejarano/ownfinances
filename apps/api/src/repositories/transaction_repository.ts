@@ -31,6 +31,33 @@ export class TransactionMongoRepository
     return result.modifiedCount > 0;
   }
 
+  async deleteManyByCategory(
+    userId: string,
+    categoryId: string
+  ): Promise<number> {
+    const collection = await this.collection();
+    const now = new Date();
+    const result = await collection.updateMany(
+      { userId, categoryId, deletedAt: null },
+      { $set: { deletedAt: now, updatedAt: now } }
+    );
+    return result.modifiedCount;
+  }
+
+  async deleteManyByAccount(userId: string, accountId: string): Promise<number> {
+    const collection = await this.collection();
+    const now = new Date();
+    const result = await collection.updateMany(
+      {
+        userId,
+        deletedAt: null,
+        $or: [{ fromAccountId: accountId }, { toAccountId: accountId }],
+      },
+      { $set: { deletedAt: now, updatedAt: now } }
+    );
+    return result.modifiedCount;
+  }
+
   async restore(userId: string, id: string): Promise<boolean> {
     const collection = await this.collection();
     const result = await collection.updateOne(

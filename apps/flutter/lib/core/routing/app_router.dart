@@ -1,5 +1,4 @@
 import "package:flutter/material.dart";
-import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/features/auth/presentation/screens/login_screen.dart";
@@ -39,13 +38,15 @@ GoRouter createRouter({
       final isUnauthenticated = authStatus == AuthStatus.unauthenticated;
       final isAuthed = authStatus == AuthStatus.authenticated;
       final completed = onboardingController.completed;
+      final onboardingLoaded = onboardingController.loaded;
 
       if (authStatus == AuthStatus.initial) {
         return "/splash";
       }
 
       if (location == "/splash" && authStatus != AuthStatus.initial) {
-        return isAuthed ? "/dashboard" : "/login";
+        if (!isAuthed) return "/login";
+        return null;
       }
 
       if (isUnauthenticated) {
@@ -54,6 +55,12 @@ GoRouter createRouter({
         }
         return null;
       }
+
+      if (isAuthed && !onboardingLoaded) {
+        if (location != "/splash") return "/splash";
+        return null;
+      }
+
       if (isAuthed && !completed) {
         if (!isOnboarding) {
           return "/onboarding";

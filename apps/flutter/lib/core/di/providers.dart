@@ -76,9 +76,7 @@ class AppProviders extends StatelessWidget {
         ),
         ChangeNotifierProvider<AuthController>(
           create: (context) {
-            final controller = AuthController(
-              context.read<AuthRepository>(),
-            );
+            final controller = AuthController(context.read<AuthRepository>());
             controller.restoreSession();
             return controller;
           },
@@ -148,8 +146,9 @@ class AppProviders extends StatelessWidget {
               TemplatesController(context.read<TemplateRepository>())..load(),
         ),
         Provider<DebtRepository>(
-          create: (context) =>
-              DebtRepositoryImpl(DebtRemoteDataSource(context.read<ApiClient>())),
+          create: (context) => DebtRepositoryImpl(
+            DebtRemoteDataSource(context.read<ApiClient>()),
+          ),
         ),
         Provider<DebtTransactionRepository>(
           create: (context) => DebtTransactionRepositoryImpl(
@@ -163,8 +162,9 @@ class AppProviders extends StatelessWidget {
           )..load(),
         ),
         Provider<GoalRepository>(
-          create: (context) =>
-              GoalRepositoryImpl(GoalRemoteDataSource(context.read<ApiClient>())),
+          create: (context) => GoalRepositoryImpl(
+            GoalRemoteDataSource(context.read<ApiClient>()),
+          ),
         ),
         ChangeNotifierProvider<GoalsController>(
           create: (context) =>
@@ -174,6 +174,7 @@ class AppProviders extends StatelessWidget {
           create: (context) {
             final controller = OnboardingController(
               context.read<OnboardingStorage>(),
+              context.read<AccountRepository>(),
             );
             controller.load();
             return controller;

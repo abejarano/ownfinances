@@ -10,7 +10,6 @@ import "package:ownfinances/features/accounts/application/controllers/accounts_c
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
-import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
 
 class TransactionsScreen extends StatelessWidget {
@@ -20,6 +19,8 @@ class TransactionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final txController = context.read<TransactionsController>();
     final txState = context.watch<TransactionsController>().state;
+    final reportsController = context.read<ReportsController>();
+    final reportsState = context.watch<ReportsController>().state;
     final categories = context.watch<CategoriesController>().state.items;
     final accounts = context.watch<AccountsController>().state.items;
 
@@ -186,27 +187,55 @@ class TransactionsScreen extends StatelessWidget {
                         ),
                         confirmDismiss: (direction) async {
                           if (direction == DismissDirection.startToEnd) {
-                            await txController.clear(item.id);
-                            await context.read<ReportsController>().load();
+                            final cleared = await txController.clearWithImpact(
+                              id: item.id,
+                              period: reportsState.period,
+                            );
+                            if (cleared?.impact != null) {
+                              reportsController.applyImpactFromJson(
+                                cleared!.impact!,
+                              );
+                            } else {
+                              await reportsController.load();
+                            }
                             return false;
                           }
                           return true;
                         },
                         onDismissed: (direction) async {
                           final deleted = item;
-                          final ok = await txController.remove(item.id);
-                          if (!ok && context.mounted) {
+                          final result = await txController.removeWithImpact(
+                            id: item.id,
+                            period: reportsState.period,
+                          );
+                          if ((result?.ok != true) && context.mounted) {
                             showStandardSnackbar(context, "Erro ao remover");
                             return;
                           }
-                          await context.read<ReportsController>().load();
+                          if (result?.impact != null) {
+                            reportsController.applyImpactFromJson(
+                              result!.impact!,
+                            );
+                          } else {
+                            await reportsController.load();
+                          }
                           if (context.mounted) {
                             showUndoSnackbar(
                               context,
                               "Transacao removida",
                               () async {
-                                await txController.restore(deleted.id);
-                                await context.read<ReportsController>().load();
+                                final restored =
+                                    await txController.restoreWithImpact(
+                                  id: deleted.id,
+                                  period: reportsState.period,
+                                );
+                                if (restored?.impact != null) {
+                                  reportsController.applyImpactFromJson(
+                                    restored!.impact!,
+                                  );
+                                } else {
+                                  await reportsController.load();
+                                }
                               },
                             );
                           }

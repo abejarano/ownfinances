@@ -5,7 +5,6 @@ import "package:ownfinances/features/auth/application/controllers/auth_controlle
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
-import "package:ownfinances/core/routing/onboarding_controller.dart";
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -82,12 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       showStandardSnackbar(context, error);
     }
     if (error == null && mounted) {
-      final onboardingParams = context.read<OnboardingController>();
-      await onboardingParams.load(); // Refresh state
-      final completed = onboardingParams.completed;
-      if (mounted) {
-        context.go(completed ? "/dashboard" : "/onboarding");
-      }
+      context.go("/splash");
     }
     if (mounted) {
       setState(() => _isLoading = false);

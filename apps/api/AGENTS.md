@@ -17,6 +17,8 @@ Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
 - PROHIBIDO: Mongo find() para listados en handlers.
 - PROHIBIDO: repos con `search(criteria)` si se quiere impletar para pagianr datos; usar siempre `list(criteria)` -> `Paginate`.
 - PROHIBIDO: métodos que retornan 1 registro fuera de `one` (no `findBy...`).
+- PROHIBIDO: `collection.findOne(...)` en repos; si necesitas 1 documento usa `repo.one({ ... })` y ajusta el modelo/consulta para que sea igualdad simple.
+- PROHIBIDO: crear wrappers tipo `oneByX(...)`/`findOneByX(...)` en repos o services; usa `repo.one({ ... })` directamente en el service/controller.
 - PROHIBIDO: updates/inserts fuera de `upsert`.
 - PROHIBIDO: USER_ID_DEFAULT fuera de dev/seed.ts.
 - PROHIBIDO: respuestas inconsistentes (a veces entity, a veces primitives).

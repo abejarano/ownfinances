@@ -87,13 +87,16 @@ export function buildDeps(): AppDeps {
     },
     get categoriesService() {
       if (!categoriesService) {
-        categoriesService = new CategoriesService(this.categoryRepo);
+        categoriesService = new CategoriesService(
+          this.categoryRepo,
+          this.transactionRepo
+        );
       }
       return categoriesService;
     },
     get accountsService() {
       if (!accountsService) {
-        accountsService = new AccountsService(this.accountRepo);
+        accountsService = new AccountsService(this.accountRepo, this.transactionRepo);
       }
       return accountsService;
     },

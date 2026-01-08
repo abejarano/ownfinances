@@ -1,5 +1,6 @@
 import { IRepository, MongoRepository } from "@abejarano/ts-mongodb-criteria";
 import { RecurringRule } from "../models/recurring/recurring_rule";
+import type { RecurringRulePrimitives } from "../models/recurring/recurring_rule";
 
 export class RecurringRuleMongoRepository
   extends MongoRepository<RecurringRule>
@@ -38,6 +39,24 @@ export class RecurringRuleMongoRepository
         id: doc._id.toString(),
       });
     });
+  }
+
+  async deactivateActiveDuplicatesBySignature(input: {
+    userId: string;
+    signature: string;
+    keepRecurringRuleId: string;
+  }): Promise<number> {
+    const collection = await this.collection();
+    const result = await collection.updateMany(
+      {
+        userId: input.userId,
+        signature: input.signature,
+        isActive: true,
+        recurringRuleId: { $ne: input.keepRecurringRuleId },
+      },
+      { $set: { isActive: false } }
+    );
+    return result.modifiedCount;
   }
 
   async remove(recurringRuleId: string): Promise<void> {

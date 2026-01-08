@@ -23,22 +23,27 @@ class ApiClient {
 
   Future<Map<String, dynamic>> post(
     String path,
-    Map<String, dynamic> body,
-  ) async {
-    final response = await _send("POST", path, body: body);
+    Map<String, dynamic> body, {
+    Map<String, String>? query,
+  }) async {
+    final response = await _send("POST", path, body: body, query: query);
     return _parse(response);
   }
 
   Future<Map<String, dynamic>> put(
     String path,
-    Map<String, dynamic> body,
-  ) async {
-    final response = await _send("PUT", path, body: body);
+    Map<String, dynamic> body, {
+    Map<String, String>? query,
+  }) async {
+    final response = await _send("PUT", path, body: body, query: query);
     return _parse(response);
   }
 
-  Future<Map<String, dynamic>> delete(String path) async {
-    final response = await _send("DELETE", path);
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    final response = await _send("DELETE", path, query: query);
     return _parse(response);
   }
 

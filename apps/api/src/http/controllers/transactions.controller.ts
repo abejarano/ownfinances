@@ -195,15 +195,15 @@ export class TransactionsController {
     transaction: TransactionPrimitives,
     query?: Record<string, string | undefined>
   ) {
-    if (query?.impact !== "true") return null;
+    const includeImpact = query?.includeImpact === "true" || query?.impact === "true";
+    if (!includeImpact) return null;
     const period = (query.period as any) ?? "monthly";
     const date = transaction.date ?? new Date();
     const summary = await this.reports.summary(userId, period, date);
     const balances = await this.reports.balances(userId, period, date);
     return {
       summary,
-      balances: balances.balances,
-      range: balances.range,
+      balances,
     };
   }
 }

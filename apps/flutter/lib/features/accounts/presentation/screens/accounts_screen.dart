@@ -80,9 +80,23 @@ class AccountsScreen extends StatelessWidget {
                             _openForm(context, controller, item: item),
                       ),
                       onLongPress: () async {
+                        final confirmed = await _confirmDelete(
+                          context,
+                          title: "Excluir conta?",
+                          description:
+                              "Isso vai excluir a conta e todas as transacoes vinculadas. Nao da pra desfazer.",
+                        );
+                        if (!confirmed || !context.mounted) return;
+
                         final error = await controller.remove(item.id);
-                        if (error != null && context.mounted) {
+                        if (!context.mounted) return;
+                        if (error != null) {
                           showStandardSnackbar(context, error);
+                          return;
+                        }
+                        await context.read<ReportsController>().load();
+                        if (context.mounted) {
+                          showStandardSnackbar(context, "Conta excluida");
                         }
                       },
                     );
@@ -97,6 +111,31 @@ class AccountsScreen extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<bool> _confirmDelete(
+    BuildContext context, {
+    required String title,
+    required String description,
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Excluir"),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 
   Future<void> _openForm(

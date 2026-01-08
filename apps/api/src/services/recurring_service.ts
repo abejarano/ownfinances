@@ -42,8 +42,34 @@ export class RecurringService {
     payload: RecurringRuleCreatePayload
   ) {
     const template = this.normalizeTemplate(payload.template);
+    const startDate = new Date(payload.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    const signature = this.computeRuleSignature({
+      userId,
+      frequency: payload.frequency,
+      interval: payload.interval,
+      startDate,
+      template,
+    });
+
+    const existing = await this.ruleRepo.one({
+      userId,
+      signature,
+      isActive: true,
+    });
+    if (existing) {
+      const primitives = existing.toPrimitives();
+      await this.ruleRepo.deactivateActiveDuplicatesBySignature({
+        userId,
+        signature,
+        keepRecurringRuleId: primitives.recurringRuleId,
+      });
+      return { rule: existing.toPrimitives() };
+    }
+
     const rule = RecurringRule.create({
-      startDate: new Date(payload.startDate),
+      signature,
+      startDate,
       endDate: payload.endDate ? new Date(payload.endDate) : undefined,
       template,
       userId,
@@ -53,6 +79,12 @@ export class RecurringService {
       lastRunAt: undefined,
     });
     await this.ruleRepo.upsert(rule);
+    const created = rule.toPrimitives();
+    await this.ruleRepo.deactivateActiveDuplicatesBySignature({
+      userId,
+      signature,
+      keepRecurringRuleId: created.recurringRuleId,
+    });
     return { rule: rule.toPrimitives() };
   }
 
@@ -374,5 +406,37 @@ export class RecurringService {
       note: template.note,
       tags: template.tags,
     };
+  }
+
+  private computeRuleSignature(input: {
+    userId: string;
+    frequency: RecurringRulePrimitives["frequency"];
+    interval: number;
+    startDate: Date;
+    template: RecurringRulePrimitives["template"];
+  }) {
+    const dateStr = input.startDate.toISOString().split("T")[0];
+    const tags = input.template.tags
+      ? [...input.template.tags].filter(Boolean).sort()
+      : undefined;
+
+    const normalized = {
+      userId: input.userId,
+      frequency: input.frequency,
+      interval: input.interval,
+      startDate: dateStr,
+      template: {
+        type: input.template.type,
+        amount: input.template.amount,
+        currency: input.template.currency,
+        categoryId: input.template.categoryId ?? null,
+        fromAccountId: input.template.fromAccountId ?? null,
+        toAccountId: input.template.toAccountId ?? null,
+        note: input.template.note ?? null,
+        tags: tags ?? null,
+      },
+    };
+
+    return JSON.stringify(normalized);
   }
 }

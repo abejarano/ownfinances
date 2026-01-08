@@ -79,7 +79,7 @@ class DebtsController extends ChangeNotifier {
   }) async {
     try {
       final updated = await debtRepository.update(
-        id: id,
+        id,
         name: name,
         type: type,
         currency: currency,
