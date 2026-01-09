@@ -204,7 +204,8 @@ export function buildDeps(): AppDeps {
         goalContributionsService = new GoalContributionsService(
           this.goalContributionRepo,
           this.goalRepo,
-          this.accountRepo
+          this.accountRepo,
+          this.transactionRepo
         );
       }
       return goalContributionsService;

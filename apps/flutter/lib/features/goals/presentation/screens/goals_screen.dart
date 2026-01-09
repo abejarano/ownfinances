@@ -61,6 +61,7 @@ class GoalsScreen extends StatelessWidget {
                       goal: goal,
                       projection: projection,
                       onAdd: () => _openContributionForm(context, goal),
+                      onQuickAdd: () => _quickContribution(context, goal, projection),
                       onEdit: () =>
                           _openGoalWizard(context, controller, goal: goal),
                       onDelete: () async {
@@ -140,7 +141,7 @@ class GoalsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   if (step == 0) ...[
                     Text(
-                      "Para que e?",
+                      "Criar meta",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -148,23 +149,19 @@ class GoalsScreen extends StatelessWidget {
                       controller: nameController,
                       decoration: const InputDecoration(
                         labelText: "Nome da meta",
+                        hintText: "Ex: Fundo de emergência",
                       ),
+                      autofocus: goal == null,
                     ),
-                  ],
-                  if (step == 1) ...[
-                    Text(
-                      "Quanto quer juntar?",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     MoneyInput(
                       label: "Valor alvo",
                       controller: targetController,
                     ),
                   ],
-                  if (step == 2) ...[
+                  if (step == 1) ...[
                     Text(
-                      "Para quando?",
+                      "Detalhes (opcional)",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -200,18 +197,10 @@ class GoalsScreen extends StatelessWidget {
                       label: "Aporte mensal (opcional)",
                       controller: monthlyController,
                     ),
-                  ],
-                  if (step == 3) ...[
-                    Text(
-                      "De qual conta voce poupa?",
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    if (accountItems.isEmpty)
-                      const Text("Voce nao tem contas ativas.")
-                    else
+                    const SizedBox(height: AppSpacing.md),
+                    if (accountItems.isNotEmpty)
                       AccountPicker(
-                        label: "Conta (opcional)",
+                        label: "Conta vinculada (opcional)",
                         items: accountItems,
                         value: accountId,
                         onSelected: (item) =>
@@ -238,21 +227,17 @@ class GoalsScreen extends StatelessWidget {
                       if (step > 0) const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: PrimaryButton(
-                          label: step == 3 ? "Salvar" : "Pronto",
+                          label: step == 0 ? "Continuar" : "Salvar",
                           onPressed: isSaving
                               ? null
                               : () async {
-                                  if (step < 3) {
-                                    setState(() => step += 1);
-                                    return;
-                                  }
-
                                   final name = nameController.text.trim();
                                   final targetAmount =
                                       parseMoney(targetController.text.trim());
                                   final monthlyAmount =
                                       parseMoney(monthlyController.text.trim());
 
+                                  // Validar mínimos
                                   if (name.isEmpty) {
                                     showStandardSnackbar(
                                       context,
@@ -268,6 +253,13 @@ class GoalsScreen extends StatelessWidget {
                                     return;
                                   }
 
+                                  // Si estamos en paso 0, avanzar al paso 1
+                                  if (step == 0) {
+                                    setState(() => step += 1);
+                                    return;
+                                  }
+
+                                  // Si estamos en paso 1, guardar
                                   setState(() => isSaving = true);
                                   String? error;
                                   if (goal == null) {
@@ -448,12 +440,71 @@ class GoalsScreen extends StatelessWidget {
       showStandardSnackbar(context, error);
     }
   }
+
+  Future<void> _quickContribution(
+    BuildContext context,
+    Goal goal,
+    GoalProjection? projection,
+  ) async {
+    final controller = context.read<GoalsController>();
+    final accountsState = context.read<AccountsController>().state;
+    final accountItems = accountsState.items
+        .map((acc) => PickerItem(id: acc.id, label: acc.name))
+        .toList();
+
+    // Determinar valor sugerido
+    final suggestedAmount = goal.monthlyContribution ??
+        projection?.monthlyContributionSuggested;
+    if (suggestedAmount == null || suggestedAmount <= 0) {
+      if (context.mounted) {
+        showStandardSnackbar(
+          context,
+          "Configure um aporte mensal para usar aporte rápido",
+        );
+      }
+      return;
+    }
+
+    // Determinar cuenta por defecto
+    String? accountId = controller.state.lastAccountId ??
+        goal.linkedAccountId ??
+        (accountItems.isNotEmpty ? accountItems.first.id : null);
+
+    if (accountId == null) {
+      if (context.mounted) {
+        showStandardSnackbar(
+          context,
+          "Configure uma conta para usar aporte rápido",
+        );
+      }
+      return;
+    }
+
+    // Crear aporte directamente
+    final error = await controller.createContribution(
+      goalId: goal.id,
+      date: DateTime.now(),
+      amount: suggestedAmount,
+      accountId: accountId,
+      note: null,
+    );
+
+    if (error != null && context.mounted) {
+      showStandardSnackbar(context, error);
+    } else if (context.mounted) {
+      showStandardSnackbar(
+        context,
+        "Aporte de ${formatMoney(suggestedAmount)} registrado",
+      );
+    }
+  }
 }
 
 class _GoalCard extends StatelessWidget {
   final Goal goal;
   final GoalProjection? projection;
   final VoidCallback onAdd;
+  final VoidCallback? onQuickAdd;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -461,9 +512,51 @@ class _GoalCard extends StatelessWidget {
     required this.goal,
     required this.projection,
     required this.onAdd,
+    this.onQuickAdd,
     required this.onEdit,
     required this.onDelete,
   });
+
+  Widget _buildProjectionText() {
+    final monthlyContribution = goal.monthlyContribution ??
+        projection?.monthlyContributionSuggested;
+    final targetDate = goal.targetDate ?? projection?.targetDateEstimated;
+
+    if (monthlyContribution != null && monthlyContribution > 0 && targetDate != null) {
+      // Caso ideal: tiene aporte mensal y fecha alvo
+      return Text(
+        "Se guardar ${formatMoney(monthlyContribution)}/mês, chega em ${formatDate(targetDate)}.",
+        style: const TextStyle(color: AppColors.muted),
+      );
+    } else if (monthlyContribution != null && monthlyContribution > 0) {
+      // Tiene aporte mensal pero no fecha alvo
+      if (projection?.targetDateEstimated != null) {
+        return Text(
+          "Guardando ${formatMoney(monthlyContribution)}/mês, chega em ${formatDate(projection!.targetDateEstimated!)}.",
+          style: const TextStyle(color: AppColors.muted),
+        );
+      }
+      return Text(
+        "Guardando ${formatMoney(monthlyContribution)}/mês",
+        style: const TextStyle(color: AppColors.muted),
+      );
+    } else if (targetDate != null) {
+      // Tiene fecha alvo pero no aporte mensal
+      if (projection?.monthlyContributionSuggested != null) {
+        return Text(
+          "Para chegar em ${formatDate(targetDate)}, precisa guardar ${formatMoney(projection!.monthlyContributionSuggested!)}/mês.",
+          style: const TextStyle(color: AppColors.muted),
+        );
+      }
+      return Text(
+        "Meta ${formatDate(targetDate)}",
+        style: const TextStyle(color: AppColors.muted),
+      );
+    }
+
+    // Sin aporte mensal ni fecha alvo
+    return const SizedBox.shrink();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -522,39 +615,47 @@ class _GoalCard extends StatelessWidget {
               "Restante ${formatMoney(remaining)}",
               style: const TextStyle(color: AppColors.muted),
             ),
-            if (projection?.monthlyContributionSuggested != null)
-              Text(
-                "Sugerido ${formatMoney(projection!.monthlyContributionSuggested!)} / mes",
-                style: const TextStyle(color: AppColors.muted),
-              ),
-            if (projection?.targetDateEstimated != null)
-              Text(
-                "Data estimada ${formatDate(projection!.targetDateEstimated!)}",
-                style: const TextStyle(color: AppColors.muted),
-              ),
-            if (goal.targetDate != null)
-              Text(
-                "Meta ${formatDate(goal.targetDate!)}",
-                style: const TextStyle(color: AppColors.muted),
-              ),
+            _buildProjectionText(),
             const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    label: "Registrar aporte",
-                    onPressed: onAdd,
+            if (onQuickAdd != null &&
+                (goal.monthlyContribution != null ||
+                    projection?.monthlyContributionSuggested != null)) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      label: "Aporte rápido",
+                      onPressed: onQuickAdd,
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: SecondaryButton(
-                    label: "Ver detalhes",
-                    onPressed: onEdit,
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: SecondaryButton(
+                      label: "Personalizar",
+                      onPressed: onAdd,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      label: "Registrar aporte",
+                      onPressed: onAdd,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: SecondaryButton(
+                      label: "Ver detalhes",
+                      onPressed: onEdit,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

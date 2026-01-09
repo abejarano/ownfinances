@@ -3,6 +3,8 @@ import { GoalContribution } from "../models/goal_contribution";
 import type { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository";
 import type { GoalMongoRepository } from "../repositories/goal_repository";
 import type { AccountMongoRepository } from "../repositories/account_repository";
+import type { TransactionMongoRepository } from "../repositories/transaction_repository";
+import { Transaction, TransactionStatus, TransactionType } from "../models/transaction";
 import type {
   GoalContributionCreatePayload,
   GoalContributionUpdatePayload,
@@ -12,7 +14,8 @@ export class GoalContributionsService {
   constructor(
     private readonly contributions: GoalContributionMongoRepository,
     private readonly goals: GoalMongoRepository,
-    private readonly accounts: AccountMongoRepository
+    private readonly accounts: AccountMongoRepository,
+    private readonly transactions: TransactionMongoRepository
   ) {}
 
   async create(userId: string, payload: GoalContributionCreatePayload) {
@@ -20,6 +23,14 @@ export class GoalContributionsService {
     if (error) return { error };
 
     const date = payload.date ? new Date(payload.date) : new Date();
+
+    // Obtener la meta para obtener la moneda y linkedAccountId
+    const goal = await this.goals.one({ userId, goalId: payload.goalId! });
+    if (!goal) {
+      return { error: "Meta no encontrada" };
+    }
+    const goalPrimitives = goal.toPrimitives();
+    const currency = goalPrimitives.currency ?? "BRL";
 
     const contribution = GoalContribution.create({
       userId,
@@ -31,6 +42,50 @@ export class GoalContributionsService {
     });
 
     await this.contributions.upsert(contribution);
+
+    // Crear transacción automática si hay accountId
+    if (payload.accountId) {
+      const note = payload.note
+        ? `Aporte para ${goalPrimitives.name}: ${payload.note}`
+        : `Aporte para ${goalPrimitives.name}`;
+
+      if (goalPrimitives.linkedAccountId && goalPrimitives.linkedAccountId !== payload.accountId) {
+        // Transferencia desde accountId hacia linkedAccountId (cuenta meta)
+        const transaction = Transaction.create({
+          userId,
+          type: TransactionType.Transfer,
+          date,
+          amount: payload.amount!,
+          currency,
+          categoryId: null,
+          fromAccountId: payload.accountId,
+          toAccountId: goalPrimitives.linkedAccountId,
+          note,
+          tags: null,
+          status: TransactionStatus.Cleared,
+          clearedAt: new Date(),
+        });
+        await this.transactions.upsert(transaction);
+      } else {
+        // Expense desde accountId (no hay cuenta meta o es la misma)
+        const transaction = Transaction.create({
+          userId,
+          type: TransactionType.Expense,
+          date,
+          amount: payload.amount!,
+          currency,
+          categoryId: null,
+          fromAccountId: payload.accountId,
+          toAccountId: null,
+          note,
+          tags: null,
+          status: TransactionStatus.Cleared,
+          clearedAt: new Date(),
+        });
+        await this.transactions.upsert(transaction);
+      }
+    }
+
     return { contribution: contribution.toPrimitives() };
   }
 
