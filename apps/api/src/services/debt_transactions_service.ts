@@ -1,8 +1,11 @@
 import type { DebtTransactionPrimitives } from "../models/debt_transaction";
-import { DebtTransaction } from "../models/debt_transaction";
+import { DebtTransaction, DebtTransactionType } from "../models/debt_transaction";
 import type { DebtMongoRepository } from "../repositories/debt_repository";
 import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository";
 import type { AccountMongoRepository } from "../repositories/account_repository";
+import type { TransactionMongoRepository } from "../repositories/transaction_repository";
+import type { CategoryMongoRepository } from "../repositories/category_repository";
+import { Transaction, TransactionType, TransactionStatus } from "../models/transaction";
 import type {
   DebtTransactionCreatePayload,
   DebtTransactionUpdatePayload,
@@ -12,7 +15,9 @@ export class DebtTransactionsService {
   constructor(
     private readonly debtTransactions: DebtTransactionMongoRepository,
     private readonly debts: DebtMongoRepository,
-    private readonly accounts: AccountMongoRepository
+    private readonly accounts: AccountMongoRepository,
+    private readonly transactions: TransactionMongoRepository,
+    private readonly categories: CategoryMongoRepository
   ) {}
 
   async create(userId: string, payload: DebtTransactionCreatePayload) {
@@ -21,6 +26,14 @@ export class DebtTransactionsService {
 
     const date = payload.date ? new Date(payload.date) : new Date();
 
+    // Obtener la deuda para obtener la moneda
+    const debt = await this.debts.one({ userId, debtId: payload.debtId! });
+    if (!debt) {
+      return { error: "Deuda no encontrada" };
+    }
+    const debtPrimitives = debt.toPrimitives();
+    const currency = debtPrimitives.currency;
+
     const tx = DebtTransaction.create({
       userId,
       debtId: payload.debtId!,
@@ -28,10 +41,45 @@ export class DebtTransactionsService {
       type: payload.type!,
       amount: payload.amount!,
       accountId: payload.accountId ?? undefined,
+      categoryId: payload.categoryId ?? null,
       note: payload.note ?? null,
     });
 
     await this.debtTransactions.upsert(tx);
+
+    // Crear transacción relacionada según el tipo
+    if (payload.type === DebtTransactionType.Charge && payload.categoryId) {
+      // Compra afecta categorías (para presupuesto)
+      const transaction = Transaction.create({
+        userId,
+        type: TransactionType.Expense,
+        date,
+        amount: payload.amount!,
+        currency,
+        categoryId: payload.categoryId,
+        fromAccountId: null, // No afecta cuenta directamente, es una deuda
+        toAccountId: null,
+        note: payload.note ?? `Compra en ${debtPrimitives.name}`,
+        status: TransactionStatus.Cleared,
+      });
+      await this.transactions.upsert(transaction);
+    } else if (payload.type === DebtTransactionType.Payment && payload.accountId) {
+      // Pago afecta cuentas
+      const transaction = Transaction.create({
+        userId,
+        type: TransactionType.Expense,
+        date,
+        amount: payload.amount!,
+        currency,
+        categoryId: null, // Pago de deuda no tiene categoría
+        fromAccountId: payload.accountId,
+        toAccountId: null,
+        note: payload.note ?? `Pago de ${debtPrimitives.name}`,
+        status: TransactionStatus.Cleared,
+      });
+      await this.transactions.upsert(transaction);
+    }
+
     return { debtTransaction: tx.toPrimitives() };
   }
 
@@ -56,6 +104,8 @@ export class DebtTransactionsService {
       debtTransactionId: existingPrimitives.debtTransactionId,
       userId: existingPrimitives.userId,
       date: payload.date ? new Date(payload.date) : existingPrimitives.date,
+      categoryId: payload.categoryId !== undefined ? payload.categoryId : existingPrimitives.categoryId,
+      accountId: payload.accountId !== undefined ? (payload.accountId ?? undefined) : existingPrimitives.accountId,
       updatedAt: new Date(),
     };
 
@@ -101,6 +151,18 @@ export class DebtTransactionsService {
         accountId: payload.accountId,
       });
       if (!account) return "Cuenta no encontrada";
+    }
+
+    // Validar categoría cuando es charge
+    if (payload.type === DebtTransactionType.Charge) {
+      if (!payload.categoryId) {
+        return "Falta la categoria para la compra";
+      }
+      const category = await this.categories.one({
+        userId,
+        categoryId: payload.categoryId,
+      });
+      if (!category) return "Categoria no encontrada";
     }
 
     return null;

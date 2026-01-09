@@ -1,6 +1,7 @@
 import "package:ownfinances/features/debts/data/datasources/debt_remote_data_source.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
+import "package:ownfinances/features/debts/domain/entities/debt_transaction.dart";
 import "package:ownfinances/features/debts/domain/repositories/debt_repository.dart";
 
 class DebtRepositoryImpl implements DebtRepository {
@@ -71,5 +72,14 @@ class DebtRepositoryImpl implements DebtRepository {
   Future<DebtSummary> summary(String id) async {
     final payload = await remote.summary(id);
     return DebtSummary.fromJson(payload);
+  }
+
+  @override
+  Future<List<DebtTransaction>> history(String id, {String? month}) async {
+    final payload = await remote.history(id, month: month);
+    final results = payload["results"] as List<dynamic>? ?? [];
+    return results
+        .map((item) => DebtTransaction.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -7,6 +7,7 @@ abstract class DebtTransactionRepository {
     required String type,
     required double amount,
     String? accountId,
+    String? categoryId,
     String? note,
   });
 }

@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/debts/application/state/debts_state.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
+import "package:ownfinances/features/debts/domain/entities/debt_transaction.dart";
 import "package:ownfinances/features/debts/domain/repositories/debt_repository.dart";
 import "package:ownfinances/features/debts/domain/repositories/debt_transaction_repository.dart";
 
@@ -123,6 +124,7 @@ class DebtsController extends ChangeNotifier {
     required String type,
     required double amount,
     String? accountId,
+    String? categoryId,
     String? note,
   }) async {
     try {
@@ -132,6 +134,7 @@ class DebtsController extends ChangeNotifier {
         type: type,
         amount: amount,
         accountId: accountId,
+        categoryId: categoryId,
         note: note,
       );
       _state = _state.copyWith(lastAccountId: accountId ?? _state.lastAccountId);
@@ -152,6 +155,14 @@ class DebtsController extends ChangeNotifier {
       notifyListeners();
     } catch (_) {
       // Ignore summary refresh errors.
+    }
+  }
+
+  Future<List<DebtTransaction>> loadHistory(String debtId, {String? month}) async {
+    try {
+      return await debtRepository.history(debtId, month: month);
+    } catch (error) {
+      return [];
     }
   }
 

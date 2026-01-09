@@ -17,6 +17,7 @@ export type DebtTransactionPrimitives = {
   type: DebtTransactionType;
   amount: number;
   accountId?: string;
+  categoryId?: string | null;
   note?: string | null;
   createdAt: Date;
   updatedAt?: Date;
@@ -29,6 +30,7 @@ export type DebtTransactionCreateProps = {
   type: DebtTransactionType;
   amount: number;
   accountId?: string;
+  categoryId?: string | null;
   note?: string | null;
 };
 
@@ -50,6 +52,7 @@ export class DebtTransaction extends AggregateRoot {
       type: props.type,
       amount: props.amount,
       accountId: props.accountId,
+      categoryId: props.categoryId ?? null,
       note: props.note,
       createdAt: now,
       updatedAt: now,

@@ -118,4 +118,27 @@ export class DebtsController {
     }
     return result;
   }
+
+  async history({
+    params,
+    query,
+    set,
+    userId,
+  }: {
+    params: { id: string };
+    query: Record<string, string | undefined>;
+    set: { status: number };
+    userId?: string;
+  }) {
+    const result = await this.service.history(
+      userId ?? "",
+      params.id,
+      query.month
+    );
+    if (result.error) {
+      if (result.status === 404) return notFound(set, result.error);
+      return badRequest(set, result.error);
+    }
+    return result;
+  }
 }

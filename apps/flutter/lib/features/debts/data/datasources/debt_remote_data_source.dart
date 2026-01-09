@@ -24,4 +24,9 @@ class DebtRemoteDataSource {
   Future<Map<String, dynamic>> summary(String id) {
     return apiClient.get("/debts/$id/summary");
   }
+
+  Future<Map<String, dynamic>> history(String id, {String? month}) {
+    final query = month != null ? {"month": month} : <String, String>{};
+    return apiClient.get("/debts/$id/history", query: query);
+  }
 }

@@ -8,6 +8,7 @@ import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
+import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 
@@ -81,6 +82,7 @@ class DebtsScreen extends StatelessWidget {
                           showStandardSnackbar(context, error);
                         }
                       },
+                      onHistory: () => _openHistoryDialog(context, controller, item.id),
                     );
                   },
                 ),
@@ -262,6 +264,7 @@ class DebtsScreen extends StatelessWidget {
     final noteController = TextEditingController();
     DateTime date = DateTime.now();
     String? accountId = lastAccountId;
+    String? categoryId;
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -276,6 +279,14 @@ class DebtsScreen extends StatelessWidget {
                 .toList();
             if (accountId == null && accountItems.isNotEmpty) {
               accountId = accountItems.first.id;
+            }
+            final categoriesState = context.watch<CategoriesController>().state;
+            final categoryItems = categoriesState.items
+                .where((cat) => cat.kind == "expense")
+                .map((cat) => PickerItem(id: cat.id, label: cat.name))
+                .toList();
+            if (categoryId == null && categoryItems.isNotEmpty && type == "charge") {
+              categoryId = categoryItems.first.id;
             }
             return Padding(
               padding: EdgeInsets.only(
@@ -297,6 +308,19 @@ class DebtsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   MoneyInput(label: "Valor", controller: amountController),
                   const SizedBox(height: AppSpacing.sm),
+                  if (type == "charge") ...[
+                    if (categoryItems.isEmpty)
+                      const Text("Voce nao tem categorias de gasto.")
+                    else
+                      CategoryPicker(
+                        label: "Categoria",
+                        items: categoryItems,
+                        value: categoryId,
+                        onSelected: (item) =>
+                            setState(() => categoryId = item.id),
+                      ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                   if (accountItems.isEmpty)
                     const Text("Voce nao tem contas ativas.")
                   else
@@ -333,7 +357,8 @@ class DebtsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
                     label: "Salvar",
-                    onPressed: accountItems.isEmpty
+                    onPressed: (accountItems.isEmpty || 
+                               (type == "charge" && (categoryId == null || categoryItems.isEmpty)))
                         ? null
                         : () => Navigator.of(context).pop(true),
                   ),
@@ -355,12 +380,20 @@ class DebtsScreen extends StatelessWidget {
       return;
     }
 
+    if (type == "charge" && categoryId == null) {
+      if (context.mounted) {
+        showStandardSnackbar(context, "Falta escolher uma categoria");
+      }
+      return;
+    }
+
     final error = await controller.createDebtTransaction(
       debtId: debt.id,
       date: date,
       type: type,
       amount: amount,
       accountId: accountId,
+      categoryId: categoryId,
       note: noteController.text.trim().isEmpty
           ? null
           : noteController.text.trim(),
@@ -369,6 +402,65 @@ class DebtsScreen extends StatelessWidget {
     if (error != null && context.mounted) {
       showStandardSnackbar(context, error);
     }
+  }
+
+  Future<void> _openHistoryDialog(
+    BuildContext context,
+    DebtsController controller,
+    String debtId,
+  ) async {
+    final now = DateTime.now();
+    final month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+    
+    final history = await controller.loadHistory(debtId, month: month);
+    
+    if (!context.mounted) return;
+    
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Historial do mês"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: history.isEmpty
+              ? const Text("Nenhum movimento este mês.")
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: history.length,
+                  itemBuilder: (context, index) {
+                    final tx = history[index];
+                    final isCharge = tx.type == "charge";
+                    final isPayment = tx.type == "payment";
+                    return ListTile(
+                      title: Text(
+                        isCharge
+                            ? "Compra"
+                            : isPayment
+                                ? "Pagamento"
+                                : tx.type,
+                      ),
+                      subtitle: Text(
+                        "${formatDate(tx.date)}${tx.note != null ? ' • ${tx.note}' : ''}",
+                      ),
+                      trailing: Text(
+                        "${isPayment ? '-' : '+'}${formatMoney(tx.amount)}",
+                        style: TextStyle(
+                          color: isPayment ? Colors.red : Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Fechar"),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -380,6 +472,7 @@ class _DebtCard extends StatelessWidget {
   final VoidCallback onPayment;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onHistory;
 
   const _DebtCard({
     required this.debt,
@@ -389,6 +482,7 @@ class _DebtCard extends StatelessWidget {
     required this.onPayment,
     required this.onEdit,
     required this.onDelete,
+    required this.onHistory,
   });
 
   @override
@@ -448,6 +542,12 @@ class _DebtCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextButton.icon(
+              onPressed: onHistory,
+              icon: const Icon(Icons.history),
+              label: const Text("Ver historial"),
             ),
           ],
         ),

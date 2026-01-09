@@ -1,5 +1,6 @@
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
+import "package:ownfinances/features/debts/domain/entities/debt_transaction.dart";
 
 abstract class DebtRepository {
   Future<List<Debt>> list();
@@ -24,4 +25,5 @@ abstract class DebtRepository {
   });
   Future<void> delete(String id);
   Future<DebtSummary> summary(String id);
+  Future<List<DebtTransaction>> history(String id, {String? month});
 }

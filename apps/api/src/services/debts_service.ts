@@ -1,12 +1,14 @@
 import type { DebtPrimitives } from "../models/debt";
 import { Debt } from "../models/debt";
 import { DebtTransactionType } from "../models/debt_transaction";
+import type { DebtTransactionPrimitives } from "../models/debt_transaction";
 import type { DebtMongoRepository } from "../repositories/debt_repository";
 import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository";
 import type {
   DebtCreatePayload,
   DebtUpdatePayload,
 } from "../http/validation/debts.validation";
+import { buildDebtTransactionsCriteria } from "../http/criteria/debt_transactions.criteria";
 
 export class DebtsService {
   constructor(
@@ -118,6 +120,47 @@ export class DebtsService {
     const maxDay = new Date(year, month + 1, 0).getDate();
     const day = Math.min(dueDay, maxDay);
     return new Date(year, month, day);
+  }
+
+  async history(userId: string, debtId: string, month?: string) {
+    const debt = await this.debts.one({ userId, debtId });
+    if (!debt) {
+      return { error: "Deuda no encontrada", status: 404 };
+    }
+
+    let dateFrom: string | undefined;
+    let dateTo: string | undefined;
+
+    if (month) {
+      // month format: YYYY-MM
+      const [yearStr, monthStr] = month.split("-");
+      const year = parseInt(yearStr, 10);
+      const monthNum = parseInt(monthStr, 10) - 1; // JavaScript months are 0-indexed
+      const start = new Date(year, monthNum, 1);
+      const end = new Date(year, monthNum + 1, 0, 23, 59, 59, 999);
+      dateFrom = start.toISOString();
+      dateTo = end.toISOString();
+    } else {
+      // Si no se especifica mes, usar el mes actual
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      dateFrom = start.toISOString();
+      dateTo = end.toISOString();
+    }
+
+    const query: Record<string, string | undefined> = {
+      debtId,
+      dateFrom,
+      dateTo,
+    };
+    const criteria = buildDebtTransactionsCriteria(query, userId);
+    const result = await this.debtTransactions.list<DebtTransactionPrimitives>(criteria);
+
+    return {
+      ...result,
+      results: result.results.map((item) => item),
+    };
   }
 }
 

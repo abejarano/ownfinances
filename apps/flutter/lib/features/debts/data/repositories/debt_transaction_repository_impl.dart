@@ -14,6 +14,7 @@ class DebtTransactionRepositoryImpl implements DebtTransactionRepository {
     required String type,
     required double amount,
     String? accountId,
+    String? categoryId,
     String? note,
   }) async {
     final payload = await remote.create({
@@ -22,6 +23,7 @@ class DebtTransactionRepositoryImpl implements DebtTransactionRepository {
       "type": type,
       "amount": amount,
       "accountId": accountId,
+      "categoryId": categoryId,
       "note": note,
     });
     return DebtTransaction.fromJson(payload);

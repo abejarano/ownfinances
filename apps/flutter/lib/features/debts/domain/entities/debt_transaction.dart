@@ -5,6 +5,7 @@ class DebtTransaction {
   final String type;
   final double amount;
   final String? accountId;
+  final String? categoryId;
   final String? note;
 
   const DebtTransaction({
@@ -14,6 +15,7 @@ class DebtTransaction {
     required this.type,
     required this.amount,
     required this.accountId,
+    required this.categoryId,
     required this.note,
   });
 
@@ -25,6 +27,7 @@ class DebtTransaction {
       type: json["type"] as String,
       amount: (json["amount"] as num?)?.toDouble() ?? 0,
       accountId: json["accountId"] as String?,
+      categoryId: json["categoryId"] as String?,
       note: json["note"] as String?,
     );
   }

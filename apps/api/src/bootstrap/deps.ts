@@ -176,7 +176,9 @@ export function buildDeps(): AppDeps {
         debtTransactionsService = new DebtTransactionsService(
           this.debtTransactionRepo,
           this.debtRepo,
-          this.accountRepo
+          this.accountRepo,
+          this.transactionRepo,
+          this.categoryRepo
         );
       }
       return debtTransactionsService;

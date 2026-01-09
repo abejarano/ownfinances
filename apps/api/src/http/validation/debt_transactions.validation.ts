@@ -8,6 +8,7 @@ export type DebtTransactionCreatePayload = {
   type: DebtTransactionType;
   amount: number;
   accountId?: string | null;
+  categoryId?: string | null;
   note?: string | null;
 };
 
@@ -23,6 +24,7 @@ const DebtTransactionBaseSchema = t.Object(
     type: DebtTransactionTypeSchema,
     amount: t.Number(),
     accountId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
+    categoryId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
     note: t.Optional(t.Union([t.String(), t.Null()])),
   },
   { additionalProperties: false }
@@ -84,6 +86,14 @@ export function validateDebtTransactionPayload(
     const date = new Date(data.date);
     if (Number.isNaN(date.getTime())) {
       return "Fecha invalida";
+    }
+  }
+
+  // Validar que charge tenga categoría
+  if (!isUpdate && data.type === DebtTransactionType.Charge) {
+    const payloadWithCategory = payload as { categoryId?: string | null };
+    if (!payloadWithCategory.categoryId) {
+      return "Falta la categoria para la compra";
     }
   }
 

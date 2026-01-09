@@ -288,6 +288,11 @@ export function registerRoutes(app: any, deps: AppDeps) {
       if (authError) return authError;
       return getDebtsController().summary(ctx);
     })
+    .get("/debts/:id/history", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getDebtsController().history(ctx);
+    })
     .get("/debt_transactions", async (ctx: any) => {
       const authError = await requireAuth(ctx);
       if (authError) return authError;
