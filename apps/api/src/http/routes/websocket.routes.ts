@@ -7,7 +7,7 @@ export function registerWebsocketRoutes(app: any) {
     },
     async message(ws, message) {
       try {
-        const data = JSON.parse(message as string);
+        const data = typeof message === 'string' ? JSON.parse(message) : message;
         if (data.type === "auth" && data.token) {
           const jwt = (ws as any).data?.jwt;
           if (!jwt) {

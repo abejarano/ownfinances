@@ -11,6 +11,7 @@ import { registerReportsRoutes } from "./reports.routes";
 import { registerTemplateRoutes } from "./templates.routes";
 import { registerTransactionsRoutes } from "./transactions.routes";
 import { registerWebsocketRoutes } from "./websocket.routes";
+import { registerSettingsRoutes } from "./settings.routes";
 
 export function registerRoutes(app: any, deps: AppDeps) {
   registerAuthRoutes(app, deps);
@@ -24,5 +25,6 @@ export function registerRoutes(app: any, deps: AppDeps) {
   registerDebtsRoutes(app, deps);
   registerGoalsRoutes(app, deps);
   registerImportRoutes(app, deps);
+  registerSettingsRoutes(app, deps);
   registerWebsocketRoutes(app);
 }

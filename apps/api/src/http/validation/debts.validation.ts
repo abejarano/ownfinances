@@ -5,6 +5,7 @@ import { DebtType } from "../../models/debt";
 export type DebtCreatePayload = {
   name: string;
   type: DebtType;
+  linkedAccountId?: string;
   currency?: string;
   dueDay?: number;
   minimumPayment?: number;
@@ -20,6 +21,7 @@ const DebtBaseSchema = t.Object(
   {
     name: t.String({ minLength: 1 }),
     type: DebtTypeSchema,
+    linkedAccountId: t.Optional(t.String()),
     currency: t.Optional(t.String({ minLength: 1 })),
     dueDay: t.Optional(t.Number()),
     minimumPayment: t.Optional(t.Number()),

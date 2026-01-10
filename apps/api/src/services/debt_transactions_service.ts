@@ -48,36 +48,88 @@ export class DebtTransactionsService {
     await this.debtTransactions.upsert(tx);
 
     // Crear transacción relacionada según el tipo
-    if (payload.type === DebtTransactionType.Charge && payload.categoryId) {
-      // Compra afecta categorías (para presupuesto)
-      const transaction = Transaction.create({
-        userId,
-        type: TransactionType.Expense,
-        date,
-        amount: payload.amount!,
-        currency,
-        categoryId: payload.categoryId,
-        fromAccountId: null, // No afecta cuenta directamente, es una deuda
-        toAccountId: null,
-        note: payload.note ?? `Compra en ${debtPrimitives.name}`,
-        status: TransactionStatus.Cleared,
-      });
-      await this.transactions.upsert(transaction);
+    if (payload.type === DebtTransactionType.Charge) {
+      if (debtPrimitives.type === "credit_card") {
+         // Compra con TC: Gasto desde la cuenta vinculada
+         if (!debtPrimitives.linkedAccountId) {
+            return { error: "Este cartão precisa estar vinculado a uma conta do tipo Cartão." };
+         }
+         if (!payload.categoryId) {
+            return { error: "Falta escolher uma categoria" };
+         }
+
+         const transaction = Transaction.create({
+            userId,
+            type: TransactionType.Expense,
+            date,
+            amount: payload.amount!,
+            currency,
+            categoryId: payload.categoryId,
+            fromAccountId: debtPrimitives.linkedAccountId, // Sale del la cuenta tarjeta
+            toAccountId: null,
+            note: payload.note ?? `Compra em ${debtPrimitives.name}`,
+            status: TransactionStatus.Cleared, // Default cleared
+         });
+         await this.transactions.upsert(transaction);
+      } else {
+        // Charge for Loan/Other (increase principal? fee?)
+        // Maintain existing behavior but ensure category if needed?
+        // Current logic required category for Charge.
+        if (payload.categoryId) {
+           const transaction = Transaction.create({
+              userId,
+              type: TransactionType.Expense,
+              date,
+              amount: payload.amount!,
+              currency,
+              categoryId: payload.categoryId,
+              fromAccountId: null, // Unknown source for abstract debt charge
+              toAccountId: null,
+              note: payload.note ?? `Compra em ${debtPrimitives.name}`,
+              status: TransactionStatus.Cleared,
+           });
+           await this.transactions.upsert(transaction);
+        }
+      }
     } else if (payload.type === DebtTransactionType.Payment && payload.accountId) {
-      // Pago afecta cuentas
-      const transaction = Transaction.create({
-        userId,
-        type: TransactionType.Expense,
-        date,
-        amount: payload.amount!,
-        currency,
-        categoryId: null, // Pago de deuda no tiene categoría
-        fromAccountId: payload.accountId,
-        toAccountId: null,
-        note: payload.note ?? `Pago de ${debtPrimitives.name}`,
-        status: TransactionStatus.Cleared,
-      });
-      await this.transactions.upsert(transaction);
+      if (debtPrimitives.type === "credit_card") {
+        // Pago de tarjeta es una Transferencia
+        if (!debtPrimitives.linkedAccountId) {
+          // Esto no debería pasar si la validación funciona, pero por seguridad:
+          return { error: "Este cartão precisa estar vinculado a uma conta do tipo Cartão." };
+        }
+        const transaction = Transaction.create({
+          userId,
+          type: TransactionType.Transfer,
+          date,
+          amount: payload.amount!,
+          currency,
+          categoryId: null,
+          fromAccountId: payload.accountId,
+          toAccountId: debtPrimitives.linkedAccountId,
+          note: payload.note ?? `Pagamento do cartão ${debtPrimitives.name}`,
+          status: TransactionStatus.Cleared,
+        });
+        await this.transactions.upsert(transaction);
+      } else {
+        // Pago de préstamo es un Gasto
+        if (!payload.categoryId) {
+           return { error: "Falta escolher uma categoria" };
+        }
+        const transaction = Transaction.create({
+          userId,
+          type: TransactionType.Expense,
+          date,
+          amount: payload.amount!,
+          currency,
+          categoryId: payload.categoryId, 
+          fromAccountId: payload.accountId,
+          toAccountId: null,
+          note: payload.note ?? `Parcela do empréstimo ${debtPrimitives.name}`,
+          status: TransactionStatus.Cleared,
+        });
+        await this.transactions.upsert(transaction);
+      }
     }
 
     return { debtTransaction: tx.toPrimitives() };
@@ -163,6 +215,23 @@ export class DebtTransactionsService {
         categoryId: payload.categoryId,
       });
       if (!category) return "Categoria no encontrada";
+    }
+
+    if (payload.type === DebtTransactionType.Payment) {
+      const debt = await this.debts.one({ userId, debtId: payload.debtId! });
+      if (debt) {
+        const primitives = debt.toPrimitives();
+        if (primitives.type === "credit_card") {
+          if (!primitives.linkedAccountId) {
+            return "Este cartão precisa estar vinculado a uma conta do tipo Cartão.";
+          }
+        } else {
+          // Loan / Other
+          if (!payload.categoryId) {
+            return "Falta escolher uma categoria";
+          }
+        }
+      }
     }
 
     return null;

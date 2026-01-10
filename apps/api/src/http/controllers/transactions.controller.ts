@@ -206,4 +206,87 @@ export class TransactionsController {
       balances,
     };
   }
+
+  async listPending({
+    query,
+    userId,
+  }: {
+    query: Record<string, string | undefined>;
+    userId?: string;
+  }) {
+    const limit = Number(query.limit || 50);
+    const page = Number(query.page || 1);
+    
+    // Build filters for pending recurring transactions
+    const filters: any[] = [
+      { field: "userId", operator: "EQUAL", value: userId ?? "" },
+      { field: "status", operator: "EQUAL", value: "pending" },
+      { field: "recurringRuleId", operator: "EXISTS", value: true },
+    ];
+    
+    // Optional filters
+    if (query.month) {
+      // month format: YYYY-MM
+      const [year, month] = query.month.split("-").map(Number);
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+      filters.push({
+        field: "date",
+        operator: "BETWEEN",
+        value: { start: startDate, end: endDate },
+      });
+    }
+    
+    if (query.categoryId) {
+      filters.push({
+        field: "categoryId",
+        operator: "EQUAL",
+        value: query.categoryId,
+      });
+    }
+    
+    if (query.recurringRuleId) {
+      filters.push({
+        field: "recurringRuleId",
+        operator: "EQUAL",
+        value: query.recurringRuleId,
+      });
+    }
+    
+    const criteria = {
+      filters: { values: filters.map((f) => new Map(Object.entries(f))) },
+      order: { orderBy: "date", orderType: "ASC" },
+      limit,
+      page,
+    };
+    
+    const result = await this.repo.list<TransactionPrimitives>(criteria as any);
+    return {
+      ...result,
+      results: result.results.map((item) =>
+        Transaction.fromPrimitives(item).toPrimitives()
+      ),
+    };
+  }
+
+  async confirmBatch({
+    body,
+    set,
+    userId,
+  }: {
+    body: { transactionIds: string[] };
+    set: { status: number };
+    userId?: string;
+  }) {
+    if (!body.transactionIds || body.transactionIds.length === 0) {
+      return badRequest(set, "No transaction IDs provided");
+    }
+    
+    const confirmed = await this.repo.confirmBatch(
+      body.transactionIds,
+      userId ?? ""
+    );
+    
+    return { confirmed };
+  }
 }

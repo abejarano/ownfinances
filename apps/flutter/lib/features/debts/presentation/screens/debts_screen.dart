@@ -57,32 +57,93 @@ class DebtsScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = state.items[index];
                     final summary = state.summaries[item.id];
+                    final amountDue = summary?.amountDue ?? 0;
+                    final creditBalance = summary?.creditBalance ?? 0;
+                    final paymentsThisMonth = summary?.paymentsThisMonth ?? 0;
+
                     return _DebtCard(
                       debt: item,
-                      balance: summary?.balanceComputed ?? 0,
+                      // We pass amountDue as the primary "balance" to show
+                      amountDue: amountDue,
+                      creditBalance: creditBalance,
+                      paymentsThisMonth: paymentsThisMonth,
                       nextDueDate: summary?.nextDueDate,
-                      onCharge: () => _openDebtTransactionForm(
-                        context,
-                        item,
-                        "charge",
-                      ),
-                      onPayment: () => _openDebtTransactionForm(
-                        context,
-                        item,
-                        "payment",
-                      ),
-                      onEdit: () => _openDebtForm(
-                        context,
-                        controller,
-                        item: item,
-                      ),
+                      onCharge: () =>
+                          _openDebtTransactionForm(context, item, "charge"),
+                      onPayment: () async {
+                        if (amountDue == 0) {
+                          // Confirmation dialog
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Aviso"),
+                              content: const Text(
+                                "Você está em dia — não há saldo a pagar neste cartão.\n"
+                                "Quer registrar este pagamento mesmo assim?",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text("Cancelar"),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("Registrar mesmo assim"),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm != true) return;
+                        }
+
+                        if (item.type == "credit_card" &&
+                            item.linkedAccountId == null) {
+                          final shouldLink = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Vincular cartão"),
+                              content: const Text(
+                                "Para registrar pagamentos, este cartão precisa estar ligado a uma conta do tipo Cartão.",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text("Cancelar"),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("Vincular agora"),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (shouldLink == true && context.mounted) {
+                            await _openDebtForm(
+                              context,
+                              controller,
+                              item: item,
+                            );
+                            // We don't auto-proceed to payment because we'd need to re-fetch the item.
+                            // The user can tap payment again now that it's linked.
+                          }
+                          return;
+                        }
+
+                        _openDebtTransactionForm(context, item, "payment");
+                      },
+                      onEdit: () =>
+                          _openDebtForm(context, controller, item: item),
                       onDelete: () async {
                         final error = await controller.remove(item.id);
                         if (error != null && context.mounted) {
                           showStandardSnackbar(context, error);
                         }
                       },
-                      onHistory: () => _openHistoryDialog(context, controller, item.id),
+                      onHistory: () =>
+                          _openHistoryDialog(context, controller, item.id),
                     );
                   },
                 ),
@@ -120,87 +181,124 @@ class DebtsScreen extends StatelessWidget {
     String type = item?.type ?? "credit_card";
     bool isActive = item?.isActive ?? true;
 
+    // Initialize with existing link
+    String? linkedAccountId = item?.linkedAccountId;
+
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            top: AppSpacing.md,
-            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item == null ? "Nova divida" : "Editar divida",
-                style: Theme.of(context).textTheme.titleMedium,
+        // Read accounts state
+        final accountsState = context.watch<AccountsController>().state;
+        // Filter for credit cards
+        final creditCardAccounts = accountsState.items
+            .where((a) => a.type == "credit_card")
+            .map((a) => PickerItem(id: a.id, label: a.name))
+            .toList();
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                top: AppSpacing.md,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
               ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Nome"),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<String>(
-                value: type,
-                decoration: const InputDecoration(labelText: "Tipo"),
-                items: const [
-                  DropdownMenuItem(
-                    value: "credit_card",
-                    child: Text("Cartao de credito"),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item == null ? "Nova divida" : "Editar divida",
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  DropdownMenuItem(value: "loan", child: Text("Emprestimo")),
-                  DropdownMenuItem(value: "other", child: Text("Outro")),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: "Nome"),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  DropdownButtonFormField<String>(
+                    value: type,
+                    decoration: const InputDecoration(labelText: "Tipo"),
+                    items: const [
+                      DropdownMenuItem(
+                        value: "credit_card",
+                        child: Text("Cartao de credito"),
+                      ),
+                      DropdownMenuItem(
+                        value: "loan",
+                        child: Text("Emprestimo"),
+                      ),
+                      DropdownMenuItem(value: "other", child: Text("Outro")),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => type = value);
+                      }
+                    },
+                  ),
+                  if (type == "credit_card") ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    if (creditCardAccounts.isEmpty)
+                      const Text(
+                        "Voce nao tem contas do tipo 'Cartao de Credito' para vincular. Crie uma conta primeiro.",
+                        style: TextStyle(color: Colors.orange, fontSize: 13),
+                      )
+                    else
+                      AccountPicker(
+                        label: "Conta vinculada (para pagamentos)",
+                        items: creditCardAccounts,
+                        value: linkedAccountId,
+                        onSelected: (item) =>
+                            setState(() => linkedAccountId = item.id),
+                      ),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: currencyController,
+                    decoration: const InputDecoration(labelText: "Moeda"),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: dueDayController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Dia de vencimento",
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  MoneyInput(
+                    label: "Minimo a pagar",
+                    controller: minimumPaymentController,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: interestController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Taxa anual (%)",
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Ativa"),
+                    value: isActive,
+                    onChanged: (value) => setState(() => isActive = value),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  PrimaryButton(
+                    label: "Salvar",
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
                 ],
-                onChanged: (value) {
-                  if (value != null) type = value;
-                },
               ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: currencyController,
-                decoration: const InputDecoration(labelText: "Moeda"),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: dueDayController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Dia de vencimento",
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              MoneyInput(
-                label: "Minimo a pagar",
-                controller: minimumPaymentController,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: interestController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Taxa anual (%)",
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text("Ativa"),
-                value: isActive,
-                onChanged: (value) => isActive = value,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              PrimaryButton(
-                label: "Salvar",
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -224,6 +322,7 @@ class DebtsScreen extends StatelessWidget {
       error = await controller.create(
         name: name,
         type: type,
+        linkedAccountId: linkedAccountId,
         currency: currencyController.text.trim().isEmpty
             ? "BRL"
             : currencyController.text.trim(),
@@ -237,6 +336,7 @@ class DebtsScreen extends StatelessWidget {
         id: item.id,
         name: name,
         type: type,
+        linkedAccountId: linkedAccountId,
         currency: currencyController.text.trim().isEmpty
             ? "BRL"
             : currencyController.text.trim(),
@@ -285,7 +385,10 @@ class DebtsScreen extends StatelessWidget {
                 .where((cat) => cat.kind == "expense")
                 .map((cat) => PickerItem(id: cat.id, label: cat.name))
                 .toList();
-            if (categoryId == null && categoryItems.isNotEmpty && type == "charge") {
+            if (categoryId == null &&
+                categoryItems.isNotEmpty &&
+                (type == "charge" ||
+                    (type == "payment" && debt.type != "credit_card"))) {
               categoryId = categoryItems.first.id;
             }
             return Padding(
@@ -293,7 +396,8 @@ class DebtsScreen extends StatelessWidget {
                 left: AppSpacing.md,
                 right: AppSpacing.md,
                 top: AppSpacing.md,
-                bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -308,7 +412,8 @@ class DebtsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   MoneyInput(label: "Valor", controller: amountController),
                   const SizedBox(height: AppSpacing.sm),
-                  if (type == "charge") ...[
+                  if (type == "charge" ||
+                      (type == "payment" && debt.type != "credit_card")) ...[
                     if (categoryItems.isEmpty)
                       const Text("Voce nao tem categorias de gasto.")
                     else
@@ -321,15 +426,25 @@ class DebtsScreen extends StatelessWidget {
                       ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
-                  if (accountItems.isEmpty)
+                  if (type == "charge" && debt.type == "credit_card")
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: Text(
+                        "Saindo do cartão: ${debt.name}",
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  else if (accountItems.isEmpty)
                     const Text("Voce nao tem contas ativas.")
                   else
                     AccountPicker(
                       label: "Conta",
                       items: accountItems,
                       value: accountId,
-                      onSelected: (item) =>
-                          setState(() => accountId = item.id),
+                      onSelected: (item) => setState(() => accountId = item.id),
                     ),
                   const SizedBox(height: AppSpacing.sm),
                   ListTile(
@@ -351,16 +466,39 @@ class DebtsScreen extends StatelessWidget {
                   ),
                   TextField(
                     controller: noteController,
-                    decoration:
-                        const InputDecoration(labelText: "Nota (opcional)"),
+                    decoration: const InputDecoration(
+                      labelText: "Nota (opcional)",
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  PrimaryButton(
-                    label: "Salvar",
-                    onPressed: (accountItems.isEmpty || 
-                               (type == "charge" && (categoryId == null || categoryItems.isEmpty)))
-                        ? null
-                        : () => Navigator.of(context).pop(true),
+                  Builder(
+                    builder: (context) {
+                      final isCCCharge =
+                          type == "charge" && debt.type == "credit_card";
+                      final requiresCategory =
+                          isCCCharge ||
+                          type == "charge" ||
+                          (type == "payment" && debt.type != "credit_card");
+
+                      bool isValid = true;
+                      if (isCCCharge) {
+                        // Account implied
+                        if (categoryId == null) isValid = false;
+                      } else {
+                        // Account required
+                        if (accountItems.isEmpty) isValid = false;
+                        // Category logic
+                        if (requiresCategory && categoryId == null)
+                          isValid = false;
+                      }
+
+                      return PrimaryButton(
+                        label: "Salvar",
+                        onPressed: isValid
+                            ? () => Navigator.of(context).pop(true)
+                            : null,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -380,7 +518,9 @@ class DebtsScreen extends StatelessWidget {
       return;
     }
 
-    if (type == "charge" && categoryId == null) {
+    if ((type == "charge" ||
+            (type == "payment" && debt.type != "credit_card")) &&
+        categoryId == null) {
       if (context.mounted) {
         showStandardSnackbar(context, "Falta escolher uma categoria");
       }
@@ -411,11 +551,11 @@ class DebtsScreen extends StatelessWidget {
   ) async {
     final now = DateTime.now();
     final month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-    
+
     final history = await controller.loadHistory(debtId, month: month);
-    
+
     if (!context.mounted) return;
-    
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -436,8 +576,8 @@ class DebtsScreen extends StatelessWidget {
                         isCharge
                             ? "Compra"
                             : isPayment
-                                ? "Pagamento"
-                                : tx.type,
+                            ? "Pagamento"
+                            : tx.type,
                       ),
                       subtitle: Text(
                         "${formatDate(tx.date)}${tx.note != null ? ' • ${tx.note}' : ''}",
@@ -466,7 +606,9 @@ class DebtsScreen extends StatelessWidget {
 
 class _DebtCard extends StatelessWidget {
   final Debt debt;
-  final double balance;
+  final double amountDue;
+  final double creditBalance;
+  final double paymentsThisMonth;
   final DateTime? nextDueDate;
   final VoidCallback onCharge;
   final VoidCallback onPayment;
@@ -476,7 +618,9 @@ class _DebtCard extends StatelessWidget {
 
   const _DebtCard({
     required this.debt,
-    required this.balance,
+    required this.amountDue,
+    required this.creditBalance,
+    required this.paymentsThisMonth,
     required this.nextDueDate,
     required this.onCharge,
     required this.onPayment,
@@ -490,6 +634,53 @@ class _DebtCard extends StatelessWidget {
     final dueLabel = nextDueDate == null
         ? "Sem vencimento"
         : "Vence ${formatDate(nextDueDate!)}";
+
+    // Main display logic
+    Widget mainContent;
+    if (amountDue == 0) {
+      mainContent = Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.green.withOpacity(0.3)),
+            ),
+            child: const Text(
+              "Em dia ✅",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      mainContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Saldo a pagar",
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.muted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            formatMoney(amountDue),
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      );
+    }
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -509,15 +700,30 @@ class _DebtCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
-            Text(
-              formatMoney(balance),
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            mainContent,
             const SizedBox(height: AppSpacing.xs),
             Text(
               "$dueLabel • ${debt.currency}",
               style: const TextStyle(color: AppColors.muted),
             ),
+            if (creditBalance > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                "Saldo a favor: ${formatMoney(creditBalance)}",
+                style: const TextStyle(
+                  color: Colors.green, // or a distinct color indicating credit
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+            if (paymentsThisMonth > 0) ...[
+              const SizedBox(height: 4),
+              Text(
+                "Pagamentos este mês: ${formatMoney(paymentsThisMonth)}",
+                style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              ),
+            ],
             if (debt.minimumPayment != null) ...[
               const SizedBox(height: AppSpacing.xs),
               Text(

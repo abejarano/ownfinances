@@ -50,7 +50,7 @@ export class RecurringRuleMongoRepository
 
     return results.map((doc) => {
       return RecurringRule.fromPrimitives({
-        ...doc.toPrimitives(),
+        ...(doc as any),
         id: doc._id.toString(),
       });
     });

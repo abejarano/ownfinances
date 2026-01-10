@@ -8,6 +8,8 @@ import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/recurring/presentation/modals/recurrence_preview_modal.dart";
+import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
+import "package:ownfinances/features/recurring/presentation/widgets/catchup_banner.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -59,6 +61,10 @@ class DashboardScreen extends StatelessWidget {
           onPressed: () => context.go("/budget"),
         ),
         const SizedBox(height: AppSpacing.lg),
+        const RecurrenceSummaryCard(),
+        const SizedBox(height: AppSpacing.md),
+        const CatchupBanner(),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           "Acoes rapidas",
           style: Theme.of(context).textTheme.titleMedium,
@@ -85,20 +91,7 @@ class DashboardScreen extends StatelessWidget {
           onTap: () => context.push("/transactions/new?type=transfer"),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text("Recorrencias", style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
-        QuickActionCard(
-          icon: Icons.calendar_today,
-          title: "Gerar gastos do mes",
-          subtitle: "Processar pendentes",
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              builder: (_) => const RecurrencePreviewModal(),
-            );
-          },
-        ),
+        Text("Gestao de regras", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.add,

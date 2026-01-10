@@ -7,6 +7,7 @@ abstract class DebtRepository {
   Future<Debt> create({
     required String name,
     required String type,
+    String? linkedAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -17,6 +18,7 @@ abstract class DebtRepository {
     String id, {
     String? name,
     String? type,
+    String? linkedAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,

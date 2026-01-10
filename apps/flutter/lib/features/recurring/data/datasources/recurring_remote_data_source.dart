@@ -18,19 +18,21 @@ class RecurringRemoteDataSource {
   }
 
   Future<dynamic> preview(String period, DateTime date) {
+    final month = '${date.year}-${date.month.toString().padLeft(2, '0')}';
     return apiClient.get(
       '/recurring_rules/preview',
       query: {
         'period': period,
-        'date': date.toIso8601String().split('T')[0], // YYYY-MM-DD
+        'month': month, // YYYY-MM
       },
     );
   }
 
   Future<Map<String, dynamic>> run(String period, DateTime date) {
+    final month = '${date.year}-${date.month.toString().padLeft(2, '0')}';
     return apiClient.post('/recurring_rules/run', {
       'period': period,
-      'date': date.toIso8601String().split('T')[0],
+      'month': month, // YYYY-MM
     });
   }
 
@@ -49,5 +51,13 @@ class RecurringRemoteDataSource {
       'date': date.toIso8601String(),
       'template': template,
     });
+  }
+
+  Future<Map<String, dynamic>> getPendingSummary() {
+    return apiClient.get('/recurring_rules/pending-summary');
+  }
+
+  Future<Map<String, dynamic>> getCatchupSummary() {
+    return apiClient.get('/recurring_rules/catchup');
   }
 }

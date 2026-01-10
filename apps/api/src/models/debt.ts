@@ -13,6 +13,7 @@ export type DebtPrimitives = {
   userId: string;
   name: string;
   type: DebtType;
+  linkedAccountId?: string;
   currency: string;
   currentBalance: number;
   dueDay?: number;
@@ -27,6 +28,7 @@ export type DebtCreateProps = {
   userId: string;
   name: string;
   type: DebtType;
+  linkedAccountId?: string;
   currency?: string;
   dueDay?: number;
   minimumPayment?: number;
@@ -49,6 +51,7 @@ export class Debt extends AggregateRoot {
       userId: props.userId,
       name: props.name,
       type: props.type,
+      linkedAccountId: props.linkedAccountId,
       currency: props.currency ?? "BRL",
       currentBalance: 0,
       dueDay: props.dueDay,

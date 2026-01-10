@@ -25,6 +25,7 @@ import { GoalsService } from "../services/goals_service";
 import { GoalContributionsService } from "../services/goal_contributions_service";
 import { ImportJobMongoRepository } from "../repositories/import_job_repository";
 import { TransactionsImportService } from "../services/transactions_import_service";
+import { UserSettingsRepository } from "../repositories/user_settings_repository";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -54,6 +55,7 @@ export type AppDeps = {
   readonly goalContributionsService: GoalContributionsService;
   readonly importJobRepo: ImportJobMongoRepository;
   readonly transactionsImportService: TransactionsImportService;
+  readonly userSettingsRepo: UserSettingsRepository;
 };
 
 export function buildDeps(): AppDeps {
@@ -231,6 +233,9 @@ export function buildDeps(): AppDeps {
         );
       }
       return transactionsImportService;
+    },
+    get userSettingsRepo() {
+      return UserSettingsRepository.getInstance();
     },
   };
 }

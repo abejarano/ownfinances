@@ -107,7 +107,7 @@ export class RecurringService {
   }
 
   async list(userId: string, limit = 50, page = 1) {
-    return this.ruleRepo.list(
+    return this.ruleRepo.list<RecurringRulePrimitives>(
       new Criteria(
         Filters.fromValues([
           new Map<string, any>([
@@ -176,16 +176,17 @@ export class RecurringService {
     const result: RecurringPreviewItem[] = [];
 
     for (const rule of rules) {
+      const rulePrimitives = rule.toPrimitives();
       const dates = this.calculateDates(rule, start, end);
       for (const d of dates) {
         const dateStr = d.toISOString().split("T")[0];
-        const uniqueKey = `${rule.ruleId}_${dateStr}`;
+        const uniqueKey = `${rulePrimitives.recurringRuleId}_${dateStr}`;
         const exists = instancesInPeriod.has(uniqueKey);
 
         result.push({
-          recurringRuleId: rule.ruleId,
+          recurringRuleId: rulePrimitives.recurringRuleId,
           date: d,
-          template: rule.template,
+          template: rulePrimitives.template,
           status: exists ? "already_generated" : "new",
         });
       }
@@ -349,25 +350,11 @@ export class RecurringService {
   }
 
   private async getInstancesInPeriod(userId: string, start: Date, end: Date) {
-    const instancesPage =
-      await this.instanceRepo.list<GeneratedInstancePrimitives>(
-        new Criteria(
-          Filters.fromValues([
-            new Map<string, any>([
-              ["field", "userId"],
-              ["operator", Operator.EQUAL],
-              ["value", userId],
-            ]),
-            new Map<string, any>([
-              ["field", "date"],
-              ["operator", Operator.BETWEEN],
-              ["value", { start, end }],
-            ]),
-          ]),
-          Order.none()
-        )
-      );
-    return new Set(instancesPage.results.map((i) => i.uniqueKey));
+    const instancesPage = await this.instanceRepo.search({
+      userId: userId,
+      date: { $gte: start, $lte: end },
+    });
+    return new Set(instancesPage.map((i) => i.getUniqueKey()));
   }
 
   private calculateDates(
@@ -451,5 +438,87 @@ export class RecurringService {
     };
 
     return JSON.stringify(normalized);
+  }
+
+  async getPendingSummary(userId: string, date: Date) {
+    const preview = await this.preview(userId, "monthly", date);
+    const toGenerate = preview.filter((p) => p.status === "new").length;
+
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+
+    return {
+      month,
+      toGenerate,
+    };
+  }
+
+  async getSummaryByMonth(userId: string, months: number = 3) {
+    const summaries = [];
+    const currentDate = new Date();
+
+    for (let i = 0; i < months; i++) {
+      const targetDate = new Date(currentDate);
+      targetDate.setMonth(currentDate.getMonth() + i);
+
+      const preview = await this.preview(userId, "monthly", targetDate);
+      const toGenerate = preview.filter((p) => p.status === "new").length;
+
+      const month = `${targetDate.getFullYear()}-${String(
+        targetDate.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+      summaries.push({
+        month,
+        toGenerate,
+      });
+    }
+
+    return { summaries };
+  }
+
+  async getCatchupSummary(userId: string) {
+    const currentDate = new Date();
+    const rules = await this.getUserRules(userId);
+
+    if (rules.length === 0) {
+      return { catchup: [] };
+    }
+
+    // Find earliest start date from active rules
+    const earliestStart = rules.reduce((earliest, rule) => {
+      return rule.startDate < earliest ? rule.startDate : earliest;
+    }, rules[0].startDate);
+
+    const catchup = [];
+
+    // Check up to 12 months back
+    const maxMonthsBack = 12;
+    const startCheckDate = new Date(currentDate);
+    startCheckDate.setMonth(startCheckDate.getMonth() - maxMonthsBack);
+
+    const checkStart =
+      earliestStart > startCheckDate ? earliestStart : startCheckDate;
+
+    // Loop through past months
+    let checkDate = new Date(checkStart);
+    while (checkDate < currentDate) {
+      const preview = await this.preview(userId, "monthly", checkDate);
+      const newCount = preview.filter((p) => p.status === "new").length;
+
+      if (newCount > 0) {
+        const month = `${checkDate.getFullYear()}-${String(
+          checkDate.getMonth() + 1
+        ).padStart(2, "0")}`;
+        catchup.push({ month, count: newCount });
+      }
+
+      // Move to next month
+      checkDate.setMonth(checkDate.getMonth() + 1);
+    }
+
+    return { catchup };
   }
 }

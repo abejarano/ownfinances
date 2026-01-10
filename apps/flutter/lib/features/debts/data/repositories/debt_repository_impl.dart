@@ -22,6 +22,7 @@ class DebtRepositoryImpl implements DebtRepository {
   Future<Debt> create({
     required String name,
     required String type,
+    String? linkedAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -31,6 +32,7 @@ class DebtRepositoryImpl implements DebtRepository {
     final payload = await remote.create({
       "name": name,
       "type": type,
+      "linkedAccountId": linkedAccountId,
       "currency": currency,
       "dueDay": dueDay,
       "minimumPayment": minimumPayment,
@@ -45,6 +47,7 @@ class DebtRepositoryImpl implements DebtRepository {
     String id, {
     String? name,
     String? type,
+    String? linkedAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -54,6 +57,7 @@ class DebtRepositoryImpl implements DebtRepository {
     final payload = await remote.update(id, {
       "name": name,
       "type": type,
+      "linkedAccountId": linkedAccountId,
       "currency": currency,
       "dueDay": dueDay,
       "minimumPayment": minimumPayment,

@@ -56,4 +56,14 @@ class RecurringRepositoryImpl implements RecurringRepository {
   ) {
     return _remoteDataSource.split(ruleId, date, template);
   }
+
+  @override
+  Future<Map<String, dynamic>> getPendingSummary() {
+    return _remoteDataSource.getPendingSummary();
+  }
+
+  @override
+  Future<Map<String, dynamic>> getCatchupSummary() {
+    return _remoteDataSource.getCatchupSummary();
+  }
 }

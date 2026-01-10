@@ -132,4 +132,32 @@ class RecurringController extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> loadPendingSummary() async {
+    try {
+      final result = await repository.getPendingSummary();
+      _state = _state.copyWith(
+        toGenerateCount: result['toGenerate'] as int? ?? 0,
+        currentMonth: result['month'] as String? ?? '',
+      );
+      notifyListeners();
+    } catch (error) {
+      // Silently fail for summary, don't show error in UI
+      _state = _state.copyWith(
+        toGenerateCount: 0,
+        currentMonth: '',
+      );
+      notifyListeners();
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCatchupSummary() async {
+    try {
+      final result = await repository.getCatchupSummary();
+      final catchup = result['catchup'] as List<dynamic>? ?? [];
+      return catchup.map((item) => item as Map<String, dynamic>).toList();
+    } catch (error) {
+      return [];
+    }
+  }
 }

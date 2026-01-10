@@ -15,14 +15,14 @@ export function buildApp(deps: AppDeps) {
         origin: true,
         allowedHeaders: ["Content-Type", "Authorization"],
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      }),
+      })
     )
     .use(openapi())
     .use(
       jwt({
         name: "jwt",
         secret: env.JWT_SECRET,
-      }),
+      })
     )
     .get("/health", async () => {
       const client = await getMongoClient();

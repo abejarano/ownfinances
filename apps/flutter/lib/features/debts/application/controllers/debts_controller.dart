@@ -43,6 +43,7 @@ class DebtsController extends ChangeNotifier {
   Future<String?> create({
     required String name,
     required String type,
+    String? linkedAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -53,6 +54,7 @@ class DebtsController extends ChangeNotifier {
       final created = await debtRepository.create(
         name: name,
         type: type,
+        linkedAccountId: linkedAccountId,
         currency: currency,
         dueDay: dueDay,
         minimumPayment: minimumPayment,
@@ -72,6 +74,7 @@ class DebtsController extends ChangeNotifier {
     required String id,
     String? name,
     String? type,
+    String? linkedAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -83,6 +86,7 @@ class DebtsController extends ChangeNotifier {
         id,
         name: name,
         type: type,
+        linkedAccountId: linkedAccountId,
         currency: currency,
         dueDay: dueDay,
         minimumPayment: minimumPayment,
@@ -137,7 +141,9 @@ class DebtsController extends ChangeNotifier {
         categoryId: categoryId,
         note: note,
       );
-      _state = _state.copyWith(lastAccountId: accountId ?? _state.lastAccountId);
+      _state = _state.copyWith(
+        lastAccountId: accountId ?? _state.lastAccountId,
+      );
       notifyListeners();
       await _refreshSummary(debtId);
       return null;
@@ -158,7 +164,10 @@ class DebtsController extends ChangeNotifier {
     }
   }
 
-  Future<List<DebtTransaction>> loadHistory(String debtId, {String? month}) async {
+  Future<List<DebtTransaction>> loadHistory(
+    String debtId, {
+    String? month,
+  }) async {
     try {
       return await debtRepository.history(debtId, month: month);
     } catch (error) {

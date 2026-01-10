@@ -81,4 +81,12 @@ abstract class TransactionRepository {
     required String id,
     required String period,
   });
+
+  Future<List<Transaction>> listPending({
+    String? month,
+    String? categoryId,
+    String? recurringRuleId,
+  });
+
+  Future<int> confirmBatch(List<String> transactionIds);
 }

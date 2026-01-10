@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Debug API (bun)",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--inspect", "--watch", "src/index.ts"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "dart",
+      "request": "launch",
+      "name": "Flutter Web (Chrome)",
+      "cwd": "${workspaceFolder}/apps/flutter",
+      "args": ["-d", "chrome"]
+    }
+  ]
+}

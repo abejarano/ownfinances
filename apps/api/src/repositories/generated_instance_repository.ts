@@ -27,4 +27,18 @@ export class GeneratedInstanceMongoRepository
     await collection.createIndex({ uniqueKey: 1 }, { unique: true });
     await collection.createIndex({ userId: 1, date: 1 });
   }
+
+  async search(filters: object): Promise<GeneratedInstance[]> {
+    const collection = await this.collection();
+    const docs = await collection
+      .find(filters)
+      .toArray();
+
+    return docs.map((doc) =>
+      GeneratedInstance.fromPrimitives({
+        ...(doc as any),
+        id: doc._id.toString(),
+      })
+    );
+  }
 }
