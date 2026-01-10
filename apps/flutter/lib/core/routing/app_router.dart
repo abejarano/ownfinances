@@ -10,6 +10,7 @@ import "package:ownfinances/features/onboarding/presentation/screens/setup_wizar
 import "package:ownfinances/features/dashboard/presentation/screens/dashboard_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transactions_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transaction_form_screen.dart";
+import "package:ownfinances/features/transactions/presentation/screens/pending_transactions_screen.dart";
 import "package:ownfinances/features/budgets/presentation/screens/budget_screen.dart";
 import "package:ownfinances/features/settings/presentation/screens/settings_screen.dart";
 import "package:ownfinances/features/categories/presentation/screens/categories_screen.dart";
@@ -97,6 +98,10 @@ GoRouter createRouter({
           initialType: state.uri.queryParameters["type"],
           initialTemplate: state.extra as TransactionTemplate?,
         ),
+      ),
+      GoRoute(
+        path: "/transactions/pending",
+        builder: (context, state) => const PendingTransactionsScreen(),
       ),
       GoRoute(
         path: "/categories",

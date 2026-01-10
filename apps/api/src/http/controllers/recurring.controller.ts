@@ -31,9 +31,9 @@ export class RecurringController {
     const limit = Number(ctx.query.limit || 50);
     const page = Number(ctx.query.page || 1);
     const paginated = await this.service.list(ctx.userId, limit, page);
+    console.log(paginated)
     return {
       ...paginated,
-      results: paginated.results.map((r) => r.toPrimitives()),
     };
   }
 
@@ -71,29 +71,54 @@ export class RecurringController {
 
   async preview(ctx: {
     userId: string;
-    query: { period: string; date?: string };
+    query: { period: string; date?: string; month?: string };
   }) {
     const period = (ctx.query.period as "monthly") || "monthly";
-    const date = ctx.query.date ? new Date(ctx.query.date) : new Date();
+    let date: Date;
+    
+    if (ctx.query.month) {
+      // Parse YYYY-MM format
+      const [year, month] = ctx.query.month.split("-").map(Number);
+      date = new Date(year, month - 1, 1);
+    } else if (ctx.query.date) {
+      date = new Date(ctx.query.date);
+    } else {
+      date = new Date();
+    }
+    
     return this.service.preview(ctx.userId, period, date);
   }
 
   async run(ctx: {
     userId: string;
-    body?: { period?: string; date?: string };
-    query?: { period?: string; date?: string };
+    body?: { period?: string; date?: string; month?: string };
+    query?: { period?: string; date?: string; month?: string };
   }) {
     const queryPeriod = (ctx as { query?: { period?: string } }).query?.period;
     const queryDate = (ctx as { query?: { date?: string } }).query?.date;
+    const queryMonth = (ctx as { query?: { month?: string } }).query?.month;
+    const bodyMonth = ctx.body?.month;
+    
     const period =
       (queryPeriod as "monthly") ||
       (ctx.body?.period as "monthly") ||
       "monthly";
-    const date = queryDate
-      ? new Date(queryDate)
-      : ctx.body?.date
-      ? new Date(ctx.body.date)
-      : new Date();
+    
+    let date: Date;
+    const monthParam = queryMonth || bodyMonth;
+    
+    if (monthParam) {
+      // Parse YYYY-MM format
+      const [year, month] = monthParam.split("-").map(Number);
+      date = new Date(year, month - 1, 1);
+    } else if (queryDate) {
+      date = new Date(queryDate);
+    } else if (ctx.body?.date) {
+      date = new Date(ctx.body.date);
+    } else {
+      date = new Date();
+    }
+    
     return this.service.run(ctx.userId, period, date);
   }
 
@@ -121,5 +146,22 @@ export class RecurringController {
       template
     );
     return rule;
+  }
+
+  async getPendingSummary(ctx: { userId: string }) {
+    const currentDate = new Date();
+    return this.service.getPendingSummary(ctx.userId, currentDate);
+  }
+
+  async getSummaryByMonth(ctx: {
+    userId: string;
+    query?: { months?: string };
+  }) {
+    const months = Number(ctx.query?.months || 3);
+    return this.service.getSummaryByMonth(ctx.userId, months);
+  }
+
+  async getCatchupSummary(ctx: { userId: string }) {
+    return this.service.getCatchupSummary(ctx.userId);
   }
 }

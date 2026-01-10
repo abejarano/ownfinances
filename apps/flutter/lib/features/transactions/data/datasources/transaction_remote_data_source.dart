@@ -104,4 +104,27 @@ class TransactionRemoteDataSource {
       query: {"includeImpact": "true", "period": period},
     );
   }
+
+  Future<Map<String, dynamic>> listPending({
+    String? month,
+    String? categoryId,
+    String? recurringRuleId,
+  }) {
+    return apiClient.get(
+      "/transactions/pending",
+      query: {
+        if (month != null) "month": month,
+        if (categoryId != null) "categoryId": categoryId,
+        if (recurringRuleId != null) "recurringRuleId": recurringRuleId,
+        "limit": "100",
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> confirmBatch(List<String> transactionIds) {
+    return apiClient.post(
+      "/transactions/confirm-batch",
+      {"transactionIds": transactionIds},
+    );
+  }
 }

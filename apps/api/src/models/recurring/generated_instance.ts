@@ -44,6 +44,10 @@ export class GeneratedInstance extends AggregateRoot {
     });
   }
 
+  getUniqueKey(): string {
+    return this.props.uniqueKey;
+  }
+
   toPrimitives(): GeneratedInstancePrimitives {
     return { ...this.props };
   }

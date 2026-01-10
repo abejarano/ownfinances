@@ -23,6 +23,7 @@ import "package:ownfinances/features/transactions/data/datasources/transaction_r
 import "package:ownfinances/features/transactions/data/repositories/transaction_repository_impl.dart";
 import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
+import "package:ownfinances/features/transactions/application/controllers/pending_transactions_controller.dart";
 import "package:ownfinances/features/reports/data/datasources/reports_remote_data_source.dart";
 import "package:ownfinances/features/reports/data/repositories/reports_repository_impl.dart";
 import "package:ownfinances/features/reports/domain/repositories/reports_repository.dart";
@@ -119,6 +120,10 @@ class AppProviders extends StatelessWidget {
           create: (context) =>
               TransactionsController(context.read<TransactionRepository>())
                 ..load(),
+        ),
+        ChangeNotifierProvider<PendingTransactionsController>(
+          create: (context) =>
+              PendingTransactionsController(context.read<TransactionRepository>()),
         ),
         Provider<ReportsRepository>(
           create: (context) => ReportsRepositoryImpl(

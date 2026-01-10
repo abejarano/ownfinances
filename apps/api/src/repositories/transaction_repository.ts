@@ -34,6 +34,11 @@ export class TransactionMongoRepository
         },
       }
     );
+    await collection.createIndex({
+      userId: 1,
+      status: 1,
+      recurringRuleId: 1,
+    });
   }
 
   async delete(userId: string, id: string): Promise<boolean> {
@@ -213,5 +218,29 @@ export class TransactionMongoRepository
 
     if (results.length === 0) return 0;
     return results[0].total as number;
+  }
+
+  async confirmBatch(
+    transactionIds: string[],
+    userId: string
+  ): Promise<number> {
+    const collection = await this.collection();
+    const now = new Date();
+    const result = await collection.updateMany(
+      {
+        userId,
+        transactionId: { $in: transactionIds },
+        status: "pending",
+        deletedAt: null,
+      },
+      {
+        $set: {
+          status: "cleared",
+          clearedAt: now,
+          updatedAt: now,
+        },
+      }
+    );
+    return result.modifiedCount;
   }
 }

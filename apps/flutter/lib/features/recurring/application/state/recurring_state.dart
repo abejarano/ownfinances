@@ -5,12 +5,16 @@ class RecurringState {
   final String? error;
   final List<RecurringRule> items;
   final List<RecurringPreviewItem> previewItems;
+  final int toGenerateCount;
+  final String currentMonth;
 
   const RecurringState({
     required this.isLoading,
     this.error,
     required this.items,
     required this.previewItems,
+    this.toGenerateCount = 0,
+    this.currentMonth = '',
   });
 
   factory RecurringState.initial() {
@@ -22,12 +26,16 @@ class RecurringState {
     String? error,
     List<RecurringRule>? items,
     List<RecurringPreviewItem>? previewItems,
+    int? toGenerateCount,
+    String? currentMonth,
   }) {
     return RecurringState(
       isLoading: isLoading ?? this.isLoading,
       error: error,
       items: items ?? this.items,
       previewItems: previewItems ?? this.previewItems,
+      toGenerateCount: toGenerateCount ?? this.toGenerateCount,
+      currentMonth: currentMonth ?? this.currentMonth,
     );
   }
 }

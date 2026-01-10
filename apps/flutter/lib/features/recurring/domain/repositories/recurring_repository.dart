@@ -12,4 +12,6 @@ abstract class RecurringRepository {
     DateTime date,
     Map<String, dynamic> template,
   );
+  Future<Map<String, dynamic>> getPendingSummary();
+  Future<Map<String, dynamic>> getCatchupSummary();
 }

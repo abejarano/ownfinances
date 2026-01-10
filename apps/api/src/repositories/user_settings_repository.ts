@@ -1,0 +1,46 @@
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
+import type { IRepository } from "@abejarano/ts-mongodb-criteria";
+import { UserSettings } from "../models/user_settings";
+import type { Collection } from "mongodb";
+
+export class UserSettingsRepository
+  extends MongoRepository<UserSettings>
+  implements IRepository<UserSettings>
+{
+  private static instance: UserSettingsRepository | null = null;
+
+  private constructor() {
+    super(UserSettings);
+  }
+
+  static getInstance(): UserSettingsRepository {
+    if (!UserSettingsRepository.instance) {
+      UserSettingsRepository.instance = new UserSettingsRepository();
+    }
+    return UserSettingsRepository.instance;
+  }
+
+  collectionName(): string {
+    return "user_settings";
+  }
+
+  async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex({ userId: 1 }, { unique: true });
+  }
+
+  async getByUserId(userId: string): Promise<UserSettings | null> {
+    const collection = await this.collection();
+    const doc = await collection.findOne({ userId });
+    if (!doc) return null;
+    return UserSettings.fromPrimitives(doc as any);
+  }
+
+  async upsertSettings(settings: UserSettings): Promise<void> {
+    const collection = await this.collection();
+    await collection.updateOne(
+      { userId: settings.getUserId() },
+      { $set: settings.toPrimitives() },
+      { upsert: true }
+    );
+  }
+}

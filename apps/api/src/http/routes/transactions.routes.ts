@@ -57,5 +57,15 @@ export function registerTransactionsRoutes(app: any, deps: AppDeps) {
       const authError = await requireAuth(ctx);
       if (authError) return authError;
       return getTransactionsController().restore(ctx);
+    })
+    .get("/transactions/pending", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().listPending(ctx);
+    })
+    .post("/transactions/confirm-batch", async (ctx: any) => {
+      const authError = await requireAuth(ctx);
+      if (authError) return authError;
+      return getTransactionsController().confirmBatch(ctx);
     });
 }

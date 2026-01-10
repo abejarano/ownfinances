@@ -97,4 +97,27 @@ class TransactionRepositoryImpl implements TransactionRepository {
     final result = await remote.deleteWithImpact(id, period: period);
     return TransactionDeleteResponse.fromJson(result);
   }
+
+  @override
+  Future<List<Transaction>> listPending({
+    String? month,
+    String? categoryId,
+    String? recurringRuleId,
+  }) async {
+    final payload = await remote.listPending(
+      month: month,
+      categoryId: categoryId,
+      recurringRuleId: recurringRuleId,
+    );
+    final results = (payload["results"] as List<dynamic>? ?? [])
+        .map((item) => Transaction.fromJson(item as Map<String, dynamic>))
+        .toList();
+    return results;
+  }
+
+  @override
+  Future<int> confirmBatch(List<String> transactionIds) async {
+    final result = await remote.confirmBatch(transactionIds);
+    return result["confirmed"] as int? ?? 0;
+  }
 }
