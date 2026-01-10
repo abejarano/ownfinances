@@ -22,6 +22,8 @@ import "package:ownfinances/core/routing/onboarding_controller.dart";
 import "package:ownfinances/features/ui_kit/presentation/screens/ui_kit_screen.dart";
 import "package:ownfinances/features/debts/presentation/screens/debts_screen.dart";
 import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
+import "package:ownfinances/features/csv_import/presentation/screens/csv_import_wizard_screen.dart";
+import "package:ownfinances/features/csv_import/presentation/screens/csv_import_result_screen.dart";
 
 GoRouter createRouter({
   required AuthController authController,
@@ -118,6 +120,17 @@ GoRouter createRouter({
       ),
       GoRoute(path: "/debts", builder: (context, state) => const DebtsScreen()),
       GoRoute(path: "/goals", builder: (context, state) => const GoalsScreen()),
+      GoRoute(
+        path: "/csv-import",
+        builder: (context, state) => const CsvImportWizardScreen(),
+      ),
+      GoRoute(
+        path: "/csv-import/result/:jobId",
+        builder: (context, state) {
+          final jobId = state.pathParameters["jobId"]!;
+          return CsvImportResultScreen(jobId: jobId);
+        },
+      ),
       ShellRoute(
         builder: (context, state, child) {
           final location = state.uri.toString();

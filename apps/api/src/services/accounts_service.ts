@@ -18,6 +18,7 @@ export class AccountsService {
       userId,
       name: payload.name!,
       type: payload.type!,
+      bankType: payload.bankType ?? null,
       currency: payload.currency ?? "BRL",
       isActive: payload.isActive ?? true,
     });

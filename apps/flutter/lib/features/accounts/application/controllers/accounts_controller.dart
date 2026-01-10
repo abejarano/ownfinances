@@ -27,7 +27,9 @@ class AccountsController extends ChangeNotifier {
     required String name,
     required String type,
     String currency = "BRL",
+
     bool isActive = true,
+    String? bankType,
   }) async {
     try {
       final created = await repository.create(
@@ -35,6 +37,7 @@ class AccountsController extends ChangeNotifier {
         type: type,
         currency: currency,
         isActive: isActive,
+        bankType: bankType,
       );
       final next = [..._state.items, created]
         ..sort((a, b) => a.name.compareTo(b.name));
@@ -52,6 +55,7 @@ class AccountsController extends ChangeNotifier {
     required String type,
     required String currency,
     required bool isActive,
+    String? bankType,
   }) async {
     try {
       final updated = await repository.update(
@@ -60,6 +64,7 @@ class AccountsController extends ChangeNotifier {
         type: type,
         currency: currency,
         isActive: isActive,
+        bankType: bankType,
       );
       final next =
           _state.items.map((item) => item.id == id ? updated : item).toList()

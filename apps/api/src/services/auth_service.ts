@@ -2,14 +2,17 @@ import crypto from "node:crypto";
 import argon2 from "argon2";
 import { User, UserPrimitives } from "../models/auth/user";
 import { RefreshToken } from "../models/auth/refresh_token";
+import { Category } from "../models/category";
 import type { UserMongoRepository } from "../repositories/user_mongo_repository";
 import type { RefreshTokenMongoRepository } from "../repositories/refresh_token_mongo_repository";
+import type { CategoryMongoRepository } from "../repositories/category_repository";
 import { env } from "../shared/env";
 
 export class AuthService {
   constructor(
     private readonly users: UserMongoRepository,
-    private readonly refreshTokens: RefreshTokenMongoRepository
+    private readonly refreshTokens: RefreshTokenMongoRepository,
+    private readonly categories: CategoryMongoRepository
   ) {}
 
   async register(payload: {
@@ -35,6 +38,7 @@ export class AuthService {
     });
 
     await this.users.upsert(user);
+    await this.seedDefaultCategories(user.getUserId());
 
     const refresh = await this.issueRefreshToken(user.getUserId());
     return {
@@ -169,6 +173,68 @@ export class AuthService {
     return {
       refreshToken,
     };
+  }
+
+  private async seedDefaultCategories(userId: string) {
+    const categories = [
+      {
+        name: "Alimentacao",
+        kind: "expense",
+        color: "#F97316",
+        icon: "restaurant",
+      },
+      {
+        name: "Educacao",
+        kind: "expense",
+        color: "#7C3AED",
+        icon: "education",
+      },
+      {
+        name: "Lazer",
+        kind: "expense",
+        color: "#0EA5E9",
+        icon: "leisure",
+      },
+      {
+        name: "Moradia",
+        kind: "expense",
+        color: "#DB2777",
+        icon: "home",
+      },
+      {
+        name: "Salario",
+        kind: "income",
+        color: "#22C55E",
+        icon: "salary",
+      },
+      {
+        name: "Sporte",
+        kind: "expense",
+        color: "#06B6D4",
+        icon: "health",
+      },
+      {
+        name: "Transporte",
+        kind: "expense",
+        color: "#64748B",
+        icon: "transport",
+      },
+    ] as const;
+
+    await Promise.all(
+      categories.map((category) =>
+        this.categories.upsert(
+          Category.create({
+            userId,
+            name: category.name,
+            kind: category.kind,
+            color: category.color,
+            icon: category.icon,
+            isActive: true,
+          })
+        )
+      )
+    );
   }
 }
 

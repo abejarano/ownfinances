@@ -23,6 +23,8 @@ import { GoalMongoRepository } from "../repositories/goal_repository";
 import { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository";
 import { GoalsService } from "../services/goals_service";
 import { GoalContributionsService } from "../services/goal_contributions_service";
+import { ImportJobMongoRepository } from "../repositories/import_job_repository";
+import { TransactionsImportService } from "../services/transactions_import_service";
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository;
@@ -50,6 +52,8 @@ export type AppDeps = {
   readonly goalContributionRepo: GoalContributionMongoRepository;
   readonly goalsService: GoalsService;
   readonly goalContributionsService: GoalContributionsService;
+  readonly importJobRepo: ImportJobMongoRepository;
+  readonly transactionsImportService: TransactionsImportService;
 };
 
 export function buildDeps(): AppDeps {
@@ -65,6 +69,7 @@ export function buildDeps(): AppDeps {
   let debtTransactionsService: DebtTransactionsService | null = null;
   let goalsService: GoalsService | null = null;
   let goalContributionsService: GoalContributionsService | null = null;
+  let transactionsImportService: TransactionsImportService | null = null;
 
   return {
     get categoryRepo() {
@@ -108,7 +113,11 @@ export function buildDeps(): AppDeps {
     },
     get authService() {
       if (!authService) {
-        authService = new AuthService(this.userRepo, this.refreshTokenRepo);
+        authService = new AuthService(
+          this.userRepo,
+          this.refreshTokenRepo,
+          this.categoryRepo
+        );
       }
       return authService;
     },
@@ -209,6 +218,19 @@ export function buildDeps(): AppDeps {
         );
       }
       return goalContributionsService;
+    },
+    get importJobRepo() {
+      return ImportJobMongoRepository.getInstance();
+    },
+    get transactionsImportService() {
+      if (!transactionsImportService) {
+        transactionsImportService = new TransactionsImportService(
+          this.transactionRepo,
+          this.importJobRepo,
+          this.accountRepo
+        );
+      }
+      return transactionsImportService;
     },
   };
 }

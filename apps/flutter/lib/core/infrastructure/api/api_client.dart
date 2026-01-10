@@ -23,10 +23,17 @@ class ApiClient {
 
   Future<Map<String, dynamic>> post(
     String path,
-    Map<String, dynamic> body, {
+    dynamic body, {
     Map<String, String>? query,
+    bool isMultipart = false,
   }) async {
-    final response = await _send("POST", path, body: body, query: query);
+    final response = await _send(
+      "POST",
+      path,
+      body: body,
+      query: query,
+      isMultipart: isMultipart,
+    );
     return _parse(response);
   }
 
@@ -50,29 +57,57 @@ class ApiClient {
   Future<http.Response> _send(
     String method,
     String path, {
-    Map<String, dynamic>? body,
+    dynamic body,
     bool retry = true,
     Map<String, String>? query,
+    bool isMultipart = false,
   }) async {
     final session = (await storage.read()).session;
     final headers = <String, String>{
-      "Content-Type": "application/json",
       if (session != null) "Authorization": "Bearer ${session.accessToken}",
     };
 
     final uri = Uri.parse("$baseUrl$path").replace(queryParameters: query);
-    final response = await _client
-        .send(
-          http.Request(method, uri)
-            ..headers.addAll(headers)
-            ..body = body == null ? "" : jsonEncode(body),
-        )
-        .then(http.Response.fromStream);
+
+    http.BaseRequest request;
+    if (isMultipart && body is Map<String, dynamic>) {
+      // Multipart request
+      final multipartRequest = http.MultipartRequest(method, uri);
+      multipartRequest.headers.addAll(headers);
+
+      body.forEach((key, value) {
+        if (value is String && key == "file") {
+          // CSV content as file - convert string to bytes
+          final bytes = utf8.encode(value);
+          multipartRequest.files.add(
+            http.MultipartFile.fromBytes(key, bytes, filename: "import.csv"),
+          );
+        } else {
+          multipartRequest.fields[key] = value.toString();
+        }
+      });
+
+      request = multipartRequest;
+    } else {
+      // JSON request
+      headers["Content-Type"] = "application/json";
+      request = http.Request(method, uri)
+        ..headers.addAll(headers)
+        ..body = body == null ? "" : jsonEncode(body);
+    }
+
+    final response = await _client.send(request).then(http.Response.fromStream);
 
     if (response.statusCode == 401 && retry && !_isAuthPath(path)) {
       final refreshed = await _refreshToken();
       if (refreshed) {
-        return _send(method, path, body: body, retry: false);
+        return _send(
+          method,
+          path,
+          body: body,
+          retry: false,
+          isMultipart: isMultipart,
+        );
       }
       await storage.setMessage("Sessao expirada");
       await storage.clear();

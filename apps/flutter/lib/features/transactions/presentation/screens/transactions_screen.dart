@@ -1,9 +1,7 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:provider/provider.dart";
-import "package:ownfinances/core/presentation/components/buttons.dart";
-import "package:ownfinances/core/presentation/components/pickers.dart";
-import "package:ownfinances/core/presentation/components/snackbar.dart";
+import "package:intl/intl.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
@@ -11,6 +9,7 @@ import "package:ownfinances/features/categories/application/controllers/categori
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -19,265 +18,331 @@ class TransactionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final txController = context.read<TransactionsController>();
     final txState = context.watch<TransactionsController>().state;
-    final reportsController = context.read<ReportsController>();
-    final reportsState = context.watch<ReportsController>().state;
-    final categories = context.watch<CategoriesController>().state.items;
-    final accounts = context.watch<AccountsController>().state.items;
-
-    final categoryItems = [
-      const PickerItem(id: "", label: "Todas"),
-      ...categories.map((cat) => PickerItem(id: cat.id, label: cat.name)),
-    ];
-    final accountItems = [
-      const PickerItem(id: "", label: "Todas"),
-      ...accounts.map((acc) => PickerItem(id: acc.id, label: acc.name)),
-    ];
-    final categoryMap = {for (final item in categories) item.id: item.name};
-    final accountMap = {for (final item in accounts) item.id: item.name};
-
     final filters = txState.filters;
-    final currentMonth = formatMonth(
-      filters.dateFrom ?? DateTime.now(),
-    ).toUpperCase();
 
+    // Process transactions for grouping
+    final groupedTransactions = _groupTransactionsByDate(txState.items);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context, txController),
+            _buildFilters(context, filters, txController),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(
+              child: txState.items.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 80),
+                      itemCount: groupedTransactions.length,
+                      itemBuilder: (context, index) {
+                        final item = groupedTransactions[index];
+                        if (item is String) {
+                          return _buildDateHeader(context, item);
+                        } else if (item is Transaction) {
+                          return _buildTransactionItem(context, item);
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddMenu(context),
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, TransactionsController controller) {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Text(
+            "Transações",
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  "Transacoes",
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+              IconButton(
+                icon: const Icon(Icons.upload_file_outlined),
+                onPressed: () => context.push("/csv-import"),
+                tooltip: "Importar CSV",
               ),
               IconButton(
                 icon: const Icon(Icons.refresh),
-                onPressed: txController.load,
+                onPressed: controller.load,
               ),
             ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              ActionChip(
-                label: const Text("Este mes"),
-                onPressed: () => _setPeriodFilter(context, filters, "current"),
-              ),
-              ActionChip(
-                label: const Text("Mes passado"),
-                onPressed: () => _setPeriodFilter(context, filters, "previous"),
-              ),
-              ActionChip(
-                label: const Text("7 dias"),
-                onPressed: () => _setPeriodFilter(context, filters, "last7"),
-              ),
-              ActionChip(
-                label: Text("Periodo: $currentMonth"),
-                onPressed: () => _pickMonth(context, filters),
-              ),
-              SizedBox(
-                width: 160,
-                child: DropdownButtonFormField<String?>(
-                  value: filters.status,
-                  decoration: const InputDecoration(labelText: "Status"),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text("Todos")),
-                    DropdownMenuItem(
-                      value: "pending",
-                      child: Text("Pendente"),
-                    ),
-                    DropdownMenuItem(
-                      value: "cleared",
-                      child: Text("Confirmado"),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    txController.setFilters(
-                      TransactionFilters(
-                        dateFrom: filters.dateFrom,
-                        dateTo: filters.dateTo,
-                        categoryId: filters.categoryId,
-                        accountId: filters.accountId,
-                        status: value,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(
-                width: 180,
-                child: CategoryPicker(
-                  label: "Categoria",
-                  items: categoryItems,
-                  value: filters.categoryId ?? "",
-                  onSelected: (item) {
-                    final id = item.id.isEmpty ? null : item.id;
-                    txController.setFilters(
-                      TransactionFilters(
-                        dateFrom: filters.dateFrom,
-                        dateTo: filters.dateTo,
-                        categoryId: id,
-                        accountId: filters.accountId,
-                        status: filters.status,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(
-                width: 180,
-                child: AccountPicker(
-                  label: "Conta",
-                  items: accountItems,
-                  value: filters.accountId ?? "",
-                  onSelected: (item) {
-                    final id = item.id.isEmpty ? null : item.id;
-                    txController.setFilters(
-                      TransactionFilters(
-                        dateFrom: filters.dateFrom,
-                        dateTo: filters.dateTo,
-                        categoryId: filters.categoryId,
-                        accountId: id,
-                        status: filters.status,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Expanded(
-            child: txState.items.isEmpty
-                ? const Center(child: Text("Nenhuma transacao neste periodo."))
-                : ListView.separated(
-                    itemCount: txState.items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final item = txState.items[index];
-                      final categoryName = categoryMap[item.categoryId];
-                      final fromName = accountMap[item.fromAccountId];
-                      final toName = accountMap[item.toAccountId];
-                      final title = _titleFor(item.type, categoryName);
-                      final subtitle =
-                          "${item.status == "cleared" ? "Confirmado" : "Pendente"} • ${formatDate(item.date)}";
-                      final accountLabel = item.type == "income"
-                          ? (toName ?? "—")
-                          : (fromName ?? "—");
-                      final amount = formatMoney(item.amount);
-
-                      return Dismissible(
-                        key: ValueKey(item.id),
-                        background: _swipeBackground(
-                          Icons.check_circle,
-                          "Confirmar",
-                          AppColors.secondary,
-                          Alignment.centerLeft,
-                        ),
-                        secondaryBackground: _swipeBackground(
-                          Icons.delete,
-                          "Excluir",
-                          Colors.redAccent,
-                          Alignment.centerRight,
-                        ),
-                        confirmDismiss: (direction) async {
-                          if (direction == DismissDirection.startToEnd) {
-                            final cleared = await txController.clearWithImpact(
-                              id: item.id,
-                              period: reportsState.period,
-                            );
-                            if (cleared?.impact != null) {
-                              reportsController.applyImpactFromJson(
-                                cleared!.impact!,
-                              );
-                            } else {
-                              await reportsController.load();
-                            }
-                            return false;
-                          }
-                          return true;
-                        },
-                        onDismissed: (direction) async {
-                          final deleted = item;
-                          final result = await txController.removeWithImpact(
-                            id: item.id,
-                            period: reportsState.period,
-                          );
-                          if ((result?.ok != true) && context.mounted) {
-                            showStandardSnackbar(context, "Erro ao remover");
-                            return;
-                          }
-                          if (result?.impact != null) {
-                            reportsController.applyImpactFromJson(
-                              result!.impact!,
-                            );
-                          } else {
-                            await reportsController.load();
-                          }
-                          if (context.mounted) {
-                            showUndoSnackbar(
-                              context,
-                              "Transacao removida",
-                              () async {
-                                final restored =
-                                    await txController.restoreWithImpact(
-                                  id: deleted.id,
-                                  period: reportsState.period,
-                                );
-                                if (restored?.impact != null) {
-                                  reportsController.applyImpactFromJson(
-                                    restored!.impact!,
-                                  );
-                                } else {
-                                  await reportsController.load();
-                                }
-                              },
-                            );
-                          }
-                        },
-                        child: ListTile(
-                          title: Text(title),
-                          subtitle: Text(
-                            item.type == "transfer"
-                                ? "${fromName ?? "—"} → ${toName ?? "—"} • $subtitle"
-                                : "${categoryName ?? "Sem categoria"} • $accountLabel • $subtitle",
-                          ),
-                          trailing: Text(
-                            _amountPrefix(item.type) + amount,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          onTap: () {
-                            context.push("/transactions/edit", extra: item);
-                          },
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          PrimaryButton(
-            label: "Registrar gasto",
-            onPressed: () => context.go("/transactions/new?type=expense"),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SecondaryButton(
-            label: "Registrar receita",
-            onPressed: () => context.go("/transactions/new?type=income"),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildFilters(
+    BuildContext context,
+    TransactionFilters filters,
+    TransactionsController controller,
+  ) {
+    final currentMonthLabel = formatMonth(
+      filters.dateFrom ?? DateTime.now(),
+    ).toUpperCase();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Row(
+        children: [
+          _FilterChip(
+            label: currentMonthLabel,
+            icon: Icons.calendar_today,
+            isActive: true, // Always show active for the main date filter
+            onTap: () => _pickMonth(context, filters),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _FilterChip(
+            label: "Conta",
+            isActive:
+                filters.accountId != null && filters.accountId!.isNotEmpty,
+            onTap: () => _showAccountPicker(context, filters),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _FilterChip(
+            label: "Categoria",
+            isActive:
+                filters.categoryId != null && filters.categoryId!.isNotEmpty,
+            onTap: () => _showCategoryPicker(context, filters),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _FilterChip(
+            label: "Status",
+            isActive: filters.status != null,
+            onTap: () => _showStatusPicker(context, filters),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: AppColors.muted,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem(BuildContext context, Transaction item) {
+    final categoryMap = {
+      for (final c in context.read<CategoriesController>().state.items) c.id: c,
+    };
+    final accountMap = {
+      for (final a in context.read<AccountsController>().state.items)
+        a.id: a.name,
+    };
+
+    final category = categoryMap[item.categoryId];
+    final fromName = accountMap[item.fromAccountId];
+    final toName = accountMap[item.toAccountId];
+
+    final title = _titleFor(item.type, category?.name);
+    final subtitle = _subtitleFor(item, fromName, toName);
+    final amount = formatMoney(item.amount);
+    final iconData = _getIconData(category?.icon);
+    final iconColor = _getIconColor(category?.color);
+
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: Colors.redAccent,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpacing.md),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      confirmDismiss: (direction) async {
+        return await _confirmDelete(context);
+      },
+      onDismissed: (direction) {
+        _deleteTransaction(context, item);
+      },
+      child: InkWell(
+        onTap: () => context.push("/transactions/edit", extra: item),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: iconColor.withValues(alpha: 0.1),
+                foregroundColor: iconColor,
+                child: Icon(iconData, size: 20),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      subtitle,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _amountPrefix(item.type) + amount,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: item.type == "income"
+                          ? Colors.green
+                          : item.type == "expense"
+                          ? Colors.white
+                          : AppColors.muted,
+                    ),
+                  ),
+                  if (item.status == "cleared")
+                    const Icon(
+                      Icons.check_circle,
+                      size: 14,
+                      color: AppColors.secondary,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.history, size: 48, color: AppColors.muted),
+          SizedBox(height: AppSpacing.md),
+          Text(
+            "Nenhuma transação encontrada",
+            style: TextStyle(color: AppColors.muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.arrow_downward, color: Colors.green),
+              title: const Text("Receita"),
+              onTap: () {
+                Navigator.pop(context);
+                context.go("/transactions/new?type=income");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.arrow_upward, color: Colors.red),
+              title: const Text("Despesa"),
+              onTap: () {
+                Navigator.pop(context);
+                context.go("/transactions/new?type=expense");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.swap_horiz, color: Colors.blue),
+              title: const Text("Transferência"),
+              onTap: () {
+                Navigator.pop(context);
+                context.go("/transactions/new?type=transfer");
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- Helpers ---
+
+  List<dynamic> _groupTransactionsByDate(List<Transaction> items) {
+    if (items.isEmpty) return [];
+
+    final grouped = <dynamic>[];
+    String? lastDate;
+
+    for (final item in items) {
+      final dateStr = _formatHeaderDate(item.date);
+      if (lastDate != dateStr) {
+        grouped.add(dateStr);
+        lastDate = dateStr;
+      }
+      grouped.add(item);
+    }
+    return grouped;
+  }
+
+  String _formatHeaderDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final itemDate = DateTime(date.year, date.month, date.day);
+
+    if (itemDate == today) return "Hoje";
+    if (itemDate == yesterday) return "Ontem";
+
+    return DateFormat("EEEE, d 'de' MMMM", "pt_BR").format(date);
+  }
+
   String _titleFor(String type, String? categoryName) {
-    if (type == "income") return "Entrou ${categoryName ?? ""}".trim();
-    if (type == "transfer") return "Transferi";
-    return "Saiu ${categoryName ?? ""}".trim();
+    if (type == "transfer") return "Transferência";
+    return categoryName ?? (type == "income" ? "Receita" : "Despesa");
+  }
+
+  String _subtitleFor(Transaction item, String? fromName, String? toName) {
+    if (item.type == "transfer") {
+      return "${fromName ?? "?"} → ${toName ?? "?"}";
+    }
+    final account = item.type == "income" ? toName : fromName;
+    return account ?? "Conta desconhecida";
   }
 
   String _amountPrefix(String type) {
@@ -286,26 +351,37 @@ class TransactionsScreen extends StatelessWidget {
     return "- ";
   }
 
-  Widget _swipeBackground(
-    IconData icon,
-    String label,
-    Color color,
-    Alignment alignment,
-  ) {
-    return Container(
-      color: color.withOpacity(0.1),
-      alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 8),
-          Text(label, style: TextStyle(color: color)),
-        ],
-      ),
-    );
+  IconData _getIconData(String? iconName) {
+    switch (iconName) {
+      case "salary":
+        return Icons.attach_money;
+      case "restaurant":
+        return Icons.restaurant;
+      case "home":
+        return Icons.home;
+      case "transport":
+        return Icons.directions_car;
+      case "leisure":
+        return Icons.movie;
+      case "health":
+        return Icons.medical_services;
+      case "shopping":
+        return Icons.shopping_bag;
+      default:
+        return Icons.category;
+    }
   }
+
+  Color _getIconColor(String? colorHex) {
+    if (colorHex == null) return Colors.grey;
+    try {
+      return Color(int.parse(colorHex.replaceAll("#", "0xFF")));
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
+
+  // --- Filter Actions ---
 
   Future<void> _pickMonth(
     BuildContext context,
@@ -319,47 +395,240 @@ class TransactionsScreen extends StatelessWidget {
       lastDate: DateTime(2100),
     );
     if (selected == null) return;
+
+    if (!context.mounted) return;
+
     final start = DateTime(selected.year, selected.month, 1);
     final end = DateTime(selected.year, selected.month + 1, 0, 23, 59, 59);
+
     context.read<TransactionsController>().setFilters(
-      TransactionFilters(
-        dateFrom: start,
-        dateTo: end,
-        categoryId: filters.categoryId,
-        accountId: filters.accountId,
-        status: filters.status,
+      filters.copyWith(dateFrom: start, dateTo: end),
+    );
+  }
+
+  Future<void> _showAccountPicker(
+    BuildContext context,
+    TransactionFilters filters,
+  ) async {
+    final accounts = context.read<AccountsController>().state.items;
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: const Text("Todas as contas"),
+            onTap: () {
+              context.read<TransactionsController>().setFilters(
+                filters.copyWith(accountId: ""), // Clear
+              );
+              Navigator.pop(context);
+            },
+          ),
+          const Divider(),
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              children: accounts
+                  .map(
+                    (acc) => ListTile(
+                      title: Text(acc.name),
+                      selected: filters.accountId == acc.id,
+                      onTap: () {
+                        context.read<TransactionsController>().setFilters(
+                          filters.copyWith(accountId: acc.id),
+                        );
+                        Navigator.pop(context);
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  void _setPeriodFilter(
+  Future<void> _showCategoryPicker(
     BuildContext context,
     TransactionFilters filters,
-    String preset,
-  ) {
-    final now = DateTime.now();
-    DateTime start;
-    DateTime end;
+  ) async {
+    final categories = context.read<CategoriesController>().state.items;
 
-    if (preset == "current") {
-      start = DateTime(now.year, now.month, 1);
-      end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
-    } else if (preset == "previous") {
-      final previous = DateTime(now.year, now.month - 1, 1);
-      start = previous;
-      end = DateTime(previous.year, previous.month + 1, 0, 23, 59, 59);
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: const Text("Todas as categorias"),
+            onTap: () {
+              context.read<TransactionsController>().setFilters(
+                filters.copyWith(categoryId: ""), // Clear
+              );
+              Navigator.pop(context);
+            },
+          ),
+          const Divider(),
+          Expanded(
+            child: ListView(
+              shrinkWrap: true,
+              children: categories
+                  .map(
+                    (cat) => ListTile(
+                      title: Text(cat.name),
+                      selected: filters.categoryId == cat.id,
+                      onTap: () {
+                        context.read<TransactionsController>().setFilters(
+                          filters.copyWith(categoryId: cat.id),
+                        );
+                        Navigator.pop(context);
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showStatusPicker(
+    BuildContext context,
+    TransactionFilters filters,
+  ) async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: const Text("Todos"),
+            onTap: () {
+              context.read<TransactionsController>().setFilters(
+                filters.copyWith(status: null),
+              );
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text("Pendente"),
+            onTap: () {
+              context.read<TransactionsController>().setFilters(
+                filters.copyWith(status: "pending"),
+              );
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text("Confirmado"),
+            onTap: () {
+              context.read<TransactionsController>().setFilters(
+                filters.copyWith(status: "cleared"),
+              );
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _confirmDelete(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Excluir transação?"),
+            content: const Text("Essa ação não pode ser desfeita."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancelar"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  "Excluir",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _deleteTransaction(
+    BuildContext context,
+    Transaction item,
+  ) async {
+    final controller = context.read<TransactionsController>();
+    final reportsController = context.read<ReportsController>();
+    final period = context.read<ReportsController>().state.period;
+
+    final result = await controller.removeWithImpact(
+      id: item.id,
+      period: period,
+    );
+
+    if (result?.impact != null && context.mounted) {
+      reportsController.applyImpactFromJson(result!.impact!);
     } else {
-      start = DateTime(now.year, now.month, now.day - 6);
-      end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      await reportsController.load();
     }
+  }
+}
 
-    context.read<TransactionsController>().setFilters(
-      TransactionFilters(
-        dateFrom: start,
-        dateTo: end,
-        categoryId: filters.categoryId,
-        accountId: filters.accountId,
-        status: filters.status,
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.onTap,
+    this.icon,
+    this.isActive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+          border: Border.all(
+            color: isActive ? AppColors.primary : AppColors.muted,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 16,
+                color: isActive ? AppColors.primary : AppColors.muted,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? AppColors.primary : AppColors.muted,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

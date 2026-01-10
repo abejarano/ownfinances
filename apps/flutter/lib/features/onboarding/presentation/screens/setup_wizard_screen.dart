@@ -29,6 +29,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   bool _createBudget = true;
   bool _isSaving = false;
   String _accountType = "bank";
+  String? _bankType;
   bool _checkingExisting = true;
 
   @override
@@ -130,7 +131,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           _AccountStep(
             controller: _accountNameController,
             accountType: _accountType,
-            onTypeChanged: (value) => setState(() => _accountType = value),
+            bankType: _bankType,
+            onTypeChanged: (value) => setState(() {
+              _accountType = value;
+              if (value != "bank") _bankType = null;
+            }),
+            onBankTypeChanged: (value) => setState(() => _bankType = value),
           ),
           _CategoriesStep(
             categories: categories,
@@ -223,6 +229,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           type: _accountType,
           currency: "BRL",
           isActive: true,
+          bankType: _accountType == "bank" ? _bankType : null,
         );
       }
 
@@ -335,12 +342,16 @@ class _WelcomeStep extends StatelessWidget {
 class _AccountStep extends StatelessWidget {
   final TextEditingController controller;
   final String accountType;
+  final String? bankType;
   final ValueChanged<String> onTypeChanged;
+  final ValueChanged<String?> onBankTypeChanged;
 
   const _AccountStep({
     required this.controller,
     required this.accountType,
+    required this.bankType,
     required this.onTypeChanged,
+    required this.onBankTypeChanged,
   });
 
   @override
@@ -374,6 +385,20 @@ class _AccountStep extends StatelessWidget {
               if (value != null) onTypeChanged(value);
             },
           ),
+          if (accountType == "bank") ...[
+            const SizedBox(height: AppSpacing.md),
+            DropdownButtonFormField<String>(
+              value: bankType,
+              decoration: const InputDecoration(labelText: "Banco"),
+              items: const [
+                DropdownMenuItem(value: "nubank", child: Text("Nubank")),
+                DropdownMenuItem(value: "itau", child: Text("Itaú")),
+                DropdownMenuItem(value: "bradesco", child: Text("Bradesco")),
+                DropdownMenuItem(value: "caixa", child: Text("Caixa")),
+              ],
+              onChanged: onBankTypeChanged,
+            ),
+          ],
         ],
       ),
     );

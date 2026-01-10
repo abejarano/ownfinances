@@ -1,10 +1,12 @@
 import { t } from "elysia";
 import { TypeCompiler } from "elysia/type-system";
 import { AccountType } from "../../models/account";
+import { BankType } from "../../models/bank_type";
 
 export type AccountCreatePayload = {
   name: string;
   type: AccountType;
+  bankType?: BankType | null;
   currency?: string;
   isActive?: boolean;
 };
@@ -12,11 +14,13 @@ export type AccountCreatePayload = {
 export type AccountUpdatePayload = Partial<AccountCreatePayload>;
 
 const AccountTypeSchema = t.Enum(AccountType);
+const BankTypeSchema = t.Enum(BankType);
 
 const AccountBaseSchema = t.Object(
   {
     name: t.String({ minLength: 1 }),
     type: AccountTypeSchema,
+    bankType: t.Optional(t.Union([BankTypeSchema, t.Null()])),
     currency: t.Optional(t.String({ minLength: 1 })),
     isActive: t.Optional(t.Boolean()),
   },

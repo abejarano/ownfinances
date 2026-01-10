@@ -35,12 +35,14 @@ class AccountRepositoryImpl implements AccountRepository {
     required String type,
     String currency = "BRL",
     bool isActive = true,
+    String? bankType,
   }) async {
     final payload = await remote.create(
       name: name,
       type: type,
       currency: currency,
       isActive: isActive,
+      bankType: bankType,
     );
     return Account.fromJson(payload);
   }
@@ -52,6 +54,7 @@ class AccountRepositoryImpl implements AccountRepository {
     required String type,
     required String currency,
     required bool isActive,
+    String? bankType,
   }) async {
     final payload = await remote.update(
       id,
@@ -59,6 +62,7 @@ class AccountRepositoryImpl implements AccountRepository {
       type: type,
       currency: currency,
       isActive: isActive,
+      bankType: bankType,
     );
     return Account.fromJson(payload);
   }

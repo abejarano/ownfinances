@@ -28,12 +28,14 @@ class AccountRemoteDataSource {
     required String type,
     String currency = "BRL",
     bool isActive = true,
+    String? bankType,
   }) {
     return apiClient.post("/accounts", {
       "name": name,
       "type": type,
       "currency": currency,
       "isActive": isActive,
+      if (bankType != null) "bankType": bankType,
     });
   }
 
@@ -43,12 +45,14 @@ class AccountRemoteDataSource {
     required String type,
     required String currency,
     required bool isActive,
+    String? bankType,
   }) {
     return apiClient.put("/accounts/$id", {
       "name": name,
       "type": type,
       "currency": currency,
       "isActive": isActive,
+      if (bankType != null) "bankType": bankType,
     });
   }
 

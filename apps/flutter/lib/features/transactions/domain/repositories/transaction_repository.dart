@@ -21,6 +21,26 @@ class TransactionFilters {
     this.status,
     this.query,
   });
+
+  TransactionFilters copyWith({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? categoryId,
+    String? accountId,
+    String? type,
+    String? status,
+    String? query,
+  }) {
+    return TransactionFilters(
+      dateFrom: dateFrom ?? this.dateFrom,
+      dateTo: dateTo ?? this.dateTo,
+      categoryId: categoryId ?? this.categoryId,
+      accountId: accountId ?? this.accountId,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      query: query ?? this.query,
+    );
+  }
 }
 
 abstract class TransactionRepository {

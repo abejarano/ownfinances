@@ -50,6 +50,11 @@ import "package:ownfinances/features/goals/data/datasources/goal_remote_data_sou
 import "package:ownfinances/features/goals/data/repositories/goal_repository_impl.dart";
 import "package:ownfinances/features/goals/domain/repositories/goal_repository.dart";
 import "package:ownfinances/features/goals/application/controllers/goals_controller.dart";
+import "package:ownfinances/features/csv_import/data/datasources/csv_import_remote_data_source.dart";
+import "package:ownfinances/features/csv_import/data/repositories/csv_import_repository_impl.dart";
+import "package:ownfinances/features/csv_import/domain/repositories/csv_import_repository.dart";
+import "package:ownfinances/features/csv_import/application/controllers/csv_import_controller.dart";
+import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -66,6 +71,12 @@ class AppProviders extends StatelessWidget {
           create: (context) => ApiClient(
             baseUrl: "http://localhost:3000",
             storage: context.read<TokenStorage>(),
+          ),
+        ),
+        Provider<WebSocketClient>(
+          create: (context) => WebSocketClient(
+            baseUrl: "http://localhost:3000",
+            tokenStorage: context.read<TokenStorage>(),
           ),
         ),
         Provider<AuthRepository>(
@@ -170,6 +181,18 @@ class AppProviders extends StatelessWidget {
           create: (context) =>
               GoalsController(context.read<GoalRepository>())..load(),
         ),
+        Provider<CsvImportRepository>(
+          create: (context) => CsvImportRepositoryImpl(
+            CsvImportRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
+        ChangeNotifierProvider<CsvImportController>(
+          create: (context) => CsvImportController(
+            context.read<CsvImportRepository>(),
+            webSocketClient: context.read<WebSocketClient>(),
+          ),
+        ),
+
         ChangeNotifierProvider<OnboardingController>(
           create: (context) {
             final controller = OnboardingController(

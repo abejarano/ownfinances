@@ -148,6 +148,7 @@ class AccountsScreen extends StatelessWidget {
       text: item?.currency ?? "BRL",
     );
     String type = item?.type ?? "cash";
+    String? bankType = item?.bankType;
     bool isActive = item?.isActive ?? true;
 
     final result = await showModalBottomSheet<bool>(
@@ -155,63 +156,103 @@ class AccountsScreen extends StatelessWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            top: AppSpacing.md,
-            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item == null ? "Nova conta" : "Editar conta",
-                style: Theme.of(context).textTheme.titleMedium,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                top: AppSpacing.md,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
               ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Nome"),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              DropdownButtonFormField<String>(
-                value: type,
-                decoration: const InputDecoration(labelText: "Tipo"),
-                items: const [
-                  DropdownMenuItem(value: "cash", child: Text("Dinheiro")),
-                  DropdownMenuItem(value: "bank", child: Text("Banco")),
-                  DropdownMenuItem(value: "wallet", child: Text("Carteira")),
-                  DropdownMenuItem(value: "broker", child: Text("Investimentos")),
-                  DropdownMenuItem(
-                    value: "credit_card",
-                    child: Text("Cartao"),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item == null ? "Nova conta" : "Editar conta",
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: "Nome"),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  DropdownButtonFormField<String>(
+                    value: type,
+                    decoration: const InputDecoration(labelText: "Tipo"),
+                    items: const [
+                      DropdownMenuItem(value: "cash", child: Text("Dinheiro")),
+                      DropdownMenuItem(value: "bank", child: Text("Banco")),
+                      DropdownMenuItem(
+                        value: "wallet",
+                        child: Text("Carteira"),
+                      ),
+                      DropdownMenuItem(
+                        value: "broker",
+                        child: Text("Investimentos"),
+                      ),
+                      DropdownMenuItem(
+                        value: "credit_card",
+                        child: Text("Cartao"),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          type = value;
+                          if (type != "bank") bankType = null;
+                        });
+                      }
+                    },
+                  ),
+                  if (type == "bank") ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    DropdownButtonFormField<String>(
+                      value: bankType,
+                      decoration: const InputDecoration(labelText: "Banco"),
+                      items: const [
+                        DropdownMenuItem(
+                          value: "nubank",
+                          child: Text("Nubank"),
+                        ),
+                        DropdownMenuItem(value: "itau", child: Text("Itaú")),
+                        DropdownMenuItem(
+                          value: "bradesco",
+                          child: Text("Bradesco"),
+                        ),
+                        DropdownMenuItem(value: "caixa", child: Text("Caixa")),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          bankType = value;
+                        });
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: currencyController,
+                    decoration: const InputDecoration(labelText: "Moeda"),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Ativa"),
+                    value: isActive,
+                    onChanged: (value) => setState(() => isActive = value),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  PrimaryButton(
+                    label: "Salvar",
+                    onPressed: () => Navigator.of(context).pop(true),
                   ),
                 ],
-                onChanged: (value) {
-                  if (value != null) type = value;
-                },
               ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: currencyController,
-                decoration: const InputDecoration(labelText: "Moeda"),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text("Ativa"),
-                value: isActive,
-                onChanged: (value) => isActive = value,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              PrimaryButton(
-                label: "Salvar",
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -232,6 +273,7 @@ class AccountsScreen extends StatelessWidget {
         type: type,
         currency: currency.isEmpty ? "BRL" : currency,
         isActive: isActive,
+        bankType: type == "bank" ? bankType : null,
       );
     } else {
       error = await controller.update(
@@ -240,6 +282,7 @@ class AccountsScreen extends StatelessWidget {
         type: type,
         currency: currency.isEmpty ? "BRL" : currency,
         isActive: isActive,
+        bankType: type == "bank" ? bankType : null,
       );
     }
     if (error != null && context.mounted) {

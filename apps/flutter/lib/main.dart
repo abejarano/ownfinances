@@ -5,11 +5,40 @@ import "package:intl/date_symbol_data_local.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/di/providers.dart";
 import "package:go_router/go_router.dart";
+import "package:provider/provider.dart";
+import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting("pt_BR");
   runApp(const OwnFinancesApp());
+}
+
+class WebSocketInitializer extends StatefulWidget {
+  final Widget child;
+
+  const WebSocketInitializer({super.key, required this.child});
+
+  @override
+  State<WebSocketInitializer> createState() => _WebSocketInitializerState();
+}
+
+class _WebSocketInitializerState extends State<WebSocketInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final wsClient = context.read<WebSocketClient>();
+      wsClient.connect().catchError((error) {
+        print("Error connecting WebSocket: $error");
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
 }
 
 class OwnFinancesApp extends StatelessWidget {
@@ -18,21 +47,23 @@ class OwnFinancesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppProviders(
-      child: Builder(
-        builder: (context) {
-          final router = context.watch<GoRouter>();
-          return MaterialApp.router(
-            title: "OwnFinances",
-            theme: AppTheme.light(),
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: const [Locale("pt", "BR")],
-            routerConfig: router,
-          );
-        },
+      child: WebSocketInitializer(
+        child: Builder(
+          builder: (context) {
+            final router = context.watch<GoRouter>();
+            return MaterialApp.router(
+              title: "OwnFinances",
+              theme: AppTheme.light(),
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [Locale("pt", "BR")],
+              routerConfig: router,
+            );
+          },
+        ),
       ),
     );
   }

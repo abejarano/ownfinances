@@ -32,6 +32,7 @@ export type TransactionPrimitives = {
   deletedAt?: Date | null;
   recurringRuleId?: string;
   recurringUniqueKey?: string;
+  importFingerprint?: string | null;
 };
 
 export type TransactionCreateProps = {
