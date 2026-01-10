@@ -107,9 +107,7 @@ export class RecurringService {
   }
 
   async list(userId: string, limit = 50, page = 1) {
-    console.log("list", userId, limit, page);
-
-    return this.ruleRepo.list(
+    return this.ruleRepo.list<RecurringRulePrimitives>(
       new Criteria(
         Filters.fromValues([
           new Map<string, any>([
@@ -123,8 +121,6 @@ export class RecurringService {
         page
       )
     );
-
-   
   }
 
   async getById(userId: string, recurringRuleId: string) {
@@ -354,11 +350,10 @@ export class RecurringService {
   }
 
   private async getInstancesInPeriod(userId: string, start: Date, end: Date) {
-    const instancesPage =
-      await this.instanceRepo.search({
-        userId: userId,
-        date: { $gte:start, $lte: end },
-      });
+    const instancesPage = await this.instanceRepo.search({
+      userId: userId,
+      date: { $gte: start, $lte: end },
+    });
     return new Set(instancesPage.map((i) => i.getUniqueKey()));
   }
 
@@ -448,9 +443,12 @@ export class RecurringService {
   async getPendingSummary(userId: string, date: Date) {
     const preview = await this.preview(userId, "monthly", date);
     const toGenerate = preview.filter((p) => p.status === "new").length;
-    
-    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    
+
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+
     return {
       month,
       toGenerate,
@@ -460,62 +458,67 @@ export class RecurringService {
   async getSummaryByMonth(userId: string, months: number = 3) {
     const summaries = [];
     const currentDate = new Date();
-    
+
     for (let i = 0; i < months; i++) {
       const targetDate = new Date(currentDate);
       targetDate.setMonth(currentDate.getMonth() + i);
-      
+
       const preview = await this.preview(userId, "monthly", targetDate);
       const toGenerate = preview.filter((p) => p.status === "new").length;
-      
-      const month = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, "0")}`;
-      
+
+      const month = `${targetDate.getFullYear()}-${String(
+        targetDate.getMonth() + 1
+      ).padStart(2, "0")}`;
+
       summaries.push({
         month,
         toGenerate,
       });
     }
-    
+
     return { summaries };
   }
 
   async getCatchupSummary(userId: string) {
     const currentDate = new Date();
     const rules = await this.getUserRules(userId);
-    
+
     if (rules.length === 0) {
       return { catchup: [] };
     }
-    
+
     // Find earliest start date from active rules
     const earliestStart = rules.reduce((earliest, rule) => {
       return rule.startDate < earliest ? rule.startDate : earliest;
     }, rules[0].startDate);
-    
+
     const catchup = [];
-    
+
     // Check up to 12 months back
     const maxMonthsBack = 12;
     const startCheckDate = new Date(currentDate);
     startCheckDate.setMonth(startCheckDate.getMonth() - maxMonthsBack);
-    
-    const checkStart = earliestStart > startCheckDate ? earliestStart : startCheckDate;
-    
+
+    const checkStart =
+      earliestStart > startCheckDate ? earliestStart : startCheckDate;
+
     // Loop through past months
     let checkDate = new Date(checkStart);
     while (checkDate < currentDate) {
       const preview = await this.preview(userId, "monthly", checkDate);
       const newCount = preview.filter((p) => p.status === "new").length;
-      
+
       if (newCount > 0) {
-        const month = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}`;
+        const month = `${checkDate.getFullYear()}-${String(
+          checkDate.getMonth() + 1
+        ).padStart(2, "0")}`;
         catchup.push({ month, count: newCount });
       }
-      
+
       // Move to next month
       checkDate.setMonth(checkDate.getMonth() + 1);
     }
-    
+
     return { catchup };
   }
 }

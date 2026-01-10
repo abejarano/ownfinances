@@ -30,11 +30,7 @@ export class RecurringController {
   }) {
     const limit = Number(ctx.query.limit || 50);
     const page = Number(ctx.query.page || 1);
-    const paginated = await this.service.list(ctx.userId, limit, page);
-    console.log(paginated)
-    return {
-      ...paginated,
-    };
+    return await this.service.list(ctx.userId, limit, page);
   }
 
   async getById(ctx: { userId: string; params: { id: string } }) {
@@ -75,7 +71,7 @@ export class RecurringController {
   }) {
     const period = (ctx.query.period as "monthly") || "monthly";
     let date: Date;
-    
+
     if (ctx.query.month) {
       // Parse YYYY-MM format
       const [year, month] = ctx.query.month.split("-").map(Number);
@@ -85,7 +81,7 @@ export class RecurringController {
     } else {
       date = new Date();
     }
-    
+
     return this.service.preview(ctx.userId, period, date);
   }
 
@@ -98,15 +94,15 @@ export class RecurringController {
     const queryDate = (ctx as { query?: { date?: string } }).query?.date;
     const queryMonth = (ctx as { query?: { month?: string } }).query?.month;
     const bodyMonth = ctx.body?.month;
-    
+
     const period =
       (queryPeriod as "monthly") ||
       (ctx.body?.period as "monthly") ||
       "monthly";
-    
+
     let date: Date;
     const monthParam = queryMonth || bodyMonth;
-    
+
     if (monthParam) {
       // Parse YYYY-MM format
       const [year, month] = monthParam.split("-").map(Number);
@@ -118,7 +114,7 @@ export class RecurringController {
     } else {
       date = new Date();
     }
-    
+
     return this.service.run(ctx.userId, period, date);
   }
 

@@ -21,6 +21,7 @@ export class DebtsService {
       userId,
       name: payload.name!,
       type: payload.type!,
+      linkedAccountId: payload.linkedAccountId,
       currency: payload.currency ?? "BRL",
       dueDay: payload.dueDay,
       minimumPayment: payload.minimumPayment,
@@ -45,6 +46,7 @@ export class DebtsService {
       id: existingPrimitives.id ?? existingPrimitives.debtId,
       debtId: existingPrimitives.debtId,
       userId: existingPrimitives.userId,
+      linkedAccountId: payload.linkedAccountId ?? existingPrimitives.linkedAccountId,
       currentBalance: existingPrimitives.currentBalance ?? 0,
       updatedAt: new Date(),
     };
@@ -95,9 +97,13 @@ export class DebtsService {
     );
 
     const nextDueDate = this.nextDueDate(debt.toPrimitives().dueDay, now);
+    const amountDue = Math.max(0, balanceComputed);
+    const creditBalance = balanceComputed < 0 ? Math.abs(balanceComputed) : 0;
 
     return {
       balanceComputed,
+      amountDue,
+      creditBalance,
       paymentsThisMonth,
       nextDueDate,
     };

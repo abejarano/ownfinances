@@ -20,7 +20,7 @@ import "package:ownfinances/features/templates/presentation/screens/template_lis
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
 import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
-import "package:ownfinances/features/ui_kit/presentation/screens/ui_kit_screen.dart";
+
 import "package:ownfinances/features/debts/presentation/screens/debts_screen.dart";
 import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
 import "package:ownfinances/features/csv_import/presentation/screens/csv_import_wizard_screen.dart";
@@ -119,10 +119,7 @@ GoRouter createRouter({
         path: "/templates",
         builder: (context, state) => const TemplateListScreen(),
       ),
-      GoRoute(
-        path: "/ui-kit",
-        builder: (context, state) => const UiKitScreen(),
-      ),
+
       GoRoute(path: "/debts", builder: (context, state) => const DebtsScreen()),
       GoRoute(path: "/goals", builder: (context, state) => const GoalsScreen()),
       GoRoute(

@@ -8,13 +8,12 @@ export function registerRecurringRoutes(app: any, deps: AppDeps) {
   app.group("/recurring_rules", (group: any) => {
     group
       .get("/", async (ctx: any) => {
-        console.log("list", ctx);
         const auth = await requireAuth(ctx);
         if (auth) return auth;
         return controller.list(ctx);
       })
       .get("/:id", async (ctx: any) => {
-        console.log("getById", ctx);
+        console.log("getById");
         const auth = await requireAuth(ctx);
         if (auth) return auth;
         return controller.getById(ctx);
@@ -65,7 +64,6 @@ export function registerRecurringRoutes(app: any, deps: AppDeps) {
         return controller.getSummaryByMonth(ctx);
       })
       .get("/catchup", async (ctx: any) => {
-        console.log("catchup", ctx);
         const auth = await requireAuth(ctx);
         if (auth) return auth;
         return controller.getCatchupSummary(ctx);

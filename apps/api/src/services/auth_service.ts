@@ -202,6 +202,12 @@ export class AuthService {
         icon: "home",
       },
       {
+        name: "Emprestimos",
+        kind: "expense",
+        color: "#E11D48",
+        icon: "shopping",
+      },
+      {
         name: "Salario",
         kind: "income",
         color: "#22C55E",

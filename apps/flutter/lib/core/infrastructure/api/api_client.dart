@@ -157,6 +157,6 @@ class ApiClient {
   }
 
   bool _isAuthPath(String path) {
-    return path.startsWith("/auth/") || path == "/me";
+    return path.startsWith("/auth/");
   }
 }

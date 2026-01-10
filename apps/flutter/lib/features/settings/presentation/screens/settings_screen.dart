@@ -27,7 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final apiClient = context.read<ApiClient>();
       final result = await apiClient.get('/settings');
       setState(() {
-        _autoGenerateRecurring = result['autoGenerateRecurring'] as bool? ?? false;
+        _autoGenerateRecurring =
+            result['autoGenerateRecurring'] as bool? ?? false;
         _isLoading = false;
       });
     } catch (e) {
@@ -44,10 +45,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       final apiClient = context.read<ApiClient>();
-      await apiClient.put('/settings', {
-        'autoGenerateRecurring': value,
-      });
-      
+      await apiClient.put('/settings', {'autoGenerateRecurring': value});
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -64,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _autoGenerateRecurring = !value;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -83,12 +82,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Text("Configuracoes", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.md),
-        
+
         // Recorrências section
-        Text(
-          "Recorrências",
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text("Recorrências", style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
         Card(
           child: Column(
@@ -121,12 +117,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        
+
         // Other settings
-        Text(
-          "Geral",
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text("Geral", style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
         ListTile(
           title: const Text("Moeda"),
@@ -138,12 +131,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: const Text("Mensal"),
           onTap: () {},
         ),
-        
+
         const SizedBox(height: AppSpacing.md),
-        Text(
-          "Gestão",
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text("Gestão", style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
         ListTile(
           title: const Text("Categorias"),
@@ -157,21 +147,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: const Text("Dividas"),
           onTap: () => context.go("/debts"),
         ),
-        ListTile(
-          title: const Text("Metas"),
-          onTap: () => context.go("/goals"),
-        ),
-        
+        ListTile(title: const Text("Metas"), onTap: () => context.go("/goals")),
+
         const SizedBox(height: AppSpacing.md),
-        Text(
-          "Avançado",
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text("Avançado", style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
-        ListTile(
-          title: const Text("UI Kit"),
-          onTap: () => context.go("/ui-kit"),
-        ),
+
         ListTile(
           title: const Text("Sair"),
           onTap: () async {
