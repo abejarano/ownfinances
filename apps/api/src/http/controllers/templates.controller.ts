@@ -1,86 +1,102 @@
-import type { TemplateService } from "../../services/template_service";
-import { TransactionTemplate } from "../../models/template/transaction_template";
-import { notFound } from "../errors";
-import type {
-  TemplateCreatePayload,
-  TemplateUpdatePayload,
-} from "../validation/templates.validation";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
+import { HttpResponse } from "../../bootstrap/response"
+import type { TemplateService } from "../../services/template_service"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import {
+  validateTemplatePayload,
+  type TemplateCreatePayload,
+  type TemplateUpdatePayload,
+} from "../validation/templates.validation"
 
+@Controller("/templates")
 export class TemplatesController {
-  constructor(private readonly service: TemplateService) {}
+  private readonly service: TemplateService
 
-  async list({
-    query,
-    userId,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-  }) {
-    const limit = query.limit ? Number(query.limit) : 50;
-    const page = query.page ? Number(query.page) : 1;
-    const result = await this.service.list(userId ?? "", limit, page);
-    return {
-      ...result,
-      results: result.results.map((item) =>
-        TransactionTemplate.fromPrimitives(item).toPrimitives(),
-      ),
-    };
+  constructor() {
+    this.service = Deps.resolve<TemplateService>("templateService")
   }
 
-  async create({
-    body,
-    set,
-    userId,
-  }: {
-    body: TemplateCreatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { template } = await this.service.create(userId ?? "", body);
-    return template;
+  @Get("/")
+  @Use([AuthMiddleware])
+  async list(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const limit = query.limit ? Number(query.limit) : 50
+    const page = query.page ? Number(query.page) : 1
+    const result = await this.service.list(req.userId ?? "", limit, page)
+    // const payload = {
+    //   ...result,
+    //   results: result.results.map((item) =>
+    //     TransactionTemplate.fromPrimitives(item).toPrimitives()
+    //   ),
+    // }
+    return HttpResponse(res, result)
   }
 
-  async getById({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const result = await this.service.getById(userId ?? "", params.id);
-    if ("error" in result) return notFound(set, result.error);
-    return result.template;
+  @Post("/")
+  @Use([AuthMiddleware, validateTemplatePayload(false)])
+  async create(
+    @Body() body: TemplateCreatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.create(req.userId ?? "", body)
+    return HttpResponse(res, result)
   }
 
-  async update({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    body: TemplateUpdatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const result = await this.service.update(userId ?? "", params.id, body);
-    if ("error" in result) return notFound(set, result.error);
-    return result.template;
+  @Get("/:id")
+  @Use([AuthMiddleware])
+  async getById(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.getById(req.userId ?? "", id)
+
+    return HttpResponse(res, result)
   }
 
-  async remove({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const result = await this.service.delete(userId ?? "", params.id);
-    if (result?.error) return notFound(set, result.error);
-    return { ok: true };
+  @Put("/:id")
+  @Use([AuthMiddleware, validateTemplatePayload(true)])
+  async update(
+    @Param("id") id: string,
+    @Body() body: TemplateUpdatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.update(req.userId ?? "", id, body)
+
+    return HttpResponse(res, result)
+  }
+
+  @Delete("/:id")
+  @Use([AuthMiddleware])
+  async remove(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.delete(req.userId ?? "", id)
+    if (result?.error) {
+      return HttpResponse(res, { error: result.error, status: 404 })
+    }
+    return HttpResponse(res, { value: { ok: true }, status: 200 })
   }
 }

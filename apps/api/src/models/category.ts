@@ -1,42 +1,42 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
-import { createMongoId } from "./shared/mongo_id";
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { createMongoId } from "./shared/mongo_id"
 
-export type CategoryKind = "income" | "expense";
+export type CategoryKind = "income" | "expense"
 
 export type CategoryPrimitives = {
-  id?: string;
-  categoryId: string;
-  userId: string;
-  name: string;
-  kind: CategoryKind;
-  parentId?: string | null;
-  color?: string | null;
-  icon?: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt?: Date;
-};
+  id?: string
+  categoryId: string
+  userId: string
+  name: string
+  kind: CategoryKind
+  parentId?: string | null
+  color?: string | null
+  icon?: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt?: Date
+}
 
 export type CategoryCreateProps = {
-  userId: string;
-  name: string;
-  kind: CategoryKind;
-  parentId?: string | null;
-  color?: string | null;
-  icon?: string | null;
-  isActive?: boolean;
-};
+  userId: string
+  name: string
+  kind: CategoryKind
+  parentId?: string | null
+  color?: string | null
+  icon?: string | null
+  isActive?: boolean
+}
 
 export class Category extends AggregateRoot {
-  private readonly props: CategoryPrimitives;
+  private readonly props: CategoryPrimitives
 
   private constructor(props: CategoryPrimitives) {
-    super();
-    this.props = props;
+    super()
+    this.props = props
   }
 
   static create(props: CategoryCreateProps): Category {
-    const now = new Date();
+    const now = new Date()
 
     return new Category({
       categoryId: createMongoId(),
@@ -49,22 +49,22 @@ export class Category extends AggregateRoot {
       isActive: props.isActive ?? true,
       createdAt: now,
       updatedAt: now,
-    });
+    })
   }
 
   getId(): string {
-    return this.props.id ?? this.props.categoryId;
+    return this.props.id ?? this.props.categoryId
   }
 
   getCategoryId(): string {
-    return this.props.categoryId;
+    return this.props.categoryId
   }
 
   toPrimitives(): CategoryPrimitives {
-    return this.props;
+    return this.props
   }
 
-  static fromPrimitives(primitives: CategoryPrimitives): Category {
-    return new Category(primitives);
+  static override fromPrimitives(primitives: CategoryPrimitives): Category {
+    return new Category(primitives)
   }
 }

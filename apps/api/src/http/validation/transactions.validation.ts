@@ -1,117 +1,126 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
-import { TransactionStatus, TransactionType } from "../../models/transaction";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "@abejarano/ts-express-server"
+import * as v from "valibot"
+import { TransactionStatus, TransactionType } from "../../models/transaction"
 
 export type TransactionCreatePayload = {
-  type: TransactionType;
-  date?: string | Date;
-  amount: number;
-  currency?: string;
-  categoryId?: string | null;
-  fromAccountId?: string | null;
-  toAccountId?: string | null;
-  note?: string | null;
-  tags?: string[] | null;
-  status?: TransactionStatus;
-};
+  type: TransactionType
+  date?: string | Date
+  amount: number
+  currency?: string
+  categoryId?: string | null
+  fromAccountId?: string | null
+  toAccountId?: string | null
+  note?: string | null
+  tags?: string[] | null
+  status?: TransactionStatus
+}
 
-export type TransactionUpdatePayload = Partial<TransactionCreatePayload>;
+export type TransactionUpdatePayload = Partial<TransactionCreatePayload>
 
-const TransactionTypeSchema = t.Enum(TransactionType);
+const TransactionTypeSchema = v.enum_(TransactionType)
 
-const TransactionStatusSchema = t.Enum(TransactionStatus);
+const TransactionStatusSchema = v.enum_(TransactionStatus)
 
-const DateLikeSchema = t.Union([t.String(), t.Date()]);
+const DateLikeSchema = v.union([v.string(), v.date()])
 
-const TransactionBaseSchema = t.Object(
-  {
-    type: TransactionTypeSchema,
-    date: t.Optional(DateLikeSchema),
-    amount: t.Number(),
-    currency: t.Optional(t.String({ minLength: 1 })),
-    categoryId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    fromAccountId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    toAccountId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    note: t.Optional(t.Union([t.String(), t.Null()])),
-    tags: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
-    status: t.Optional(TransactionStatusSchema),
-  },
-  { additionalProperties: false }
-);
+const TransactionBaseSchema = v.strictObject({
+  type: TransactionTypeSchema,
+  date: v.optional(DateLikeSchema),
+  amount: v.number(),
+  currency: v.optional(v.pipe(v.string(), v.minLength(1))),
+  categoryId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  fromAccountId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  toAccountId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  note: v.optional(v.nullable(v.string())),
+  tags: v.optional(v.nullable(v.array(v.string()))),
+  status: v.optional(TransactionStatusSchema),
+})
 
-const TransactionCreateSchema = TransactionBaseSchema;
-const TransactionUpdateSchema = t.Partial(TransactionBaseSchema);
+const TransactionCreateSchema = TransactionBaseSchema
+const TransactionUpdateSchema = v.partial(TransactionBaseSchema)
 
-const transactionCreateCompiler = TypeCompiler.Compile(TransactionCreateSchema);
-const transactionUpdateCompiler = TypeCompiler.Compile(TransactionUpdateSchema);
+export function validateTransactionPayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const schema = isUpdate ? TransactionUpdateSchema : TransactionCreateSchema
+    const result = v.safeParse(schema, req.body)
 
-export function validateTransactionPayload(
-  payload: TransactionCreatePayload | TransactionUpdatePayload,
-  isUpdate: boolean
-): string | null {
-  const compiler = isUpdate
-    ? transactionUpdateCompiler
-    : transactionCreateCompiler;
-  if (!compiler.Check(payload)) {
-    const data = payload as {
-      type?: string;
-      amount?: number;
-    };
+    if (!result.success) {
+      const data = req.body as {
+        type?: string
+        amount?: number
+        status?: string
+      }
+      if (
+        data?.type &&
+        !Object.values(TransactionType).includes(data.type as TransactionType)
+      ) {
+        return res.status(422).send("Tipo de transacao invalido")
+      }
+      if (!isUpdate && !data?.type) {
+        return res.status(422).send("Falta o tipo de transacao")
+      }
+      if (!isUpdate && data?.amount === undefined) {
+        return res.status(422).send("Falta o valor")
+      }
+      if (
+        data?.status &&
+        !Object.values(TransactionStatus).includes(
+          data.status as TransactionStatus
+        )
+      ) {
+        return res.status(422).send("Status invalido")
+      }
+      if (!result.issues) return res.status(422).send("Payload invalido")
+      const flattened = v.flatten(result.issues)
+      if (flattened.nested?.type)
+        return res.status(422).send("Tipo de transacao invalido")
+      if (flattened.nested?.amount)
+        return res.status(422).send("Falta o valor")
+      if (flattened.nested?.status)
+        return res.status(422).send("Status invalido")
+      return res.status(422).send("Payload invalido")
+    }
+
+    const data = req.body as {
+      type?: string
+      amount?: number
+      status?: string
+      date?: string | Date
+    }
+
+    if (!isUpdate && !data.type) {
+      return res.status(422).send("Falta o tipo de transacao")
+    }
+    if (data.amount !== undefined && data.amount <= 0) {
+      return res.status(422).send("O valor deve ser maior que 0")
+    }
+    if (!isUpdate && data.amount === undefined) {
+      return res.status(422).send("Falta o valor")
+    }
     if (
-      data?.type &&
-      !Object.values(TransactionType).includes(data.type as TransactionType)
+      data.status &&
+      !Object.values(TransactionStatus).includes(
+        data.status as TransactionStatus
+      )
     ) {
-      return "Tipo de transacao invalido";
+      return res.status(422).send("Status invalido")
     }
-    if (!isUpdate && !data?.type) {
-      return "Falta o tipo de transacao";
-    }
-    if (!isUpdate && data?.amount === undefined) {
-      return "Falta o valor";
-    }
-    for (const error of compiler.Errors(payload)) {
-      if (error.path === "/type") return "Tipo de transacao invalido";
-      if (error.path === "/amount") return "Falta o valor";
-      if (error.path === "/status") return "Status invalido";
-    }
-    return "Payload invalido";
-  }
 
-  const data = payload as {
-    type?: string;
-    amount?: number;
-    status?: string;
-    date?: string | Date;
-  };
-
-  if (!isUpdate && !data.type) {
-    return "Falta el tipo de transaccion";
-  }
-  if (
-    data.type &&
-    !Object.values(TransactionType).includes(data.type as TransactionType)
-  ) {
-    return "Tipo de transacao invalido";
-  }
-  if (data.amount !== undefined && data.amount <= 0) {
-    return "O valor deve ser maior que 0";
-  }
-  if (!isUpdate && data.amount === undefined) {
-    return "Falta o valor";
-  }
-  if (
-    data.status &&
-    !Object.values(TransactionStatus).includes(data.status as TransactionStatus)
-  ) {
-    return "Status invalido";
-  }
-
-  if (data.date) {
-    const date = new Date(data.date);
-    if (Number.isNaN(date.getTime())) {
-      return "Data invalida";
+    if (data.date) {
+      const date = new Date(data.date)
+      if (Number.isNaN(date.getTime())) {
+        return res.status(422).send("Data invalida")
+      }
     }
-  }
 
-  return null;
+    return next()
+  }
 }

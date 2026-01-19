@@ -1,5 +1,5 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
-import { createMongoId } from "./shared/mongo_id";
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { createMongoId } from "./shared/mongo_id"
 
 export enum DebtTransactionType {
   Charge = "charge",
@@ -9,41 +9,41 @@ export enum DebtTransactionType {
 }
 
 export type DebtTransactionPrimitives = {
-  id?: string;
-  debtTransactionId: string;
-  userId: string;
-  debtId: string;
-  date: Date;
-  type: DebtTransactionType;
-  amount: number;
-  accountId?: string;
-  categoryId?: string | null;
-  note?: string | null;
-  createdAt: Date;
-  updatedAt?: Date;
-};
+  id?: string
+  debtTransactionId: string
+  userId: string
+  debtId: string
+  date: Date
+  type: DebtTransactionType
+  amount: number
+  accountId?: string
+  categoryId?: string | null
+  note?: string | null
+  createdAt: Date
+  updatedAt?: Date
+}
 
 export type DebtTransactionCreateProps = {
-  userId: string;
-  debtId: string;
-  date?: Date;
-  type: DebtTransactionType;
-  amount: number;
-  accountId?: string;
-  categoryId?: string | null;
-  note?: string | null;
-};
+  userId: string
+  debtId: string
+  date?: Date
+  type: DebtTransactionType
+  amount: number
+  accountId?: string
+  categoryId?: string | null
+  note?: string | null
+}
 
 export class DebtTransaction extends AggregateRoot {
-  private readonly props: DebtTransactionPrimitives;
+  private readonly props: DebtTransactionPrimitives
 
   private constructor(props: DebtTransactionPrimitives) {
-    super();
-    this.props = props;
+    super()
+    this.props = props
   }
 
   static create(props: DebtTransactionCreateProps): DebtTransaction {
-    const now = new Date();
+    const now = new Date()
     return new DebtTransaction({
       debtTransactionId: createMongoId(),
       userId: props.userId,
@@ -56,22 +56,24 @@ export class DebtTransaction extends AggregateRoot {
       note: props.note,
       createdAt: now,
       updatedAt: now,
-    });
+    })
   }
 
-  static fromPrimitives(primitives: DebtTransactionPrimitives): DebtTransaction {
-    return new DebtTransaction(primitives);
+  static override fromPrimitives(
+    primitives: DebtTransactionPrimitives
+  ): DebtTransaction {
+    return new DebtTransaction(primitives)
   }
 
   toPrimitives(): DebtTransactionPrimitives {
-    return this.props;
+    return this.props
   }
 
   getId(): string {
-    return this.props.id ?? this.props.debtTransactionId;
+    return this.props.id ?? this.props.debtTransactionId
   }
 
   getDebtTransactionId(): string {
-    return this.props.debtTransactionId;
+    return this.props.debtTransactionId
   }
 }

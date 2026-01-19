@@ -1,107 +1,118 @@
-import type { AccountMongoRepository } from "../../repositories/account_repository";
-import { Account } from "../../models/account";
-import type { AccountPrimitives } from "../../models/account";
-import type { AccountsService } from "../../services/accounts_service";
-import { buildAccountsCriteria } from "../criteria/accounts.criteria";
-import { badRequest, notFound } from "../errors";
-import type {
-  AccountCreatePayload,
-  AccountUpdatePayload,
-} from "../validation/accounts.validation";
+import { Deps } from "../../bootstrap/deps"
+import { HttpResponse } from "../../bootstrap/response"
+import { type AccountPrimitives } from "../../models/account"
+import { AccountMongoRepository } from "../../repositories/account_repository"
+import type { AccountsService } from "../../services/accounts_service"
+import { buildAccountsCriteria } from "../criteria/accounts.criteria"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import {
+  type AccountCreatePayload,
+  type AccountUpdatePayload,
+  validateAccountPayload,
+} from "../validation/accounts.validation"
 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  type ServerResponse,
+  Use,
+} from "bun-platform-kit"
+import type { AuthenticatedRequest } from "../../@types/request"
+
+@Controller("/accounts")
 export class AccountsController {
-  constructor(
-    private readonly repo: AccountMongoRepository,
-    private readonly service: AccountsService
-  ) {}
+  private repo: AccountMongoRepository
+  private service: AccountsService
 
-  async list({
-    query,
-    userId,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-  }) {
-    const criteria = buildAccountsCriteria(query, userId ?? "");
-    const result = await this.repo.list<AccountPrimitives>(criteria);
-    return {
-      ...result,
-      results: result.results.map((item) =>
-        Account.fromPrimitives(item).toPrimitives()
-      ),
-    };
+  constructor() {
+    const deps = Deps.getInstance()
+    this.repo = Deps.resolve<AccountMongoRepository>("accountRepo")
+    this.service = Deps.resolve<AccountsService>("accountsService")
   }
 
-  async create({
-    body,
-    set,
-    userId,
-  }: {
-    body: AccountCreatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { account } = await this.service.create(userId ?? "", body);
-    return account!;
+  @Post("/")
+  @Use([AuthMiddleware, validateAccountPayload(false)])
+  async create(@Body() body: AccountCreatePayload, @Res() res: ServerResponse) {
+    const account = await this.service.create(body)
+    res.status(201).send(account)
   }
 
-  async getById({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
+  @Get("/")
+  @Use(AuthMiddleware)
+  async list(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const criteria = buildAccountsCriteria(query, req.userId!)
+
+      const result = await this.repo.list<AccountPrimitives>(criteria)
+
+      return HttpResponse(res, { value: result, status: 200 })
+    } catch (e) {
+      console.log(`errrr ${e}`)
+      return HttpResponse(res, { error: "Error interno", status: 500 })
+    }
+  }
+
+  @Get("/:id")
+  async getById(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     const account = await this.repo.one({
-      userId: userId ?? "",
-      accountId: params.id,
-    });
-    if (!account) return notFound(set, "Cuenta no encontrada");
-    return account.toPrimitives();
+      userId: req.userId ?? "",
+      accountId: id,
+    })
+
+    if (!account) return res.status(404).send("Cuenta não encontrada")
+
+    res.status(200).send(account.toPrimitives())
   }
 
-  async update({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    body: AccountUpdatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { account, error, status } = await this.service.update(
-      userId ?? "",
-      params.id,
-      body
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
+  @Put("/:id")
+  @Use([AuthMiddleware, validateAccountPayload(true)])
+  async update(
+    @Param("id") id: string,
+    @Body() body: AccountUpdatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const response = await this.service.update(req.userId ?? "", id, body)
+
+    if (response.error) {
+      return res.status(response.status).send(response.error)
     }
-    return account!;
+
+    return res.status(response.status).send(response.value)
   }
 
-  async remove({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { ok, error, status } = await this.service.remove(
-      userId ?? "",
-      params.id
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return { ok: ok === true };
+  @Delete("/:id")
+  async remove(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const respoonse = await this.service.remove(req.userId ?? "", id)
+    return HttpResponse(res, respoonse)
+  }
+
+  @Get("/test/:id")
+  async test(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    return HttpResponse(res, { status: 200, value: id })
   }
 }

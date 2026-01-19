@@ -1,111 +1,118 @@
-import type { DebtTransactionMongoRepository } from "../../repositories/debt_transaction_repository";
-import { DebtTransaction } from "../../models/debt_transaction";
-import type { DebtTransactionPrimitives } from "../../models/debt_transaction";
-import type { DebtTransactionsService } from "../../services/debt_transactions_service";
-import { buildDebtTransactionsCriteria } from "../criteria/debt_transactions.criteria";
-import { badRequest, notFound } from "../errors";
-import type {
-  DebtTransactionCreatePayload,
-  DebtTransactionUpdatePayload,
-} from "../validation/debt_transactions.validation";
+import type { DebtTransactionMongoRepository } from "../../repositories/debt_transaction_repository"
+import { DebtTransaction } from "../../models/debt_transaction"
+import type { DebtTransactionPrimitives } from "../../models/debt_transaction"
+import type { DebtTransactionsService } from "../../services/debt_transactions_service"
+import { buildDebtTransactionsCriteria } from "../criteria/debt_transactions.criteria"
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { HttpResponse } from "../../bootstrap/response"
+import {
+  validateDebtTransactionPayload,
+  type DebtTransactionCreatePayload,
+} from "../validation/debt_transactions.validation"
+import { Deps } from "../../bootstrap/deps"
 
+@Controller("/debt_transactions")
 export class DebtTransactionsController {
-  constructor(
-    private readonly repo: DebtTransactionMongoRepository,
-    private readonly service: DebtTransactionsService
-  ) {}
+  private readonly repo: DebtTransactionMongoRepository
+  private readonly service: DebtTransactionsService
 
-  async list({
-    query,
-    userId,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-  }) {
-    const criteria = buildDebtTransactionsCriteria(query, userId ?? "");
-    const result = await this.repo.list<DebtTransactionPrimitives>(criteria);
-    return {
-      ...result,
-      results: result.results.map((item) =>
-        DebtTransaction.fromPrimitives(item).toPrimitives()
-      ),
-    };
+  constructor() {
+    const deps = Deps.getInstance()
+    this.repo = deps.debtTransactionRepo
+    this.service = deps.debtTransactionsService
   }
 
-  async create({
-    body,
-    set,
-    userId,
-  }: {
-    body: DebtTransactionCreatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { debtTransaction, error } = await this.service.create(
-      userId ?? "",
-      body
-    );
-    if (error) return badRequest(set, error);
-    return debtTransaction!;
+  @Get("/")
+  @Use([AuthMiddleware])
+  async list(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const criteria = buildDebtTransactionsCriteria(query, req.userId)
+    const result = await this.repo.list<DebtTransactionPrimitives>(criteria)
+    return HttpResponse(res, {
+      value: {
+        nextPag: result.nextPag,
+        count: result.count,
+        results: result.results.map((item) =>
+          DebtTransaction.fromPrimitives(item).toPrimitives()
+        ),
+      },
+      status: 200,
+    })
   }
 
-  async getById({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
+  @Get("/:id")
+  @Use([AuthMiddleware])
+  async getById(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     const item = await this.repo.one({
-      userId: userId ?? "",
-      debtTransactionId: params.id,
-    });
-    if (!item) return notFound(set, "Movimiento no encontrado");
-    return item.toPrimitives();
+      userId: req.userId ?? "",
+      debtTransactionId: id,
+    })
+
+    if (!item)
+      return HttpResponse(res, {
+        status: 404,
+        value: "Movimiento no encontrado",
+      })
+
+    return HttpResponse(res, {
+      value: item.toPrimitives(),
+      status: 200,
+    })
   }
 
-  async update({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    body: DebtTransactionUpdatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { debtTransaction, error, status } = await this.service.update(
-      userId ?? "",
-      params.id,
-      body
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return debtTransaction!;
+  @Post("/")
+  @Use([AuthMiddleware, validateDebtTransactionPayload(false)])
+  async create(
+    @Body() body: DebtTransactionCreatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.create(req.userId ?? "", body)
+    return HttpResponse(res, result)
   }
 
-  async remove({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { ok, error, status } = await this.service.remove(
-      userId ?? "",
-      params.id
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return { ok: ok === true };
+  @Put("/:id")
+  @Use([AuthMiddleware, validateDebtTransactionPayload(true)])
+  async update(
+    @Body() body: DebtTransactionCreatePayload,
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.update(req.userId ?? "", id, body)
+    return HttpResponse(res, result)
+  }
+
+  @Delete("/:id")
+  @Use([AuthMiddleware])
+  async remove(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.remove(req.userId ?? "", id)
+    return HttpResponse(res, result)
   }
 }

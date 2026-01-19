@@ -3,7 +3,7 @@ await Bun.build({
   entrypoints: ["./src/index.ts"],
   outdir: "./dist",
   compile: {
-    outfile: "./myapp",
+    outfile: "./desquadra",
     bytecode: true,
   },
   minify: true,

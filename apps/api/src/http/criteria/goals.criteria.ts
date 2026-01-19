@@ -1,10 +1,10 @@
 import {
   Criteria,
   Filters,
-  FilterInputValue,
   Operator,
   Order,
-} from "@abejarano/ts-mongodb-criteria";
+  type FilterInputValue,
+} from "@abejarano/ts-mongodb-criteria"
 
 export function buildGoalsCriteria(
   query: Record<string, string | undefined>,
@@ -16,7 +16,7 @@ export function buildGoalsCriteria(
       ["operator", Operator.EQUAL],
       ["value", userId],
     ]),
-  ];
+  ]
 
   if (query.isActive !== undefined) {
     filters.push(
@@ -25,7 +25,7 @@ export function buildGoalsCriteria(
         ["operator", Operator.EQUAL],
         ["value", query.isActive === "true"],
       ])
-    );
+    )
   }
 
   if (query.q) {
@@ -35,21 +35,21 @@ export function buildGoalsCriteria(
         ["operator", Operator.CONTAINS],
         ["value", query.q],
       ])
-    );
+    )
   }
 
-  const limit = query.limit ? Number(query.limit) : 20;
-  const page = query.page ? Number(query.page) : 1;
-  const order = buildOrder(query.sort, Order.desc("startDate"));
+  const limit = query.limit ? Number(query.limit) : 20
+  const page = query.page ? Number(query.page) : 1
+  const order = buildOrder(query.sort, Order.desc("startDate"))
 
-  return new Criteria(Filters.fromValues(filters), order, limit, page);
+  return new Criteria(Filters.fromValues(filters), order, limit, page)
 }
 
 function buildOrder(sort?: string, fallback?: Order): Order {
   if (!sort) {
-    return fallback ?? Order.none();
+    return fallback ?? Order.none()
   }
-  const orderType = sort.startsWith("-") ? "desc" : "asc";
-  const orderBy = sort.startsWith("-") ? sort.slice(1) : sort;
-  return Order.fromValues(orderBy, orderType);
+  const orderType = sort.startsWith("-") ? "desc" : "asc"
+  const orderBy = sort.startsWith("-") ? sort.slice(1) : sort
+  return Order.fromValues(orderBy, orderType)
 }

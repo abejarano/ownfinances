@@ -1,64 +1,66 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import * as v from "valibot"
 
 export type GoalContributionCreatePayload = {
-  goalId: string;
-  date?: string | Date;
-  amount: number;
-  accountId?: string | null;
-  note?: string | null;
-};
+  goalId: string
+  date?: string | Date
+  amount: number
+  accountId?: string | null
+  note?: string | null
+}
 
-export type GoalContributionUpdatePayload = Partial<GoalContributionCreatePayload>;
+export type GoalContributionUpdatePayload =
+  Partial<GoalContributionCreatePayload>
 
-const DateLikeSchema = t.Union([t.String(), t.Date()]);
+const DateLikeSchema = v.union([v.string(), v.date()])
 
-const GoalContributionBaseSchema = t.Object(
-  {
-    goalId: t.String({ minLength: 1 }),
-    date: t.Optional(DateLikeSchema),
-    amount: t.Number(),
-    accountId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    note: t.Optional(t.Union([t.String(), t.Null()])),
-  },
-  { additionalProperties: false }
-);
+const GoalContributionBaseSchema = v.strictObject({
+  goalId: v.pipe(v.string(), v.minLength(1)),
+  date: v.optional(DateLikeSchema),
+  amount: v.number(),
+  accountId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  note: v.optional(v.nullable(v.string())),
+})
 
-const GoalContributionCreateSchema = GoalContributionBaseSchema;
-const GoalContributionUpdateSchema = t.Partial(GoalContributionBaseSchema);
+const GoalContributionCreateSchema = GoalContributionBaseSchema
+const GoalContributionUpdateSchema = v.partial(GoalContributionBaseSchema)
 
-const goalContributionCreateCompiler = TypeCompiler.Compile(
-  GoalContributionCreateSchema
-);
-const goalContributionUpdateCompiler = TypeCompiler.Compile(
-  GoalContributionUpdateSchema
-);
+export function validateGoalContributionPayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const payload = req.body
+    const schema = isUpdate
+      ? GoalContributionUpdateSchema
+      : GoalContributionCreateSchema
+    const result = v.safeParse(schema, payload)
 
-export function validateGoalContributionPayload(
-  payload: GoalContributionCreatePayload | GoalContributionUpdatePayload,
-  isUpdate: boolean
-): string | null {
-  const compiler = isUpdate
-    ? goalContributionUpdateCompiler
-    : goalContributionCreateCompiler;
-
-  if (!compiler.Check(payload)) {
-    for (const error of compiler.Errors(payload)) {
-      if (error.path === "/goalId") return "Falta la meta";
-      if (error.path === "/amount") return "Falta el monto";
+    if (!result.success) {
+      if (!result.issues) return res.status(422).send("Payload invalido")
+      const flattened = v.flatten(result.issues)
+      if (flattened.nested?.goalId) return res.status(422).send("Falta la meta")
+      if (flattened.nested?.amount)
+        return res.status(422).send("Falta el monto")
+      return res.status(422).send("Payload invalido")
     }
-    return "Payload invalido";
-  }
 
-  const data = payload as { amount?: number; date?: string | Date };
-  if (!isUpdate && (data.amount == null || data.amount <= 0)) {
-    return "El monto debe ser mayor que 0";
-  }
+    const data = payload as { amount?: number; date?: string | Date }
+    if (!isUpdate && (data.amount == null || data.amount <= 0)) {
+      return res.status(422).send("El monto debe ser mayor que 0")
+    }
 
-  if (data.date) {
-    const date = new Date(data.date);
-    if (Number.isNaN(date.getTime())) return "Fecha invalida";
-  }
+    if (data.date) {
+      const date = new Date(data.date)
+      if (Number.isNaN(date.getTime()))
+        return res.status(422).send("Fecha invalida")
+    }
 
-  return null;
+    return next()
+  }
 }

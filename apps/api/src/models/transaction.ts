@@ -1,5 +1,5 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
-import { createMongoId } from "./shared/mongo_id";
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { createMongoId } from "./shared/mongo_id"
 
 export enum TransactionType {
   Income = "income",
@@ -13,60 +13,60 @@ export enum TransactionStatus {
 }
 
 export type TransactionPrimitives = {
-  id?: string;
-  transactionId: string;
-  userId: string;
-  type: TransactionType;
-  date: Date;
-  amount: number;
-  currency: string;
-  categoryId?: string | null;
-  fromAccountId?: string | null;
-  toAccountId?: string | null;
-  note?: string | null;
-  tags?: string[] | null;
-  status: TransactionStatus;
-  clearedAt?: Date | null;
-  createdAt: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | null;
-  recurringRuleId?: string;
-  recurringUniqueKey?: string;
-  importFingerprint?: string | null;
-};
+  id?: string
+  transactionId: string
+  userId: string
+  type: TransactionType
+  date: Date
+  amount: number
+  currency: string
+  categoryId?: string | null
+  fromAccountId?: string | null
+  toAccountId?: string | null
+  note?: string | null
+  tags?: string[] | null
+  status: TransactionStatus
+  clearedAt?: Date | null
+  createdAt: Date
+  updatedAt?: Date
+  deletedAt?: Date | null
+  recurringRuleId?: string
+  recurringUniqueKey?: string
+  importFingerprint?: string | null
+}
 
 export type TransactionCreateProps = {
-  userId: string;
-  type: TransactionType;
-  date: Date;
-  amount: number;
-  currency: string;
-  categoryId?: string | null;
-  fromAccountId?: string | null;
-  toAccountId?: string | null;
-  note?: string | null;
-  tags?: string[] | null;
-  status?: TransactionStatus;
-  clearedAt?: Date | null;
-  recurringRuleId?: string;
-};
+  userId: string
+  type: TransactionType
+  date: Date
+  amount: number
+  currency: string
+  categoryId?: string | null
+  fromAccountId?: string | null
+  toAccountId?: string | null
+  note?: string | null
+  tags?: string[] | null
+  status?: TransactionStatus
+  clearedAt?: Date | null
+  recurringRuleId?: string
+}
 
 export class Transaction extends AggregateRoot {
-  private readonly props: TransactionPrimitives;
+  private readonly props: TransactionPrimitives
 
   private constructor(props: TransactionPrimitives) {
-    super();
-    this.props = props;
+    super()
+    this.props = props
   }
 
   static create(props: TransactionCreateProps): Transaction {
-    const now = new Date();
-    const status = props.status ?? TransactionStatus.Pending;
+    const now = new Date()
+    const status = props.status ?? TransactionStatus.Pending
     const clearedAt =
-      status === TransactionStatus.Cleared ? props.clearedAt ?? now : null;
+      status === TransactionStatus.Cleared ? (props.clearedAt ?? now) : null
     const recurringUniqueKey = props.recurringRuleId
       ? `${props.recurringRuleId}_${props.date.toISOString().split("T")[0]}`
-      : undefined;
+      : undefined
 
     return new Transaction({
       userId: props.userId,
@@ -87,22 +87,24 @@ export class Transaction extends AggregateRoot {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-    });
+    })
   }
 
   getId(): string {
-    return this.props.id ?? this.props.transactionId;
+    return this.props.id ?? this.props.transactionId
   }
 
   getTransactionId(): string {
-    return this.props.transactionId;
+    return this.props.transactionId
   }
 
   toPrimitives(): TransactionPrimitives {
-    return this.props;
+    return this.props
   }
 
-  static fromPrimitives(primitives: TransactionPrimitives): Transaction {
-    return new Transaction(primitives);
+  static override fromPrimitives(
+    primitives: TransactionPrimitives
+  ): Transaction {
+    return new Transaction(primitives)
   }
 }

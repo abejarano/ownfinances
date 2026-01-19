@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
+import crypto from "node:crypto"
 
 export function createMongoId(): string {
-  return crypto.randomBytes(12).toString("hex");
+  return crypto.randomBytes(12).toString("hex")
 }

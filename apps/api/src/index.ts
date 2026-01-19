@@ -1,25 +1,15 @@
-import { env } from "./shared/env";
-import { closeMongoClient } from "./bootstrap/mongo";
-import { buildDeps } from "./bootstrap/deps";
-import { buildApp } from "./bootstrap/app";
-import { seedDevData } from "./dev/seed";
+import { BunKitServer, CorsModule, SecurityModule } from "bun-platform-kit"
+import { controllersModule } from "./bootstrap/controllers"
+import { env } from "./shared/env"
 
-const deps = buildDeps();
+const server = new BunKitServer(Number(env.PORT))
 
-if (env.NODE_ENV !== "production") {
-  await seedDevData(env.USER_ID_DEFAULT, deps.categoryRepo, deps.accountRepo);
-}
+server.addModules([
+  new CorsModule({
+    allowedHeaders: ["content-type", "authorization"],
+  }),
+  new SecurityModule(),
+  controllersModule(),
+])
 
-const app = buildApp(deps).listen(env.PORT);
-
-console.log(`API running at http://localhost:${app.server?.port}`);
-
-process.on("SIGINT", async () => {
-  await closeMongoClient();
-  process.exit(0);
-});
-
-process.on("SIGTERM", async () => {
-  await closeMongoClient();
-  process.exit(0);
-});
+server.start()

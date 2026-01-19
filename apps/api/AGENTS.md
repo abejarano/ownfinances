@@ -1,6 +1,7 @@
-# AGENTS.md — Backend (Bun + Elysia + Mongo) — Desquadra
+# AGENTS.md — Backend (Bun + bun-platform-kit + Mongo) — Desquadra
 
 Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
+Si hay conflicto con decisiones previas, prevalecen los patrones actuales.
 
 ---
 
@@ -26,6 +27,8 @@ Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
 - PROHIBIDO: validar payload en service; el validate va en router.
 - PROHIBIDO: usar `unknown` en tipos; todo request debe tener contrato tipado.
 - PROHIBIDO: validar en servicios; los validate viven en `http` como pre-handler en routes.
+- PROHIBIDO: controllers retornan raw data sin HttpResponse.
+- PROHIBIDO: services nuevos sin Result (value/status/error).
 - PROHIBIDO: usar string unions para valores fijos; usar `enum` y `type` solo para shapes.
 - PROHIBIDO: crear interfaces de repositorios propias si ya se usa el repo Mongo directamente.
 - PROHIBIDO: instanciar AggregateRoot con `new`; usar `Model.create(...)`.
@@ -38,6 +41,7 @@ Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
 - List => Paginate<Primitives>
 - Get/Create/Update => Primitives
 - Error => { error, code? }
+- HTTP: Controllers responden con HttpResponse y services devuelven Result<{value,status,error}>
 
 ---
 
@@ -54,7 +58,8 @@ Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
    - MongoRepository<T> usando `one`, `list` y `upsert` (nunca search, nunca findBy)
 4. HTTP:
    - criteria mapper (query -> Criteria)
-   - validate en router (pre-handler) -> controller -> service -> presenter
+   - validate con Valibot en /http/validation como middleware (pre-handler)
+   - controller con decoradores + @Use(AuthMiddleware/validator) + HttpResponse
 5. OpenAPI snapshot actualizado
 6. Tests mínimos
 
@@ -64,7 +69,7 @@ Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
 
 - [ ] respeta Clean Architecture
 - [ ] endpoints list usan Criteria/Paginate
-- [ ] cada nuevo endpoint fue evaluado para validate (TypeBox) cuando aplica
+- [ ] cada nuevo endpoint fue evaluado para validate (Valibot) cuando aplica
 - [ ] multi-tenant por ctx.userId
 - [ ] errores humanos pt-BR
 - [ ] undo (soft delete + restore) donde aplique

@@ -1,211 +1,210 @@
-import type { GoalMongoRepository } from "../../repositories/goal_repository";
-import { Goal } from "../../models/goal";
-import type { GoalPrimitives } from "../../models/goal";
-import type { GoalsService } from "../../services/goals_service";
-import type { GoalContributionsService } from "../../services/goal_contributions_service";
-import type { GoalContributionMongoRepository } from "../../repositories/goal_contribution_repository";
-import { buildGoalsCriteria } from "../criteria/goals.criteria";
-import { buildGoalContributionsCriteria } from "../criteria/goal_contributions.criteria";
-import { badRequest, notFound } from "../errors";
-import type {
-  GoalCreatePayload,
-  GoalUpdatePayload,
-} from "../validation/goals.validation";
+import type { GoalMongoRepository } from "../../repositories/goal_repository"
+import { Goal } from "../../models/goal"
+import type { GoalPrimitives } from "../../models/goal"
+import type { GoalsService } from "../../services/goals_service"
+import type { GoalContributionsService } from "../../services/goal_contributions_service"
+import type { GoalContributionMongoRepository } from "../../repositories/goal_contribution_repository"
+import { buildGoalsCriteria } from "../criteria/goals.criteria"
+import { buildGoalContributionsCriteria } from "../criteria/goal_contributions.criteria"
+import {
+  validateGoalPayload,
+  type GoalCreatePayload,
+  type GoalUpdatePayload,
+} from "../validation/goals.validation"
 import type {
   GoalContributionCreatePayload,
   GoalContributionUpdatePayload,
-} from "../validation/goal_contributions.validation";
-import { GoalContribution } from "../../models/goal_contribution";
-import type { GoalContributionPrimitives } from "../../models/goal_contribution";
+} from "../validation/goal_contributions.validation"
+import {
+  GoalContribution,
+  type GoalContributionPrimitives,
+} from "../../models/goal_contribution"
 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import { Deps } from "../../bootstrap/deps"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { HttpResponse } from "../../bootstrap/response"
+
+@Controller("/goals")
 export class GoalsController {
-  constructor(
-    private readonly repo: GoalMongoRepository,
-    private readonly service: GoalsService,
-    private readonly contributionsService: GoalContributionsService,
-    private readonly contributionsRepo: GoalContributionMongoRepository
-  ) {}
+  private readonly repo: GoalMongoRepository
+  private readonly contributionsRepo: GoalContributionMongoRepository
+  private readonly service: GoalsService
+  private readonly contributionsService: GoalContributionsService
 
-  async list({
-    query,
-    userId,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-  }) {
-    const criteria = buildGoalsCriteria(query, userId ?? "");
-    const result = await this.repo.list<GoalPrimitives>(criteria);
-    return {
-      ...result,
-      results: result.results.map((item) =>
-        Goal.fromPrimitives(item).toPrimitives()
-      ),
-    };
+  constructor() {
+    const deps = Deps.getInstance()
+
+    this.repo = deps.goalRepo
+    this.service = deps.goalsService
+    this.contributionsService = deps.goalContributionsService
+    this.contributionsRepo = deps.goalContributionRepo
   }
 
-  async create({
-    body,
-    set,
-    userId,
-  }: {
-    body: GoalCreatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { goal } = await this.service.create(userId ?? "", body);
-    return goal!;
+  @Get("/")
+  @Use([AuthMiddleware])
+  async list(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const criteria = buildGoalsCriteria(query, req.userId ?? "")
+    const result = await this.repo.list<GoalPrimitives>(criteria)
+
+    return HttpResponse(res, {
+      value: {
+        ...result,
+        results: result.results.map((item) =>
+          Goal.fromPrimitives(item).toPrimitives()
+        ),
+      },
+      status: 200,
+    })
   }
 
-  async getById({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const goal = await this.repo.one({ userId: userId ?? "", goalId: params.id });
-    if (!goal) return notFound(set, "Meta no encontrada");
-    return goal.toPrimitives();
+  @Post("/")
+  @Use([AuthMiddleware, validateGoalPayload(false)])
+  async create(
+    @Body() body: GoalCreatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.create(req.userId ?? "", body)
+    return HttpResponse(res, result)
   }
 
-  async update({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    body: GoalUpdatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { goal, error, status } = await this.service.update(
-      userId ?? "",
-      params.id,
+  @Get("/:id")
+  async getById(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const goal = await this.repo.one({
+      userId: req.userId ?? "",
+      goalId: id,
+    })
+
+    if (!goal)
+      return HttpResponse(res, { error: "Meta no encontrada", status: 404 })
+
+    return HttpResponse(res, { value: goal.toPrimitives(), status: 200 })
+  }
+
+  @Put("/:id")
+  @Use([AuthMiddleware, validateGoalPayload(true)])
+  async update(
+    @Param("id") id: string,
+    @Body() body: GoalUpdatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.update(req.userId ?? "", id, body)
+    return HttpResponse(res, result)
+  }
+
+  @Delete("/:id")
+  @Use([AuthMiddleware])
+  async remove(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.remove(req.userId ?? "", id)
+    return HttpResponse(res, result)
+  }
+
+  @Get("/:id/projection")
+  @Use([AuthMiddleware])
+  async projection(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.projection(req.userId ?? "", id)
+    return HttpResponse(res, result)
+  }
+
+  @Get("/:id/contributions")
+  @Use([AuthMiddleware])
+  async listContributions(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const criteria = buildGoalContributionsCriteria(query, req.userId ?? "")
+    const result =
+      await this.contributionsRepo.list<GoalContributionPrimitives>(criteria)
+    return HttpResponse(res, {
+      value: {
+        ...result,
+        results: result.results.map((item) =>
+          GoalContribution.fromPrimitives(item).toPrimitives()
+        ),
+      },
+      status: 200,
+    })
+  }
+
+  @Post("/:id/contributions")
+  @Use([AuthMiddleware])
+  async createContribution(
+    @Param("id") id: string,
+    @Body() body: GoalContributionCreatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.contributionsService.create(req.userId ?? "", {
+      ...body,
+      goalId: id,
+    })
+
+    return HttpResponse(res, result)
+  }
+
+  @Put("/:id/contributions/:contributionId")
+  @Use([AuthMiddleware, validateGoalPayload(true)])
+  async updateContribution(
+    @Param("id") id: string,
+    @Param("contributionId") contributionId: string,
+    @Body() body: GoalContributionUpdatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.contributionsService.update(
+      req.userId ?? "",
+      contributionId,
       body
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return goal!;
+    )
+
+    return HttpResponse(res, result)
   }
 
-  async remove({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { ok, error, status } = await this.service.remove(
-      userId ?? "",
-      params.id
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return { ok: ok === true };
-  }
-
-  async projection({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const result = await this.service.projection(userId ?? "", params.id);
-    if (result.error) {
-      if (result.status === 404) return notFound(set, result.error);
-      return badRequest(set, result.error);
-    }
-    return result;
-  }
-
-  async listContributions({
-    query,
-    userId,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-  }) {
-    const criteria = buildGoalContributionsCriteria(query, userId ?? "");
-    const result = await this.contributionsRepo.list(criteria);
-    return {
-      ...result,
-      results: result.results.map((item) =>
-        GoalContribution.fromPrimitives(item).toPrimitives()
-      ),
-    };
-  }
-
-  async createContribution({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    body: GoalContributionCreatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { contribution, error } = await this.contributionsService.create(
-      userId ?? "",
-      { ...body, goalId: params.id }
-    );
-    if (error) return badRequest(set, error);
-    return contribution!;
-  }
-
-  async updateContribution({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string; contributionId: string };
-    body: GoalContributionUpdatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { contribution, error, status } = await this.contributionsService.update(
-      userId ?? "",
-      params.contributionId,
-      body
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return contribution!;
-  }
-
-  async removeContribution({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string; contributionId: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { ok, error, status } = await this.contributionsService.remove(
-      userId ?? "",
-      params.contributionId
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return { ok: ok === true };
+  @Delete("/:id/contributions/:contributionId")
+  @Use([AuthMiddleware])
+  async removeContribution(
+    @Param("id") id: string,
+    @Param("contributionId") contributionId: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.contributionsService.remove(
+      req.userId ?? "",
+      contributionId
+    )
+    return HttpResponse(res, result)
   }
 }

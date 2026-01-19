@@ -1,56 +1,61 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
-import { TransactionType } from "../../models/transaction";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "@abejarano/ts-express-server"
+import * as v from "valibot"
+import { TransactionType } from "../../models/transaction"
 
 export type TemplateCreatePayload = {
-  name: string;
-  type: TransactionType;
-  amount: number;
-  currency?: string;
-  categoryId?: string;
-  fromAccountId?: string;
-  toAccountId?: string;
-  note?: string;
-  tags?: string[];
-};
+  name: string
+  type: TransactionType
+  amount: number
+  currency?: string
+  categoryId?: string
+  fromAccountId?: string
+  toAccountId?: string
+  note?: string
+  tags?: string[]
+}
 
-export type TemplateUpdatePayload = Partial<TemplateCreatePayload>;
+export type TemplateUpdatePayload = Partial<TemplateCreatePayload>
 
-const TemplateSchema = t.Object(
-  {
-    name: t.String({ minLength: 1 }),
-    type: t.Enum(TransactionType),
-    amount: t.Number(),
-    currency: t.Optional(t.String({ minLength: 1 })),
-    categoryId: t.Optional(t.String({ minLength: 1 })),
-    fromAccountId: t.Optional(t.String({ minLength: 1 })),
-    toAccountId: t.Optional(t.String({ minLength: 1 })),
-    note: t.Optional(t.String()),
-    tags: t.Optional(t.Array(t.String())),
-  },
-  { additionalProperties: false },
-);
+const TemplateSchema = v.strictObject({
+  name: v.pipe(v.string(), v.minLength(1)),
+  type: v.enum_(TransactionType),
+  amount: v.number(),
+  currency: v.optional(v.pipe(v.string(), v.minLength(1))),
+  categoryId: v.optional(v.pipe(v.string(), v.minLength(1))),
+  fromAccountId: v.optional(v.pipe(v.string(), v.minLength(1))),
+  toAccountId: v.optional(v.pipe(v.string(), v.minLength(1))),
+  note: v.optional(v.string()),
+  tags: v.optional(v.array(v.string())),
+})
 
-const TemplateCreateSchema = TemplateSchema;
-const TemplateUpdateSchema = t.Partial(TemplateSchema);
+const TemplateCreateSchema = TemplateSchema
+const TemplateUpdateSchema = v.partial(TemplateSchema)
 
-const templateCreateCompiler = TypeCompiler.Compile(TemplateCreateSchema);
-const templateUpdateCompiler = TypeCompiler.Compile(TemplateUpdateSchema);
+export function validateTemplatePayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const schema = isUpdate ? TemplateUpdateSchema : TemplateCreateSchema
+    const result = v.safeParse(schema, req.body)
 
-export function validateTemplatePayload(
-  payload: TemplateCreatePayload | TemplateUpdatePayload,
-  isUpdate: boolean,
-): string | null {
-  const compiler = isUpdate ? templateUpdateCompiler : templateCreateCompiler;
-  if (compiler.Check(payload)) {
-    return null;
+    if (!result.success) {
+      if (!result.issues) return res.status(422).send("Payload invalido")
+      const flattened = v.flatten(result.issues)
+      if (flattened.nested?.name)
+        return res.status(422).send("Falta el nombre de la plantilla")
+      if (flattened.nested?.type)
+        return res.status(422).send("Tipo de transaccion invalido")
+      if (flattened.nested?.amount)
+        return res.status(422).send("Falta el monto")
+      return res.status(422).send("Payload invalido")
+    }
+
+    return next()
   }
-
-  for (const error of compiler.Errors(payload)) {
-    if (error.path === "/name") return "Falta el nombre de la plantilla";
-    if (error.path === "/type") return "Tipo de transaccion invalido";
-    if (error.path === "/amount") return "Falta el monto";
-  }
-
-  return "Payload invalido";
 }

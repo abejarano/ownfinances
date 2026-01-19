@@ -1,28 +1,28 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
-import { createMongoId } from "../shared/mongo_id";
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
+import { createMongoId } from "../shared/mongo_id"
 
 export type UserPrimitives = {
-  id?: string;
-  userId: string;
-  email: string;
-  name?: string | null;
-  passwordHash: string;
-  createdAt: Date;
-  updatedAt?: Date;
-  lastLoginAt?: Date;
-};
+  id?: string
+  userId: string
+  email: string
+  name?: string | null
+  passwordHash: string
+  createdAt: Date
+  updatedAt?: Date
+  lastLoginAt?: Date
+}
 
 export class User extends AggregateRoot {
   private constructor(private readonly props: UserPrimitives) {
-    super();
+    super()
   }
 
   static create(props: {
-    email: string;
-    name?: string | null;
-    passwordHash: string;
+    email: string
+    name?: string | null
+    passwordHash: string
   }): User {
-    const now = new Date();
+    const now = new Date()
 
     return new User({
       userId: createMongoId(),
@@ -31,22 +31,30 @@ export class User extends AggregateRoot {
       passwordHash: props.passwordHash,
       createdAt: now,
       updatedAt: now,
-    });
+    })
   }
 
   getId(): string {
-    return this.props.id ?? this.props.userId;
+    return this.props.id ?? this.props.userId
   }
 
   getUserId(): string {
-    return this.props.userId;
+    return this.props.userId
+  }
+
+  getName() {
+    return this.props.name
+  }
+
+  getEmail() {
+    return this.props.email
   }
 
   toPrimitives(): UserPrimitives {
-    return this.props;
+    return this.props
   }
 
-  static fromPrimitives(primitives: UserPrimitives): User {
-    return new User(primitives);
+  static override fromPrimitives(primitives: UserPrimitives): User {
+    return new User(primitives)
   }
 }

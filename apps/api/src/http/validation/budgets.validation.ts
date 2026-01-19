@@ -1,84 +1,92 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
-import type { BudgetLine, BudgetPeriodType } from "../../models/budget";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import * as v from "valibot"
+import type { BudgetLine, BudgetPeriodType } from "../../models/budget"
 
 export type BudgetCreatePayload = {
-  periodType: BudgetPeriodType;
-  startDate: string | Date;
-  endDate: string | Date;
-  lines?: BudgetLine[];
-};
+  periodType: BudgetPeriodType
+  startDate: string | Date
+  endDate: string | Date
+  lines?: BudgetLine[]
+}
 
-export type BudgetUpdatePayload = Partial<BudgetCreatePayload>;
+export type BudgetUpdatePayload = Partial<BudgetCreatePayload>
 
-const BudgetPeriodSchema = t.Union([
-  t.Literal("monthly"),
-  t.Literal("quarterly"),
-  t.Literal("semiannual"),
-  t.Literal("annual"),
-]);
+const BudgetPeriodSchema = v.picklist([
+  "monthly",
+  "quarterly",
+  "semiannual",
+  "annual",
+])
 
-const DateLikeSchema = t.Union([t.String(), t.Date()]);
+const DateLikeSchema = v.union([v.string(), v.date()])
 
-const BudgetLineSchema = t.Object(
-  {
-    categoryId: t.String({ minLength: 1 }),
-    plannedAmount: t.Number({ minimum: 0 }),
-  },
-  { additionalProperties: false }
-);
+const BudgetLineSchema = v.strictObject({
+  categoryId: v.pipe(v.string(), v.minLength(1)),
+  plannedAmount: v.pipe(v.number(), v.minValue(0)),
+})
 
-const BudgetBaseSchema = t.Object(
-  {
-    periodType: BudgetPeriodSchema,
-    startDate: DateLikeSchema,
-    endDate: DateLikeSchema,
-    lines: t.Optional(t.Array(BudgetLineSchema)),
-  },
-  { additionalProperties: false }
-);
+const BudgetBaseSchema = v.strictObject({
+  periodType: BudgetPeriodSchema,
+  startDate: DateLikeSchema,
+  endDate: DateLikeSchema,
+  lines: v.optional(v.array(BudgetLineSchema)),
+})
 
-const BudgetCreateSchema = BudgetBaseSchema;
-const BudgetUpdateSchema = t.Partial(BudgetBaseSchema);
+const BudgetCreateSchema = BudgetBaseSchema
+const BudgetUpdateSchema = v.partial(BudgetBaseSchema)
 
-const budgetCreateCompiler = TypeCompiler.Compile(BudgetCreateSchema);
-const budgetUpdateCompiler = TypeCompiler.Compile(BudgetUpdateSchema);
+export function validateBudgetPayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const payload = req.body
 
-export function validateBudgetPayload(
-  payload: BudgetCreatePayload | BudgetUpdatePayload,
-  isUpdate: boolean
-): string | null {
-  const compiler = isUpdate ? budgetUpdateCompiler : budgetCreateCompiler;
-  if (!compiler.Check(payload)) {
-    const data = payload as {
-      periodType?: string;
-      startDate?: string | Date;
-      endDate?: string | Date;
-    };
-    if (!isUpdate && !data?.periodType) return "Falta el periodo";
+    const schema = isUpdate ? BudgetUpdateSchema : BudgetCreateSchema
+    const result = v.safeParse(schema, payload)
+    if (!result.success) {
+      const data = payload as {
+        periodType?: string
+        startDate?: string | Date
+        endDate?: string | Date
+      }
+      if (!isUpdate && !data?.periodType)
+        return res.status(422).send("Falta el periodo")
 
-    for (const error of compiler.Errors(payload)) {
-      if (error.path === "/periodType") return "Periodo invalido";
-      if (error.path === "/startDate") return "Falta la fecha de inicio";
-      if (error.path === "/endDate") return "Falta la fecha de fin";
-      if (error.path.startsWith("/lines")) {
-        return "Lineas invalidas en el presupuesto";
+      if (!result.issues) return res.status(422).send("Payload invalido")
+      const flattened = v.flatten(result.issues)
+
+      if (flattened.nested?.periodType)
+        return res.status(422).send("Periodo invalido")
+      if (flattened.nested?.startDate)
+        return res.status(422).send("Falta la fecha de inicio")
+      if (flattened.nested?.endDate)
+        return res.status(422).send("Falta la fecha de fin")
+      if (flattened.nested?.lines)
+        return res.status(422).send("Lineas invalidas en el presupuesto")
+
+      return res.status(422).send("Payload invalido")
+    }
+
+    const maybePayload = payload as {
+      startDate?: string | Date
+      endDate?: string | Date
+    }
+    if (maybePayload.startDate && maybePayload.endDate) {
+      const start = new Date(maybePayload.startDate)
+      const end = new Date(maybePayload.endDate)
+      if (start > end) {
+        return res
+          .status(422)
+          .send("La fecha de fin debe ser mayor a la fecha de inicio")
       }
     }
-    return "Payload invalido";
-  }
 
-  const maybePayload = payload as {
-    startDate?: string | Date;
-    endDate?: string | Date;
-  };
-  if (maybePayload.startDate && maybePayload.endDate) {
-    const start = new Date(maybePayload.startDate);
-    const end = new Date(maybePayload.endDate);
-    if (start > end) {
-      return "La fecha de fin debe ser mayor a la fecha de inicio";
-    }
+    return next()
   }
-
-  return null;
 }

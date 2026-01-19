@@ -1,41 +1,64 @@
-import type { ReportsService } from "../../services/reports_service";
-import type { BudgetPeriodType } from "../../models/budget";
-import { badRequest } from "../errors";
+import {
+  Controller,
+  Get,
+  Query,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
+import { HttpResponse } from "../../bootstrap/response"
+import type { BudgetPeriodType } from "../../models/budget"
+import type { ReportsService } from "../../services/reports_service"
+import { AuthMiddleware } from "../middleware/auth.middleware"
 
+@Controller("/reports")
 export class ReportsController {
-  constructor(private readonly reports: ReportsService) {}
+  private readonly reports: ReportsService
 
-  async summary({
-    query,
-    userId,
-    set,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-    set: { status: number };
-  }) {
-    const period = query.period as BudgetPeriodType | undefined;
-    const date = query.date ? new Date(query.date) : new Date();
-    if (!period) return badRequest(set, "Falta el periodo");
-    if (Number.isNaN(date.getTime())) return badRequest(set, "Fecha invalida");
-
-    return this.reports.summary(userId ?? "", period, date);
+  constructor() {
+    this.reports = Deps.resolve<ReportsService>("reportsService")
   }
 
-  async balances({
-    query,
-    userId,
-    set,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-    set: { status: number };
-  }) {
-    const period = query.period as BudgetPeriodType | undefined;
-    const date = query.date ? new Date(query.date) : new Date();
-    if (!period) return badRequest(set, "Falta el periodo");
-    if (Number.isNaN(date.getTime())) return badRequest(set, "Fecha invalida");
+  @Get("/summary")
+  @Use([AuthMiddleware])
+  async summary(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const period = query.period as BudgetPeriodType | undefined
+    const date = query.date ? new Date(query.date) : new Date()
 
-    return this.reports.balances(userId ?? "", period, date);
+    if (!period)
+      return HttpResponse(res, { error: "Falta el periodo", status: 400 })
+
+    if (Number.isNaN(date.getTime()))
+      return HttpResponse(res, { error: "Fecha invalida", status: 400 })
+
+    const result = await this.reports.summary(req.userId ?? "", period, date)
+    return HttpResponse(res, result)
+  }
+
+  @Get("/balances")
+  @Use([AuthMiddleware])
+  async balances(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const period = query.period as BudgetPeriodType | undefined
+    const date = query.date ? new Date(query.date) : new Date()
+
+    if (!period)
+      return HttpResponse(res, { error: "Falta el periodo", status: 400 })
+
+    if (Number.isNaN(date.getTime()))
+      return HttpResponse(res, { error: "Fecha invalida", status: 400 })
+
+    const result = await this.reports.balances(req.userId ?? "", period, date)
+    return HttpResponse(res, result)
   }
 }

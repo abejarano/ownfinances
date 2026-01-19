@@ -1,101 +1,106 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
-import { DebtTransactionType } from "../../models/debt_transaction";
+import * as v from "valibot"
+import { DebtTransactionType } from "../../models/debt_transaction"
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
 
 export type DebtTransactionCreatePayload = {
-  debtId: string;
-  date?: string | Date;
-  type: DebtTransactionType;
-  amount: number;
-  accountId?: string | null;
-  categoryId?: string | null;
-  note?: string | null;
-};
+  debtId: string
+  date?: string | Date
+  type: DebtTransactionType
+  amount: number
+  accountId?: string | null
+  categoryId?: string | null
+  note?: string | null
+}
 
-export type DebtTransactionUpdatePayload = Partial<DebtTransactionCreatePayload>;
+export type DebtTransactionUpdatePayload = Partial<DebtTransactionCreatePayload>
 
-const DebtTransactionTypeSchema = t.Enum(DebtTransactionType);
-const DateLikeSchema = t.Union([t.String(), t.Date()]);
+const DebtTransactionTypeSchema = v.picklist([
+  DebtTransactionType.Charge,
+  DebtTransactionType.Payment,
+  DebtTransactionType.Fee,
+  DebtTransactionType.Interest,
+])
+const DateLikeSchema = v.union([v.string(), v.date()])
 
-const DebtTransactionBaseSchema = t.Object(
-  {
-    debtId: t.String({ minLength: 1 }),
-    date: t.Optional(DateLikeSchema),
-    type: DebtTransactionTypeSchema,
-    amount: t.Number(),
-    accountId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    categoryId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    note: t.Optional(t.Union([t.String(), t.Null()])),
-  },
-  { additionalProperties: false }
-);
+const DebtTransactionBaseSchema = v.strictObject({
+  debtId: v.pipe(v.string(), v.minLength(1)),
+  date: v.optional(DateLikeSchema),
+  type: DebtTransactionTypeSchema,
+  amount: v.number(),
+  accountId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  categoryId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  note: v.optional(v.nullable(v.string())),
+})
 
-const DebtTransactionCreateSchema = DebtTransactionBaseSchema;
-const DebtTransactionUpdateSchema = t.Partial(DebtTransactionBaseSchema);
+const DebtTransactionCreateSchema = DebtTransactionBaseSchema
+const DebtTransactionUpdateSchema = v.partial(DebtTransactionBaseSchema)
 
-const debtTransactionCreateCompiler = TypeCompiler.Compile(
-  DebtTransactionCreateSchema
-);
-const debtTransactionUpdateCompiler = TypeCompiler.Compile(
-  DebtTransactionUpdateSchema
-);
+export function validateDebtTransactionPayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const payload = req.body
+    const schema = isUpdate
+      ? DebtTransactionUpdateSchema
+      : DebtTransactionCreateSchema
+    const result = v.safeParse(schema, payload)
 
-export function validateDebtTransactionPayload(
-  payload: DebtTransactionCreatePayload | DebtTransactionUpdatePayload,
-  isUpdate: boolean
-): string | null {
-  const compiler = isUpdate
-    ? debtTransactionUpdateCompiler
-    : debtTransactionCreateCompiler;
+    if (!result.issues) return res.status(422).send("Payload invalido")
 
-  if (!compiler.Check(payload)) {
-    for (const error of compiler.Errors(payload)) {
-      if (error.path === "/debtId") return "Falta la deuda";
-      if (error.path === "/type") return "Tipo invalido";
-      if (error.path === "/amount") return "Falta el monto";
+    const flattened = v.flatten(result.issues)
+
+    if (flattened.nested?.debtId) return res.status(422).send("Falta la deuda")
+    if (flattened.nested?.type) return res.status(422).send("Tipo invalido")
+    if (flattened.nested?.amount) return res.status(422).send("Falta el monto")
+
+    const data = payload as {
+      amount?: number
+      type?: string
+      date?: string | Date
     }
-    return "Payload invalido";
-  }
 
-  const data = payload as {
-    amount?: number;
-    type?: string;
-    date?: string | Date;
-  };
+    if (!isUpdate && !data.type) {
+      return res.status(422).send("Falta el tipo")
+    }
 
-  if (!isUpdate && !data.type) {
-    return "Falta el tipo";
-  }
+    if (data.amount !== undefined && data.amount <= 0) {
+      return res.status(422).send("El monto debe ser mayor que 0")
+    }
 
-  if (data.amount !== undefined && data.amount <= 0) {
-    return "El monto debe ser mayor que 0";
-  }
+    if (!isUpdate && data.amount === undefined) {
+      return res.status(422).send("Falta el monto")
+    }
 
-  if (!isUpdate && data.amount === undefined) {
-    return "Falta el monto";
-  }
-
-  if (data.type &&
+    if (
+      data.type &&
       !Object.values(DebtTransactionType).includes(
         data.type as DebtTransactionType
-      )) {
-    return "Tipo invalido";
-  }
-
-  if (data.date) {
-    const date = new Date(data.date);
-    if (Number.isNaN(date.getTime())) {
-      return "Fecha invalida";
+      )
+    ) {
+      return res.status(422).send("Tipo invalido")
     }
-  }
 
-  // Validar que charge tenga categoría
-  if (!isUpdate && data.type === DebtTransactionType.Charge) {
-    const payloadWithCategory = payload as { categoryId?: string | null };
-    if (!payloadWithCategory.categoryId) {
-      return "Falta la categoria para la compra";
+    if (data.date) {
+      const date = new Date(data.date)
+      if (Number.isNaN(date.getTime())) {
+        return res.status(422).send("Fecha invalida")
+      }
     }
-  }
 
-  return null;
+    // Validar que charge tenga categoría
+    if (!isUpdate && data.type === DebtTransactionType.Charge) {
+      const payloadWithCategory = payload as { categoryId?: string | null }
+      if (!payloadWithCategory.categoryId) {
+        return res.status(422).send("Falta la categoria para la compra")
+      }
+    }
+
+    return next()
+  }
 }

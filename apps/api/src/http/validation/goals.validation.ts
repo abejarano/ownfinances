@@ -1,78 +1,87 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import * as v from "valibot"
 
 export type GoalCreatePayload = {
-  name: string;
-  targetAmount: number;
-  currency?: string;
-  startDate: string | Date;
-  targetDate?: string | Date;
-  monthlyContribution?: number;
-  linkedAccountId?: string;
-  isActive?: boolean;
-};
+  name: string
+  targetAmount: number
+  currency?: string
+  startDate: string | Date
+  targetDate?: string | Date
+  monthlyContribution?: number
+  linkedAccountId?: string
+  isActive?: boolean
+}
 
-export type GoalUpdatePayload = Partial<GoalCreatePayload>;
+export type GoalUpdatePayload = Partial<GoalCreatePayload>
 
-const DateLikeSchema = t.Union([t.String(), t.Date()]);
+const DateLikeSchema = v.union([v.string(), v.date()])
 
-const GoalBaseSchema = t.Object(
-  {
-    name: t.String({ minLength: 1 }),
-    targetAmount: t.Number(),
-    currency: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    startDate: DateLikeSchema,
-    targetDate: t.Optional(t.Union([DateLikeSchema, t.Null()])),
-    monthlyContribution: t.Optional(t.Union([t.Number(), t.Null()])),
-    linkedAccountId: t.Optional(t.Union([t.String({ minLength: 1 }), t.Null()])),
-    isActive: t.Optional(t.Boolean()),
-  },
-  { additionalProperties: false }
-);
+const GoalBaseSchema = v.strictObject({
+  name: v.pipe(v.string(), v.minLength(1)),
+  targetAmount: v.number(),
+  currency: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  startDate: DateLikeSchema,
+  targetDate: v.optional(v.nullable(DateLikeSchema)),
+  monthlyContribution: v.optional(v.nullable(v.number())),
+  linkedAccountId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+  isActive: v.optional(v.boolean()),
+})
 
-const GoalCreateSchema = GoalBaseSchema;
-const GoalUpdateSchema = t.Partial(GoalBaseSchema);
+const GoalCreateSchema = GoalBaseSchema
+const GoalUpdateSchema = v.partial(GoalBaseSchema)
 
-const goalCreateCompiler = TypeCompiler.Compile(GoalCreateSchema);
-const goalUpdateCompiler = TypeCompiler.Compile(GoalUpdateSchema);
+export function validateGoalPayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const payload = req.body
+    const schema = isUpdate ? GoalUpdateSchema : GoalCreateSchema
+    const result = v.safeParse(schema, payload)
 
-export function validateGoalPayload(
-  payload: GoalCreatePayload | GoalUpdatePayload,
-  isUpdate: boolean
-): string | null {
-  const compiler = isUpdate ? goalUpdateCompiler : goalCreateCompiler;
-  if (!compiler.Check(payload)) {
-    for (const error of compiler.Errors(payload)) {
-      if (error.path === "/name") return "Falta el nombre";
-      if (error.path === "/targetAmount") return "Falta el monto objetivo";
-      if (error.path === "/currency") return "Moneda invalida";
-      if (error.path === "/startDate") return "Fecha invalida";
+    if (!result.success) {
+      if (!result.issues) return res.status(422).send("Payload invalido")
+      const flattened = v.flatten(result.issues)
+      if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
+      if (flattened.nested?.targetAmount)
+        return res.status(422).send("Falta el monto objetivo")
+      if (flattened.nested?.currency)
+        return res.status(422).send("Moneda invalida")
+      if (flattened.nested?.startDate)
+        return res.status(422).send("Fecha invalida")
+      return res.status(422).send("Payload invalido")
     }
-    return "Payload invalido";
-  }
 
-  const data = payload as {
-    targetAmount?: number;
-    monthlyContribution?: number;
-    startDate?: string | Date;
-    targetDate?: string | Date;
-  };
+    const data = payload as {
+      targetAmount?: number
+      monthlyContribution?: number | null
+      startDate?: string | Date
+      targetDate?: string | Date | null
+    }
 
-  if (!isUpdate && (data.targetAmount == null || data.targetAmount <= 0)) {
-    return "El monto debe ser mayor que 0";
-  }
-  if (data.monthlyContribution != null && data.monthlyContribution < 0) {
-    return "El aporte debe ser mayor o igual a 0";
-  }
+    if (!isUpdate && (data.targetAmount == null || data.targetAmount <= 0)) {
+      return res.status(422).send("El monto debe ser mayor que 0")
+    }
+    if (data.monthlyContribution != null && data.monthlyContribution < 0) {
+      return res.status(422).send("El aporte debe ser mayor o igual a 0")
+    }
 
-  if (data.startDate) {
-    const date = new Date(data.startDate);
-    if (Number.isNaN(date.getTime())) return "Fecha invalida";
-  }
-  if (data.targetDate) {
-    const date = new Date(data.targetDate);
-    if (Number.isNaN(date.getTime())) return "Fecha invalida";
-  }
+    if (data.startDate) {
+      const date = new Date(data.startDate)
+      if (Number.isNaN(date.getTime()))
+        return res.status(422).send("Fecha invalida")
+    }
+    if (data.targetDate) {
+      const date = new Date(data.targetDate)
+      if (Number.isNaN(date.getTime()))
+        return res.status(422).send("Fecha invalida")
+    }
 
-  return null;
+    return next()
+  }
 }

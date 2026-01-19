@@ -1,11 +1,12 @@
-import type { AccountPrimitives } from "../models/account";
-import { Account } from "../models/account";
-import type { AccountMongoRepository } from "../repositories/account_repository";
-import type { TransactionMongoRepository } from "../repositories/transaction_repository";
+import type { Result } from "../bootstrap/response"
 import type {
   AccountCreatePayload,
   AccountUpdatePayload,
-} from "../http/validation/accounts.validation";
+} from "../http/validation/accounts.validation"
+import type { AccountPrimitives } from "../models/account"
+import { Account } from "../models/account"
+import type { AccountMongoRepository } from "../repositories/account_repository"
+import type { TransactionMongoRepository } from "../repositories/transaction_repository"
 
 export class AccountsService {
   constructor(
@@ -13,34 +14,34 @@ export class AccountsService {
     private readonly transactions: TransactionMongoRepository
   ) {}
 
-  async create(userId: string, payload: AccountCreatePayload) {
+  async create(payload: AccountCreatePayload) {
     const account = Account.create({
-      userId,
+      userId: "",
       name: payload.name!,
       type: payload.type!,
       bankType: payload.bankType ?? null,
       currency: payload.currency ?? "BRL",
       isActive: payload.isActive ?? true,
-    });
+    })
 
-    await this.accounts.upsert(account);
-    return { account: account.toPrimitives() };
+    await this.accounts.upsert(account)
+    return { account: account.toPrimitives() }
   }
 
   async update(
     userId: string,
     accountId: string,
     payload: AccountUpdatePayload
-  ) {
+  ): Promise<Result<AccountPrimitives>> {
     const existing = await this.accounts.one({
       userId,
       accountId,
-    });
+    })
     if (!existing) {
-      return { error: "Cuenta no encontrada", status: 404 };
+      return { error: "Cuenta no encontrada", status: 404 }
     }
 
-    const existingPrimitives = existing.toPrimitives();
+    const existingPrimitives = existing.toPrimitives()
     const merged: AccountPrimitives = {
       ...existingPrimitives,
       ...payload,
@@ -48,27 +49,33 @@ export class AccountsService {
       accountId: existingPrimitives.accountId,
       userId: existingPrimitives.userId,
       updatedAt: new Date(),
-    };
+    }
 
-    const account = Account.fromPrimitives(merged);
-    await this.accounts.upsert(account);
-    return { account: account.toPrimitives() };
+    const account = Account.fromPrimitives(merged)
+
+    await this.accounts.upsert(account)
+
+    return { value: account.toPrimitives(), status: 200 }
   }
 
-  async remove(userId: string, accountId: string) {
-    const existing = await this.accounts.one({ userId, accountId });
+  async remove(
+    userId: string,
+    accountId: string
+  ): Promise<Result<{ ok: boolean }>> {
+    const existing = await this.accounts.one({ userId, accountId })
     if (!existing) {
-      return { error: "Cuenta no encontrada", status: 404 };
+      return { error: "Cuenta no encontrada", status: 404 }
     }
 
     const deletedTransactions = await this.transactions.deleteManyByAccount(
       userId,
       accountId
-    );
-    const deleted = await this.accounts.delete(userId, accountId);
+    )
+
+    const deleted = await this.accounts.delete(userId, accountId)
     if (!deleted) {
-      return { error: "Cuenta no encontrada", status: 404 };
+      return { error: "Cuenta no encontrada", status: 404 }
     }
-    return { ok: true, deletedTransactions };
+    return { value: { ok: true }, status: 200 }
   }
 }

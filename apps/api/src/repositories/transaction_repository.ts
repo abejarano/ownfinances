@@ -1,26 +1,26 @@
-import type { IRepository } from "@abejarano/ts-mongodb-criteria";
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
-import { Transaction, TransactionType } from "../models/transaction";
-import { Collection } from "mongodb";
+import type { IRepository } from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
+import { Transaction, TransactionType } from "../models/transaction"
 
 export class TransactionMongoRepository
   extends MongoRepository<Transaction>
   implements IRepository<Transaction>
 {
-  private static instance: TransactionMongoRepository | null = null;
+  private static instance: TransactionMongoRepository | null = null
   private constructor() {
-    super(Transaction);
+    super(Transaction)
   }
 
   static getInstance(): TransactionMongoRepository {
     if (!TransactionMongoRepository.instance) {
-      TransactionMongoRepository.instance = new TransactionMongoRepository();
+      TransactionMongoRepository.instance = new TransactionMongoRepository()
     }
-    return TransactionMongoRepository.instance;
+    return TransactionMongoRepository.instance
   }
 
   collectionName(): string {
-    return "transactions";
+    return "transactions"
   }
 
   async ensureIndexes(collection: Collection): Promise<void> {
@@ -33,42 +33,42 @@ export class TransactionMongoRepository
           deletedAt: null,
         },
       }
-    );
+    )
     await collection.createIndex({
       userId: 1,
       status: 1,
       recurringRuleId: 1,
-    });
+    })
   }
 
   async delete(userId: string, id: string): Promise<boolean> {
-    const collection = await this.collection();
+    const collection = await this.collection()
     const result = await collection.updateOne(
       { userId, transactionId: id, deletedAt: null },
       { $set: { deletedAt: new Date() } }
-    );
-    return result.modifiedCount > 0;
+    )
+    return result.modifiedCount > 0
   }
 
   async deleteManyByCategory(
     userId: string,
     categoryId: string
   ): Promise<number> {
-    const collection = await this.collection();
-    const now = new Date();
+    const collection = await this.collection()
+    const now = new Date()
     const result = await collection.updateMany(
       { userId, categoryId, deletedAt: null },
       { $set: { deletedAt: now, updatedAt: now } }
-    );
-    return result.modifiedCount;
+    )
+    return result.modifiedCount
   }
 
   async deleteManyByAccount(
     userId: string,
     accountId: string
   ): Promise<number> {
-    const collection = await this.collection();
-    const now = new Date();
+    const collection = await this.collection()
+    const now = new Date()
     const result = await collection.updateMany(
       {
         userId,
@@ -76,17 +76,17 @@ export class TransactionMongoRepository
         $or: [{ fromAccountId: accountId }, { toAccountId: accountId }],
       },
       { $set: { deletedAt: now, updatedAt: now } }
-    );
-    return result.modifiedCount;
+    )
+    return result.modifiedCount
   }
 
   async restore(userId: string, id: string): Promise<boolean> {
-    const collection = await this.collection();
+    const collection = await this.collection()
     const result = await collection.updateOne(
       { userId, transactionId: id },
       { $set: { deletedAt: null } }
-    );
-    return result.modifiedCount > 0;
+    )
+    return result.modifiedCount > 0
   }
 
   async sumByCategory(
@@ -96,7 +96,7 @@ export class TransactionMongoRepository
   ): Promise<
     Array<{ categoryId: string; type: TransactionType; total: number }>
   > {
-    const collection = await this.collection();
+    const collection = await this.collection()
     const results = await collection
       .aggregate([
         {
@@ -124,13 +124,13 @@ export class TransactionMongoRepository
           },
         },
       ])
-      .toArray();
+      .toArray()
 
     return results as Array<{
-      categoryId: string;
-      type: TransactionType;
-      total: number;
-    }>;
+      categoryId: string
+      type: TransactionType
+      total: number
+    }>
   }
 
   async sumByAccount(
@@ -138,7 +138,7 @@ export class TransactionMongoRepository
     start: Date,
     end: Date
   ): Promise<Array<{ accountId: string; balance: number }>> {
-    const collection = await this.collection();
+    const collection = await this.collection()
     const results = await collection
       .aggregate([
         {
@@ -196,13 +196,13 @@ export class TransactionMongoRepository
         },
         { $project: { _id: 0, accountId: "$_id", balance: "$total" } },
       ])
-      .toArray();
+      .toArray()
 
-    return results as Array<{ accountId: string; balance: number }>;
+    return results as Array<{ accountId: string; balance: number }>
   }
 
   async sumByGoalTag(userId: string, goalId: string): Promise<number> {
-    const collection = await this.collection();
+    const collection = await this.collection()
     const results = await collection
       .aggregate([
         {
@@ -214,18 +214,17 @@ export class TransactionMongoRepository
         },
         { $group: { _id: "$userId", total: { $sum: "$amount" } } },
       ])
-      .toArray();
+      .toArray()
 
-    if (results.length === 0) return 0;
-    return results[0].total as number;
+    return results.length === 0 ? 0 : (results[0].total as number)
   }
 
   async confirmBatch(
     transactionIds: string[],
     userId: string
   ): Promise<number> {
-    const collection = await this.collection();
-    const now = new Date();
+    const collection = await this.collection()
+    const now = new Date()
     const result = await collection.updateMany(
       {
         userId,
@@ -240,7 +239,7 @@ export class TransactionMongoRepository
           updatedAt: now,
         },
       }
-    );
-    return result.modifiedCount;
+    )
+    return result.modifiedCount
   }
 }

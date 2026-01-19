@@ -1,107 +1,121 @@
-import type { CategoryMongoRepository } from "../../repositories/category_repository";
-import { Category } from "../../models/category";
-import type { CategoryPrimitives } from "../../models/category";
-import type { CategoriesService } from "../../services/categories_service";
-import { buildCategoriesCriteria } from "../criteria/categories.criteria";
-import { badRequest, notFound } from "../errors";
+import type { CategoryPrimitives } from "../../models/category"
+import { Category } from "../../models/category"
+import type { CategoryMongoRepository } from "../../repositories/category_repository"
+import type { CategoriesService } from "../../services/categories_service"
+import { buildCategoriesCriteria } from "../criteria/categories.criteria"
 import type {
   CategoryCreatePayload,
   CategoryUpdatePayload,
-} from "../validation/categories.validation";
+} from "../validation/categories.validation"
 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
+import { HttpResponse } from "../../bootstrap/response"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import { validateBudgetPayload } from "../validation/budgets.validation"
+
+@Controller("/categories")
 export class CategoriesController {
-  constructor(
-    private readonly repo: CategoryMongoRepository,
-    private readonly service: CategoriesService,
-  ) {}
+  private repo: CategoryMongoRepository
+  private service: CategoriesService
 
-  async list({
-    query,
-    userId,
-  }: {
-    query: Record<string, string | undefined>;
-    userId?: string;
-  }) {
-    const criteria = buildCategoriesCriteria(query, userId ?? "");
-    const result = await this.repo.list<CategoryPrimitives>(criteria);
-    return {
-      ...result,
-      results: result.results.map((item) =>
-        Category.fromPrimitives(item).toPrimitives(),
-      ),
-    };
+  constructor() {
+    const deps = Deps.getInstance()
+    this.repo = deps.categoryRepo
+    this.service = deps.categoriesService
   }
 
-  async create({
-    body,
-    set,
-    userId,
-  }: {
-    body: CategoryCreatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { category } = await this.service.create(userId ?? "", body);
-    return category!;
+  @Get("/")
+  @Use([AuthMiddleware])
+  async list(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const userId = req.userId
+    const criteria = buildCategoriesCriteria(query, userId ?? "")
+    const result = await this.repo.list<CategoryPrimitives>(criteria)
+    return HttpResponse(res, {
+      value: {
+        nextPag: result.nextPag,
+        count: result.count,
+        results: result.results.map((item) =>
+          Category.fromPrimitives(item).toPrimitives()
+        ),
+      },
+      status: 200,
+    })
   }
 
-  async getById({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
+  @Post("/")
+  @Use([AuthMiddleware, validateBudgetPayload(false)])
+  async create(
+    @Body() body: CategoryCreatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.create(req.userId ?? "", body)
+
+    return HttpResponse(res, result)
+  }
+
+  @Get("/:id")
+  @Use([AuthMiddleware])
+  async getById(
+    @Param("/:id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     const category = await this.repo.one({
-      userId: userId ?? "",
-      categoryId: params.id,
-    });
-    if (!category) return notFound(set, "Categoria no encontrada");
-    return category.toPrimitives();
+      userId: req.userId ?? "",
+      categoryId: id,
+    })
+
+    if (!category)
+      return HttpResponse(res, {
+        error: "Categoria no encontrada",
+        status: 404,
+      })
+
+    return HttpResponse(res, { value: category.toPrimitives(), status: 200 })
   }
 
-  async update({
-    params,
-    body,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    body: CategoryUpdatePayload;
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { category, error, status } = await this.service.update(
-      userId ?? "",
-      params.id,
-      body,
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return category!;
+  @Patch("/:id")
+  @Use([AuthMiddleware, validateBudgetPayload(true)])
+  async update(
+    @Param("/:id") id: string,
+    @Body() body: CategoryUpdatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.update(req.userId ?? "", id, body)
+
+    return HttpResponse(res, result)
   }
 
-  async remove({
-    params,
-    set,
-    userId,
-  }: {
-    params: { id: string };
-    set: { status: number };
-    userId?: string;
-  }) {
-    const { ok, error, status } = await this.service.remove(
-      userId ?? "",
-      params.id,
-    );
-    if (error) {
-      if (status === 404) return notFound(set, error);
-      return badRequest(set, error);
-    }
-    return { ok: ok === true };
+  @Delete("/:id")
+  @Use([AuthMiddleware])
+  async remove(
+    @Param("/:id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.remove(req.userId ?? "", id)
+
+    return HttpResponse(res, result)
   }
 }

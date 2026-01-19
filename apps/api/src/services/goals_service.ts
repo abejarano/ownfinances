@@ -1,12 +1,13 @@
-import type { GoalPrimitives } from "../models/goal";
-import { Goal } from "../models/goal";
-import type { GoalMongoRepository } from "../repositories/goal_repository";
-import type { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository";
-import type { TransactionMongoRepository } from "../repositories/transaction_repository";
+import type { Result } from "../bootstrap/response"
 import type {
   GoalCreatePayload,
   GoalUpdatePayload,
-} from "../http/validation/goals.validation";
+} from "../http/validation/goals.validation"
+import type { GoalPrimitives } from "../models/goal"
+import { Goal } from "../models/goal"
+import type { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository"
+import type { GoalMongoRepository } from "../repositories/goal_repository"
+import type { TransactionMongoRepository } from "../repositories/transaction_repository"
 
 export class GoalsService {
   constructor(
@@ -15,7 +16,10 @@ export class GoalsService {
     private readonly transactions: TransactionMongoRepository
   ) {}
 
-  async create(userId: string, payload: GoalCreatePayload) {
+  async create(
+    userId: string,
+    payload: GoalCreatePayload
+  ): Promise<Result<{ goal: GoalPrimitives }>> {
     const goal = Goal.create({
       userId,
       name: payload.name!,
@@ -26,19 +30,23 @@ export class GoalsService {
       monthlyContribution: payload.monthlyContribution,
       linkedAccountId: payload.linkedAccountId,
       isActive: payload.isActive ?? true,
-    });
+    })
 
-    await this.goals.upsert(goal);
-    return { goal: goal.toPrimitives() };
+    await this.goals.upsert(goal)
+    return { value: { goal: goal.toPrimitives() }, status: 201 }
   }
 
-  async update(userId: string, goalId: string, payload: GoalUpdatePayload) {
-    const existing = await this.goals.one({ userId, goalId });
+  async update(
+    userId: string,
+    goalId: string,
+    payload: GoalUpdatePayload
+  ): Promise<Result<{ goal: GoalPrimitives }>> {
+    const existing = await this.goals.one({ userId, goalId })
     if (!existing) {
-      return { error: "Meta no encontrada", status: 404 };
+      return { error: "Meta no encontrada", status: 404 }
     }
 
-    const existingPrimitives = existing.toPrimitives();
+    const existingPrimitives = existing.toPrimitives()
     const merged: GoalPrimitives = {
       ...existingPrimitives,
       ...payload,
@@ -46,8 +54,7 @@ export class GoalsService {
       goalId: existingPrimitives.goalId,
       userId: existingPrimitives.userId,
       currency: payload.currency ?? existingPrimitives.currency ?? "BRL",
-      targetAmount:
-        payload.targetAmount ?? existingPrimitives.targetAmount,
+      targetAmount: payload.targetAmount ?? existingPrimitives.targetAmount,
       startDate: payload.startDate
         ? new Date(payload.startDate)
         : existingPrimitives.startDate,
@@ -55,69 +62,89 @@ export class GoalsService {
         ? new Date(payload.targetDate)
         : existingPrimitives.targetDate,
       updatedAt: new Date(),
-    };
+    }
 
-    const goal = Goal.fromPrimitives(merged);
-    await this.goals.upsert(goal);
-    return { goal: goal.toPrimitives() };
+    const goal = Goal.fromPrimitives(merged)
+    await this.goals.upsert(goal)
+
+    return { value: { goal: goal.toPrimitives() }, status: 200 }
   }
 
-  async remove(userId: string, goalId: string) {
-    const deleted = await this.goals.delete(userId, goalId);
+  async remove(
+    userId: string,
+    goalId: string
+  ): Promise<Result<{ ok: boolean }>> {
+    const deleted = await this.goals.delete(userId, goalId)
     if (!deleted) {
-      return { error: "Meta no encontrada", status: 404 };
+      return { error: "Meta no encontrada", status: 404 }
     }
-    return { ok: true };
+    return { value: { ok: true }, status: 200 }
   }
 
-  async projection(userId: string, goalId: string) {
-    const goal = await this.goals.one({ userId, goalId });
+  async projection(
+    userId: string,
+    goalId: string
+  ): Promise<
+    Result<{
+      progress: number
+      remaining: number
+      targetAmount: number
+      monthlyContributionSuggested: number | null
+      targetDateEstimated: Date | null
+    }>
+  > {
+    const goal = await this.goals.one({ userId, goalId })
     if (!goal) {
-      return { error: "Meta no encontrada", status: 404 };
+      return { error: "Meta no encontrada", status: 404 }
     }
 
-    const primitive = goal.toPrimitives();
+    const primitive = goal.toPrimitives()
     const contributionTotal = await this.contributions.sumByGoal(userId, {
       goalId,
-    });
-    const taggedTotal = await this.transactions.sumByGoalTag(userId, goalId);
+    })
+    const taggedTotal = await this.transactions.sumByGoalTag(userId, goalId)
 
-    const progress = contributionTotal + taggedTotal;
-    const remaining = Math.max(0, primitive.targetAmount - progress);
+    const progress = contributionTotal + taggedTotal
+    const remaining = Math.max(0, primitive.targetAmount - progress)
 
-    let monthlyContributionSuggested: number | null = null;
-    let targetDateEstimated: Date | null = null;
+    let monthlyContributionSuggested: number | null = null
+    let targetDateEstimated: Date | null = null
 
     if (primitive.monthlyContribution && primitive.monthlyContribution > 0) {
-      const months = Math.ceil(remaining / primitive.monthlyContribution);
+      const months = Math.ceil(remaining / primitive.monthlyContribution)
       if (months > 0) {
-        targetDateEstimated = addMonths(new Date(), months);
+        targetDateEstimated = addMonths(new Date(), months)
       }
     }
 
     if (primitive.targetDate) {
-      const monthsToTarget = diffInMonths(new Date(), primitive.targetDate);
+      const monthsToTarget = diffInMonths(new Date(), primitive.targetDate)
       if (monthsToTarget > 0) {
-        monthlyContributionSuggested = remaining / monthsToTarget;
+        monthlyContributionSuggested = remaining / monthsToTarget
       }
     }
 
     return {
-      progress,
-      remaining,
-      targetAmount: primitive.targetAmount,
-      monthlyContributionSuggested,
-      targetDateEstimated,
-    };
+      value: {
+        progress,
+        remaining,
+        targetAmount: primitive.targetAmount,
+        monthlyContributionSuggested,
+        targetDateEstimated,
+      },
+      status: 200,
+    }
   }
 }
 
 function addMonths(date: Date, months: number) {
-  return new Date(date.getFullYear(), date.getMonth() + months, date.getDate());
+  return new Date(date.getFullYear(), date.getMonth() + months, date.getDate())
 }
 
 function diffInMonths(start: Date, end: Date) {
   return (
-    end.getFullYear() * 12 + end.getMonth() - (start.getFullYear() * 12 + start.getMonth())
-  );
+    end.getFullYear() * 12 +
+    end.getMonth() -
+    (start.getFullYear() * 12 + start.getMonth())
+  )
 }

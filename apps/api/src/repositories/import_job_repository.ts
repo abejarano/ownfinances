@@ -1,30 +1,30 @@
-import type { IRepository } from "@abejarano/ts-mongodb-criteria";
-import { MongoRepository } from "@abejarano/ts-mongodb-criteria";
-import { ImportJob } from "../models/import_job";
-import { Collection } from "mongodb";
+import type { IRepository } from "@abejarano/ts-mongodb-criteria"
+import { MongoRepository } from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
+import { ImportJob } from "../models/import_job"
 
 export class ImportJobMongoRepository
   extends MongoRepository<ImportJob>
   implements IRepository<ImportJob>
 {
-  private static instance: ImportJobMongoRepository | null = null;
+  private static instance: ImportJobMongoRepository | null = null
 
   private constructor() {
-    super(ImportJob);
+    super(ImportJob)
   }
 
   static getInstance(): ImportJobMongoRepository {
     if (!ImportJobMongoRepository.instance) {
-      ImportJobMongoRepository.instance = new ImportJobMongoRepository();
+      ImportJobMongoRepository.instance = new ImportJobMongoRepository()
     }
-    return ImportJobMongoRepository.instance;
+    return ImportJobMongoRepository.instance
   }
 
   collectionName(): string {
-    return "import_jobs";
+    return "import_jobs"
   }
 
   async ensureIndexes(collection: Collection): Promise<void> {
-    await collection.createIndex({ userId: 1, createdAt: -1 });
+    await collection.createIndex({ userId: 1, createdAt: -1 })
   }
 }

@@ -1,52 +1,57 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
-import { AccountType } from "../../models/account";
-import { BankType } from "../../models/bank_type";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import * as v from "valibot"
+import { AccountType } from "../../models/account"
+import { BankType } from "../../models/bank_type"
 
 export type AccountCreatePayload = {
-  name: string;
-  type: AccountType;
-  bankType?: BankType | null;
-  currency?: string;
-  isActive?: boolean;
-};
+  name: string
+  type: AccountType
+  bankType?: BankType | null
+  currency?: string
+  isActive?: boolean
+}
 
-export type AccountUpdatePayload = Partial<AccountCreatePayload>;
+export type AccountUpdatePayload = Partial<AccountCreatePayload>
 
-const AccountTypeSchema = t.Enum(AccountType);
-const BankTypeSchema = t.Enum(BankType);
+const AccountBaseSchema = v.strictObject({
+  name: v.pipe(v.string(), v.minLength(1)),
+  type: v.enum_(AccountType),
+  bankType: v.optional(v.nullable(v.enum_(BankType))),
+  currency: v.optional(v.pipe(v.string(), v.minLength(1))),
+  isActive: v.optional(v.boolean()),
+})
 
-const AccountBaseSchema = t.Object(
-  {
-    name: t.String({ minLength: 1 }),
-    type: AccountTypeSchema,
-    bankType: t.Optional(t.Union([BankTypeSchema, t.Null()])),
-    currency: t.Optional(t.String({ minLength: 1 })),
-    isActive: t.Optional(t.Boolean()),
-  },
-  { additionalProperties: false }
-);
+const AccountCreateSchema = AccountBaseSchema
+const AccountUpdateSchema = v.partial(AccountBaseSchema)
 
-const AccountCreateSchema = AccountBaseSchema;
-const AccountUpdateSchema = t.Partial(AccountBaseSchema);
+export function validateAccountPayload(isUpdate: boolean) {
+  return async (
+    req: ServerRequest,
+    res: ServerResponse,
+    next: NextFunction
+  ): Promise<void> => {
+    const schema = isUpdate ? AccountUpdateSchema : AccountCreateSchema
+    const result = v.safeParse(schema, req.body)
+    if (result.success) {
+      return next()
+    }
+    if (!result.issues) {
+      return res.status(422).send("Payload invalido")
+    }
 
-const accountCreateCompiler = TypeCompiler.Compile(AccountCreateSchema);
-const accountUpdateCompiler = TypeCompiler.Compile(AccountUpdateSchema);
+    const flattened = v.flatten(result.issues)
 
-export function validateAccountPayload(
-  payload: AccountCreatePayload | AccountUpdatePayload,
-  isUpdate: boolean
-): string | null {
-  const compiler = isUpdate ? accountUpdateCompiler : accountCreateCompiler;
-  if (compiler.Check(payload)) {
-    return null;
+    if (flattened.nested?.name)
+      return res.status(422).send("Falta o nome da conta")
+    if (flattened.nested?.type)
+      return res.status(422).send("Tipo de conta invalido")
+    if (flattened.nested?.currency)
+      return res.status(422).send("Moeda invalida")
+
+    return res.status(422).send("Payload invalido")
   }
-
-  for (const error of compiler.Errors(payload)) {
-    if (error.path === "/name") return "Falta o nome da conta";
-    if (error.path === "/type") return "Tipo de conta invalido";
-    if (error.path === "/currency") return "Moeda invalida";
-  }
-
-  return "Payload invalido";
 }

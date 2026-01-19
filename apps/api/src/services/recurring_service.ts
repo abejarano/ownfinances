@@ -3,31 +3,33 @@ import {
   Filters,
   Operator,
   Order,
-} from "@abejarano/ts-mongodb-criteria";
+  type Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import {
   GeneratedInstance,
-  GeneratedInstancePrimitives,
-} from "../models/recurring/generated_instance";
+  type GeneratedInstancePrimitives,
+} from "../models/recurring/generated_instance"
 import {
-  RecurringRule,
-  RecurringRulePrimitives,
   RecurringFrequency,
-} from "../models/recurring/recurring_rule";
-import { Transaction, TransactionStatus } from "../models/transaction";
+  RecurringRule,
+  type RecurringRulePrimitives,
+} from "../models/recurring/recurring_rule"
+import { Transaction, TransactionStatus } from "../models/transaction"
+import { GeneratedInstanceMongoRepository } from "../repositories/generated_instance_repository"
+import { RecurringRuleMongoRepository } from "../repositories/recurring_rule_repository"
+import { TransactionMongoRepository } from "../repositories/transaction_repository"
 import type {
   RecurringRuleCreatePayload,
   RecurringRuleUpdatePayload,
   RecurringTemplatePayload,
-} from "../http/validation/recurring.validation";
-import { GeneratedInstanceMongoRepository } from "../repositories/generated_instance_repository";
-import { RecurringRuleMongoRepository } from "../repositories/recurring_rule_repository";
-import { TransactionMongoRepository } from "../repositories/transaction_repository";
+} from "../http/validation/recurring.validation"
+import type { Result } from "../bootstrap/response"
 
 export interface RecurringPreviewItem {
-  recurringRuleId: string;
-  date: Date;
-  template: RecurringRulePrimitives["template"];
-  status: "new" | "already_generated";
+  recurringRuleId: string
+  date: Date
+  template: RecurringRulePrimitives["template"]
+  status: "new" | "already_generated"
 }
 
 export class RecurringService {
@@ -37,31 +39,34 @@ export class RecurringService {
     private readonly transactionRepo: TransactionMongoRepository
   ) {}
 
-  async create(userId: string, payload: RecurringRuleCreatePayload) {
-    const template = this.normalizeTemplate(payload.template);
-    const startDate = new Date(payload.startDate);
-    startDate.setHours(0, 0, 0, 0);
+  async create(
+    userId: string,
+    payload: RecurringRuleCreatePayload
+  ): Promise<Result<{ rule: RecurringRulePrimitives }>> {
+    const template = this.normalizeTemplate(payload.template)
+    const startDate = new Date(payload.startDate)
+    startDate.setHours(0, 0, 0, 0)
     const signature = this.computeRuleSignature({
       userId,
       frequency: payload.frequency,
       interval: payload.interval,
       startDate,
       template,
-    });
+    })
 
     const existing = await this.ruleRepo.one({
       userId,
       signature,
       isActive: true,
-    });
+    })
     if (existing) {
-      const primitives = existing.toPrimitives();
+      const primitives = existing.toPrimitives()
       await this.ruleRepo.deactivateActiveDuplicatesBySignature({
         userId,
         signature,
         keepRecurringRuleId: primitives.recurringRuleId,
-      });
-      return { rule: existing.toPrimitives() };
+      })
+      return { value: { rule: existing.toPrimitives() }, status: 200 }
     }
 
     const rule = RecurringRule.create({
@@ -74,77 +79,95 @@ export class RecurringService {
       interval: payload.interval,
       isActive: payload.isActive ?? true,
       lastRunAt: undefined,
-    });
+    })
+
     try {
-      await this.ruleRepo.upsert(rule);
+      await this.ruleRepo.upsert(rule)
     } catch {
       const concurrent = await this.ruleRepo.one({
         userId,
         signature,
         isActive: true,
-      });
+      })
+
       if (concurrent) {
-        return { rule: concurrent.toPrimitives() };
+        return { value: { rule: concurrent.toPrimitives() }, status: 200 }
       }
-      throw new Error("Nao foi possivel criar a recorrencia");
+      return { error: "Nao foi possivel criar a recorrencia", status: 500 }
     }
-    const created = rule.toPrimitives();
+
+    const created = rule.toPrimitives()
     await this.ruleRepo.deactivateActiveDuplicatesBySignature({
       userId,
       signature,
       keepRecurringRuleId: created.recurringRuleId,
-    });
-    return { rule: rule.toPrimitives() };
+    })
+
+    return { value: { rule: rule.toPrimitives() }, status: 201 }
   }
 
-  async delete(userId: string, recurringRuleId: string) {
-    const rule = await this.ruleRepo.one({ recurringRuleId });
+  async delete(
+    userId: string,
+    recurringRuleId: string
+  ): Promise<Result<{ ok: boolean }>> {
+    const rule = await this.ruleRepo.one({ recurringRuleId })
     if (!rule || rule.userId !== userId) {
-      return { error: "Recurrencia no encontrada", status: 404 };
+      return { error: "Recurrencia no encontrada", status: 404 }
     }
-    await this.ruleRepo.remove(recurringRuleId);
-    return { ok: true };
+    await this.ruleRepo.remove(recurringRuleId)
+    return { value: { ok: true }, status: 200 }
   }
 
-  async list(userId: string, limit = 50, page = 1) {
-    return this.ruleRepo.list<RecurringRulePrimitives>(
-      new Criteria(
-        Filters.fromValues([
-          new Map<string, any>([
-            ["field", "userId"],
-            ["operator", Operator.EQUAL],
-            ["value", userId],
+  async list(
+    userId: string,
+    limit = 50,
+    page = 1
+  ): Promise<Result<Paginate<RecurringRulePrimitives>>> {
+    return {
+      value: await this.ruleRepo.list<RecurringRulePrimitives>(
+        new Criteria(
+          Filters.fromValues([
+            new Map<string, any>([
+              ["field", "userId"],
+              ["operator", Operator.EQUAL],
+              ["value", userId],
+            ]),
           ]),
-        ]),
-        Order.none(),
-        limit,
-        page
-      )
-    );
+          Order.none(),
+          limit,
+          page
+        )
+      ),
+      status: 200,
+    }
   }
 
-  async getById(userId: string, recurringRuleId: string) {
-    const rule = await this.ruleRepo.one({ recurringRuleId });
+  async getById(
+    userId: string,
+    recurringRuleId: string
+  ): Promise<Result<{ rule: RecurringRulePrimitives }>> {
+    const rule = await this.ruleRepo.one({ recurringRuleId })
     if (!rule || rule.userId !== userId) {
-      return { error: "Recurrencia no encontrada", status: 404 };
+      return { error: "Recurrencia no encontrada", status: 404 }
     }
-    return { rule: rule.toPrimitives() };
+
+    return { value: { rule: rule.toPrimitives() }, status: 200 }
   }
 
   async update(
     userId: string,
     recurringRuleId: string,
     payload: RecurringRuleUpdatePayload
-  ) {
-    const rule = await this.ruleRepo.one({ recurringRuleId });
+  ): Promise<Result<{ rule: RecurringRulePrimitives }>> {
+    const rule = await this.ruleRepo.one({ recurringRuleId })
     if (!rule || rule.userId !== userId) {
-      return { error: "Recurrencia no encontrada", status: 404 };
+      return { error: "Recurrencia no encontrada", status: 404 }
     }
 
-    const current = rule.toPrimitives();
+    const current = rule.toPrimitives()
     const template = payload.template
       ? this.normalizeTemplate(payload.template)
-      : current.template;
+      : current.template
 
     const updated = RecurringRule.fromPrimitives({
       ...current,
@@ -154,51 +177,60 @@ export class RecurringService {
         : current.startDate,
       endDate: payload.endDate ? new Date(payload.endDate) : current.endDate,
       template,
-    });
+    })
 
-    await this.ruleRepo.upsert(updated);
-    return { rule: updated.toPrimitives() };
+    await this.ruleRepo.upsert(updated)
+    return { value: { rule: updated.toPrimitives() }, status: 200 }
   }
 
   async preview(
     userId: string,
     period: "monthly",
     date: Date
-  ): Promise<RecurringPreviewItem[]> {
-    const { start, end } = this.computeRange(period, date);
-    const rules = await this.getUserRules(userId);
+  ): Promise<Result<RecurringPreviewItem[]>> {
+    const { start, end } = this.computeRange(period, date)
+    const rules = await this.getUserRules(userId)
     const instancesInPeriod = await this.getInstancesInPeriod(
       userId,
       start,
       end
-    );
+    )
 
-    const result: RecurringPreviewItem[] = [];
+    const result: RecurringPreviewItem[] = []
 
     for (const rule of rules) {
-      const rulePrimitives = rule.toPrimitives();
-      const dates = this.calculateDates(rule, start, end);
+      const rulePrimitives = rule.toPrimitives()
+      const dates = this.calculateDates(rule, start, end)
       for (const d of dates) {
-        const dateStr = d.toISOString().split("T")[0];
-        const uniqueKey = `${rulePrimitives.recurringRuleId}_${dateStr}`;
-        const exists = instancesInPeriod.has(uniqueKey);
+        const dateStr = d.toISOString().split("T")[0]
+        const uniqueKey = `${rulePrimitives.recurringRuleId}_${dateStr}`
+        const exists = instancesInPeriod.has(uniqueKey)
 
         result.push({
           recurringRuleId: rulePrimitives.recurringRuleId,
           date: d,
           template: rulePrimitives.template,
           status: exists ? "already_generated" : "new",
-        });
+        })
       }
     }
-    return result;
+
+    return { value: result, status: 200 }
   }
 
-  async run(userId: string, period: "monthly", date: Date) {
-    const preview = await this.preview(userId, period, date);
-    const toCreate = preview.filter((p) => p.status === "new");
+  async run(
+    userId: string,
+    period: "monthly",
+    date: Date
+  ): Promise<Result<{ generated: number }>> {
+    const preview = await this.preview(userId, period, date)
+    if (preview.error) {
+      return { error: preview.error, status: preview.status }
+    }
 
-    let count = 0;
+    const toCreate = preview.value!.filter((p) => p.status === "new")
+
+    let count = 0
     for (const item of toCreate) {
       const tx = Transaction.create({
         userId,
@@ -213,14 +245,14 @@ export class RecurringService {
         tags: item.template.tags || [],
         status: TransactionStatus.Pending, // Always create as pending
         recurringRuleId: item.recurringRuleId,
-      });
-      const txId = tx.getTransactionId();
+      })
+      const txId = tx.getTransactionId()
 
       try {
-        await this.transactionRepo.upsert(tx);
+        await this.transactionRepo.upsert(tx)
       } catch {
         // If a recurringUniqueKey race happens, skip without duplicating.
-        continue;
+        continue
       }
 
       const instance = GeneratedInstance.create(
@@ -228,16 +260,16 @@ export class RecurringService {
         userId,
         item.date,
         txId
-      );
+      )
       try {
-        await this.instanceRepo.upsert(instance);
-        count++;
+        await this.instanceRepo.upsert(instance)
+        count++
       } catch {
         // If a uniqueKey race happens, skip without duplicating.
       }
     }
 
-    return { generated: count };
+    return { value: { generated: count }, status: 200 }
   }
 
   /**
@@ -249,13 +281,13 @@ export class RecurringService {
     recurringRuleId: string,
     date: Date,
     overrideTemplate?: RecurringRulePrimitives["template"]
-  ) {
-    const rule = await this.ruleRepo.one({ recurringRuleId });
-    if (!rule || rule.userId !== userId) throw new Error("Rule not found");
+  ): Promise<Result<Transaction>> {
+    const rule = await this.ruleRepo.one({ recurringRuleId })
+    if (!rule || rule.userId !== userId) throw new Error("Rule not found")
 
     // Check if already materialized
-    const dateStr = date.toISOString().split("T")[0];
-    const uniqueKey = `${rule.ruleId}_${dateStr}`;
+    const dateStr = date.toISOString().split("T")[0]
+    const uniqueKey = `${rule.ruleId}_${dateStr}`
 
     const existingPage =
       await this.instanceRepo.list<GeneratedInstancePrimitives>(
@@ -269,14 +301,14 @@ export class RecurringService {
           ]),
           Order.none()
         )
-      );
+      )
 
     if (existingPage.results.length > 0) {
-      throw new Error("Instance already generated");
+      return { error: "Instance already generated", status: 400 }
     }
 
     // Create Transaction
-    const template = overrideTemplate || rule.template;
+    const template = overrideTemplate || rule.template
     const tx = Transaction.create({
       userId,
       date: date, // specific date
@@ -290,15 +322,15 @@ export class RecurringService {
       tags: template.tags || [],
       status: TransactionStatus.Pending,
       recurringRuleId: rule.ruleId,
-    });
-    const txId = tx.getTransactionId();
-    await this.transactionRepo.upsert(tx);
+    })
+    const txId = tx.getTransactionId()
+    await this.transactionRepo.upsert(tx)
 
     // Create Instance Record
-    const instance = GeneratedInstance.create(rule.ruleId, userId, date, txId);
-    await this.instanceRepo.upsert(instance);
+    const instance = GeneratedInstance.create(rule.ruleId, userId, date, txId)
+    await this.instanceRepo.upsert(instance)
 
-    return tx;
+    return { value: tx, status: 200 }
   }
 
   /**
@@ -311,20 +343,20 @@ export class RecurringService {
     recurringRuleId: string,
     splitDate: Date,
     newTemplate: RecurringTemplatePayload
-  ) {
-    const rule = await this.ruleRepo.one({ recurringRuleId });
-    if (!rule || rule.userId !== userId) throw new Error("Rule not found");
+  ): Promise<Result<{ rule: RecurringRulePrimitives }>> {
+    const rule = await this.ruleRepo.one({ recurringRuleId })
+    if (!rule || rule.userId !== userId) throw new Error("Rule not found")
 
     // 1. Update existing rule end date to splitDate - 1 day
-    const endDate = new Date(splitDate);
-    endDate.setDate(endDate.getDate() - 1);
+    const endDate = new Date(splitDate)
+    endDate.setDate(endDate.getDate() - 1)
 
     // We need to implement update in Repo or just overwrite
     const updatedRule = RecurringRule.fromPrimitives({
       ...rule.toPrimitives(),
       endDate: endDate,
-    });
-    await this.ruleRepo.upsert(updatedRule);
+    })
+    await this.ruleRepo.upsert(updatedRule)
 
     // 2. Create new rule starting at splitDate
     return this.create(userId, {
@@ -332,29 +364,29 @@ export class RecurringService {
       interval: rule.interval,
       startDate: splitDate,
       template: this.normalizeTemplate(newTemplate),
-    });
+    })
   }
 
   private computeRange(period: "monthly", date: Date) {
-    const start = new Date(date);
-    start.setDate(1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1, 0); // Last day of month
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
+    const start = new Date(date)
+    start.setDate(1)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(start)
+    end.setMonth(end.getMonth() + 1, 0) // Last day of month
+    end.setHours(23, 59, 59, 999)
+    return { start, end }
   }
 
   private async getUserRules(userId: string) {
-    return this.ruleRepo.searchActive(userId);
+    return this.ruleRepo.searchActive(userId)
   }
 
   private async getInstancesInPeriod(userId: string, start: Date, end: Date) {
     const instancesPage = await this.instanceRepo.search({
       userId: userId,
       date: { $gte: start, $lte: end },
-    });
-    return new Set(instancesPage.map((i) => i.getUniqueKey()));
+    })
+    return new Set(instancesPage.map((i) => i.getUniqueKey()))
   }
 
   private calculateDates(
@@ -362,36 +394,36 @@ export class RecurringService {
     windowStart: Date,
     windowEnd: Date
   ): Date[] {
-    const dates: Date[] = [];
-    let current = new Date(rule.startDate);
+    const dates: Date[] = []
+    let current = new Date(rule.startDate)
 
     // If start date is in future beyond window, no dates
-    if (current > windowEnd) return [];
-    if (rule.endDate && rule.endDate < windowStart) return [];
+    if (current > windowEnd) return []
+    if (rule.endDate && rule.endDate < windowStart) return []
 
     // Advance current to be at least windowStart or close to it
     // For simplicity, we just iterate from startDate. Optimization possible for yearly.
 
     // Safety break
-    let safety = 0;
+    let safety = 0
     while (current <= windowEnd && safety < 1000) {
-      if (rule.endDate && current > rule.endDate) break;
+      if (rule.endDate && current > rule.endDate) break
       if (current >= windowStart) {
-        dates.push(new Date(current));
+        dates.push(new Date(current))
       }
 
       // Advance
       if (rule.frequency === RecurringFrequency.Weekly) {
-        current.setDate(current.getDate() + 7 * rule.interval);
+        current.setDate(current.getDate() + 7 * rule.interval)
       } else if (rule.frequency === RecurringFrequency.Monthly) {
-        current.setMonth(current.getMonth() + rule.interval);
+        current.setMonth(current.getMonth() + rule.interval)
       } else if (rule.frequency === RecurringFrequency.Yearly) {
-        current.setFullYear(current.getFullYear() + rule.interval);
+        current.setFullYear(current.getFullYear() + rule.interval)
       }
-      safety++;
+      safety++
     }
 
-    return dates;
+    return dates
   }
 
   private normalizeTemplate(
@@ -405,20 +437,20 @@ export class RecurringService {
       toAccountId: template.toAccountId,
       note: template.note,
       tags: template.tags,
-    };
+    }
   }
 
   private computeRuleSignature(input: {
-    userId: string;
-    frequency: RecurringRulePrimitives["frequency"];
-    interval: number;
-    startDate: Date;
-    template: RecurringRulePrimitives["template"];
+    userId: string
+    frequency: RecurringRulePrimitives["frequency"]
+    interval: number
+    startDate: Date
+    template: RecurringRulePrimitives["template"]
   }) {
-    const dateStr = input.startDate.toISOString().split("T")[0];
+    const dateStr = input.startDate.toISOString().split("T")[0]
     const tags = input.template.tags
       ? [...input.template.tags].filter(Boolean).sort()
-      : undefined;
+      : undefined
 
     const normalized = {
       userId: input.userId,
@@ -435,90 +467,109 @@ export class RecurringService {
         note: input.template.note ?? null,
         tags: tags ?? null,
       },
-    };
+    }
 
-    return JSON.stringify(normalized);
+    return JSON.stringify(normalized)
   }
 
-  async getPendingSummary(userId: string, date: Date) {
-    const preview = await this.preview(userId, "monthly", date);
-    const toGenerate = preview.filter((p) => p.status === "new").length;
+  async getPendingSummary(
+    userId: string,
+    date: Date
+  ): Promise<Result<{ month: string; toGenerate: number }>> {
+    const preview = await this.preview(userId, "monthly", date)
+    if (preview.error) {
+      return { error: preview.error, status: preview.status }
+    }
+
+    const toGenerate = preview.value!.filter((p) => p.status === "new").length
 
     const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
       2,
       "0"
-    )}`;
+    )}`
 
     return {
-      month,
-      toGenerate,
-    };
+      value: {
+        month,
+        toGenerate,
+      },
+      status: 200,
+    }
   }
 
-  async getSummaryByMonth(userId: string, months: number = 3) {
-    const summaries = [];
-    const currentDate = new Date();
+  async getSummaryByMonth(
+    userId: string,
+    months: number = 3
+  ): Promise<Result<{ summaries: { month: string; toGenerate: number }[] }>> {
+    const summaries = []
+    const currentDate = new Date()
 
     for (let i = 0; i < months; i++) {
-      const targetDate = new Date(currentDate);
-      targetDate.setMonth(currentDate.getMonth() + i);
+      const targetDate = new Date(currentDate)
+      targetDate.setMonth(currentDate.getMonth() + i)
 
-      const preview = await this.preview(userId, "monthly", targetDate);
-      const toGenerate = preview.filter((p) => p.status === "new").length;
+      const preview = await this.preview(userId, "monthly", targetDate)
+      if (preview.error) {
+        return { error: preview.error, status: preview.status }
+      }
+
+      const toGenerate = preview.value!.filter((p) => p.status === "new").length
 
       const month = `${targetDate.getFullYear()}-${String(
         targetDate.getMonth() + 1
-      ).padStart(2, "0")}`;
+      ).padStart(2, "0")}`
 
       summaries.push({
         month,
         toGenerate,
-      });
+      })
     }
 
-    return { summaries };
+    return { value: { summaries }, status: 200 }
   }
 
-  async getCatchupSummary(userId: string) {
-    const currentDate = new Date();
-    const rules = await this.getUserRules(userId);
+  async getCatchupSummary(
+    userId: string
+  ): Promise<Result<{ catchup: { month: string; count: number }[] }>> {
+    const currentDate = new Date()
+    const rules = await this.getUserRules(userId)
 
     if (rules.length === 0) {
-      return { catchup: [] };
+      return { value: { catchup: [] }, status: 200 }
     }
 
     // Find earliest start date from active rules
     const earliestStart = rules.reduce((earliest, rule) => {
-      return rule.startDate < earliest ? rule.startDate : earliest;
-    }, rules[0].startDate);
+      return rule.startDate < earliest ? rule.startDate : earliest
+    }, rules[0]!.startDate)
 
-    const catchup = [];
+    const catchup = []
 
     // Check up to 12 months back
-    const maxMonthsBack = 12;
-    const startCheckDate = new Date(currentDate);
-    startCheckDate.setMonth(startCheckDate.getMonth() - maxMonthsBack);
+    const maxMonthsBack = 12
+    const startCheckDate = new Date(currentDate)
+    startCheckDate.setMonth(startCheckDate.getMonth() - maxMonthsBack)
 
     const checkStart =
-      earliestStart > startCheckDate ? earliestStart : startCheckDate;
+      earliestStart > startCheckDate ? earliestStart : startCheckDate
 
     // Loop through past months
-    let checkDate = new Date(checkStart);
+    let checkDate = new Date(checkStart)
     while (checkDate < currentDate) {
-      const preview = await this.preview(userId, "monthly", checkDate);
-      const newCount = preview.filter((p) => p.status === "new").length;
+      const preview = await this.preview(userId, "monthly", checkDate)
+      const newCount = preview.value!.filter((p) => p.status === "new").length
 
       if (newCount > 0) {
         const month = `${checkDate.getFullYear()}-${String(
           checkDate.getMonth() + 1
-        ).padStart(2, "0")}`;
-        catchup.push({ month, count: newCount });
+        ).padStart(2, "0")}`
+        catchup.push({ month, count: newCount })
       }
 
       // Move to next month
-      checkDate.setMonth(checkDate.getMonth() + 1);
+      checkDate.setMonth(checkDate.getMonth() + 1)
     }
 
-    return { catchup };
+    return { value: { catchup }, status: 200 }
   }
 }

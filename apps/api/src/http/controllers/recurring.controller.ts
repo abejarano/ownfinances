@@ -1,11 +1,45 @@
-import type { RecurringService } from "../../services/recurring_service";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
+import { HttpResponse } from "../../bootstrap/response"
+import type { RecurringService } from "../../services/recurring_service"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import {
+  validateRecurringMaterializePayload,
+  validateRecurringRulePayload,
+  validateRecurringSplitPayload,
+  type RecurringRuleCreatePayload,
+} from "../validation/recurring.validation"
 
+@Controller("/recurring_rules")
 export class RecurringController {
-  constructor(private readonly service: RecurringService) {}
+  private readonly service: RecurringService
 
-  async create(ctx: { userId: string; body: any }) {
-    const { body, userId } = ctx;
-    const { rule } = await this.service.create(userId, {
+  constructor() {
+    this.service = Deps.resolve<RecurringService>("recurringService")
+  }
+
+  @Post("/")
+  @Use([AuthMiddleware, validateRecurringRulePayload(false)])
+  async create(
+    @Body() body: RecurringRuleCreatePayload,
+    @Req() req: { userId: string },
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.create(req.userId, {
       frequency: body.frequency,
       interval: body.interval || 1,
       startDate: new Date(body.startDate),
@@ -20,26 +54,104 @@ export class RecurringController {
         note: body.template.note,
         tags: body.template.tags,
       },
-    });
-    return rule;
+    })
+
+    return HttpResponse(res, result)
   }
 
-  async list(ctx: {
-    userId: string;
-    query: { limit?: string; page?: string };
-  }) {
-    const limit = Number(ctx.query.limit || 50);
-    const page = Number(ctx.query.page || 1);
-    return await this.service.list(ctx.userId, limit, page);
+  @Get("/")
+  @Use([AuthMiddleware])
+  async list(
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const limit = Number(query.limit || 50)
+    const page = Number(query.page || 1)
+    const result = await this.service.list(req.userId!, limit, page)
+
+    return HttpResponse(res, result)
   }
 
-  async getById(ctx: { userId: string; params: { id: string } }) {
-    return this.service.getById(ctx.userId, ctx.params.id);
+  @Get("/preview")
+  @Use([AuthMiddleware])
+  async preview(
+    @Query() query: { period: string; date?: string; month?: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const period = (query.period as "monthly") || "monthly"
+    let date: Date
+
+    if (query.month) {
+      // Parse YYYY-MM format
+      const [year, month] = query.month.split("-").map(Number)
+      date = new Date(year!, month! - 1, 1)
+    } else if (query.date) {
+      date = new Date(query.date)
+    } else {
+      date = new Date()
+    }
+
+    return this.service.preview(req.userId!, period, date)
   }
 
-  async update(ctx: { userId: string; params: { id: string }; body: any }) {
-    const { body } = ctx;
-    return this.service.update(ctx.userId, ctx.params.id, {
+  @Get("/pending-summary")
+  @Use([AuthMiddleware])
+  async getPendingSummary(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const currentDate = new Date()
+    const result = await this.service.getPendingSummary(
+      req.userId!,
+      currentDate
+    )
+    return HttpResponse(res, result)
+  }
+
+  @Get("/summary-by-month")
+  @Use([AuthMiddleware])
+  async getSummaryByMonth(
+    @Query() query: { months?: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const months = Number(query?.months || 3)
+    const result = await this.service.getSummaryByMonth(req.userId!, months)
+    return HttpResponse(res, result)
+  }
+
+  @Get("/catchup")
+  @Use([AuthMiddleware])
+  async getCatchupSummary(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.getCatchupSummary(req.userId!)
+    return HttpResponse(res, result)
+  }
+
+  @Get("/:id")
+  @Use([AuthMiddleware])
+  async getById(
+    @Param("id") id: string,
+    @Req() req: { userId: string },
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.getById(req.userId, id)
+    return HttpResponse(res, result)
+  }
+
+  @Put("/:id")
+  @Use([AuthMiddleware, validateRecurringRulePayload(true)])
+  async update(
+    @Body() body: any,
+    @Param("id") id: string,
+    @Req() req: { userId: string },
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.update(req.userId, id, {
       frequency: body.frequency,
       interval: body.interval,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
@@ -57,107 +169,86 @@ export class RecurringController {
             tags: body.template.tags,
           }
         : undefined,
-    });
+    })
+
+    return HttpResponse(res, result)
   }
 
-  async delete(ctx: { userId: string; params: { id: string } }) {
-    await this.service.delete(ctx.userId, ctx.params.id);
-    return { success: true };
+  @Delete("/:id")
+  @Use([AuthMiddleware])
+  async delete(
+    @Param("id") id: string,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const result = await this.service.delete(req.userId!, id)
+    return HttpResponse(res, result)
   }
 
-  async preview(ctx: {
-    userId: string;
-    query: { period: string; date?: string; month?: string };
-  }) {
-    const period = (ctx.query.period as "monthly") || "monthly";
-    let date: Date;
-
-    if (ctx.query.month) {
-      // Parse YYYY-MM format
-      const [year, month] = ctx.query.month.split("-").map(Number);
-      date = new Date(year, month - 1, 1);
-    } else if (ctx.query.date) {
-      date = new Date(ctx.query.date);
-    } else {
-      date = new Date();
-    }
-
-    return this.service.preview(ctx.userId, period, date);
-  }
-
-  async run(ctx: {
-    userId: string;
-    body?: { period?: string; date?: string; month?: string };
-    query?: { period?: string; date?: string; month?: string };
-  }) {
-    const queryPeriod = (ctx as { query?: { period?: string } }).query?.period;
-    const queryDate = (ctx as { query?: { date?: string } }).query?.date;
-    const queryMonth = (ctx as { query?: { month?: string } }).query?.month;
-    const bodyMonth = ctx.body?.month;
+  @Post("/run")
+  @Use([AuthMiddleware])
+  async run(
+    @Body() body: { period?: string; date?: string; month?: string },
+    @Query() query: { period?: string; date?: string; month?: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const queryPeriod = query?.period
+    const queryDate = query?.date
+    const queryMonth = query?.month
+    const bodyMonth = body?.month
 
     const period =
-      (queryPeriod as "monthly") ||
-      (ctx.body?.period as "monthly") ||
-      "monthly";
+      (queryPeriod as "monthly") || (body?.period as "monthly") || "monthly"
 
-    let date: Date;
-    const monthParam = queryMonth || bodyMonth;
+    let date: Date
+    const monthParam = queryMonth || bodyMonth
 
     if (monthParam) {
       // Parse YYYY-MM format
-      const [year, month] = monthParam.split("-").map(Number);
-      date = new Date(year, month - 1, 1);
+      const [year, month] = monthParam.split("-").map(Number)
+      date = new Date(year!, month! - 1, 1)
     } else if (queryDate) {
-      date = new Date(queryDate);
-    } else if (ctx.body?.date) {
-      date = new Date(ctx.body.date);
+      date = new Date(queryDate)
+    } else if (body?.date) {
+      date = new Date(body.date)
     } else {
-      date = new Date();
+      date = new Date()
     }
 
-    return this.service.run(ctx.userId, period, date);
+    return this.service.run(req.userId!, period, date)
   }
 
-  async materialize(ctx: {
-    userId: string;
-    params: { id: string };
-    body: { date: string };
-  }) {
-    const date = new Date(ctx.body.date);
-    const tx = await this.service.materialize(ctx.userId, ctx.params.id, date);
-    return tx.toPrimitives();
+  @Post("/:id/materialize")
+  @Use([AuthMiddleware, validateRecurringMaterializePayload()])
+  async materialize(
+    @Param("id") id: string,
+    @Body() body: { date: string },
+
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const date = new Date(body.date)
+    const tx = await this.service.materialize(req.userId!, id, date)
+
+    return HttpResponse(res, tx)
   }
 
-  async split(ctx: {
-    userId: string;
-    params: { id: string };
-    body: { date: string; template: any };
-  }) {
-    const date = new Date(ctx.body.date);
-    const template = ctx.body.template;
-    const { rule } = await this.service.split(
-      ctx.userId,
-      ctx.params.id,
+  @Post("/:id/split")
+  @Use([AuthMiddleware, validateRecurringSplitPayload()])
+  async split(
+    @Param("id") id: string,
+    @Body() body: { date: string; template: any },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const date = new Date(body.date)
+    const result = await this.service.split(
+      req.userId!,
+      id,
       date,
-      template
-    );
-    return rule;
-  }
-
-  async getPendingSummary(ctx: { userId: string }) {
-    const currentDate = new Date();
-    return this.service.getPendingSummary(ctx.userId, currentDate);
-  }
-
-  async getSummaryByMonth(ctx: {
-    userId: string;
-    query?: { months?: string };
-  }) {
-    const months = Number(ctx.query?.months || 3);
-    return this.service.getSummaryByMonth(ctx.userId, months);
-  }
-
-  async getCatchupSummary(ctx: { userId: string }) {
-    return this.service.getCatchupSummary(ctx.userId);
+      body.template
+    )
+    return HttpResponse(res, result)
   }
 }

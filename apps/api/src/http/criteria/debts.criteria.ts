@@ -1,10 +1,10 @@
 import {
   Criteria,
   Filters,
-  FilterInputValue,
   Operator,
   Order,
-} from "@abejarano/ts-mongodb-criteria";
+  type FilterInputValue,
+} from "@abejarano/ts-mongodb-criteria"
 
 export function buildDebtsCriteria(
   query: Record<string, string | undefined>,
@@ -16,7 +16,7 @@ export function buildDebtsCriteria(
       ["operator", Operator.EQUAL],
       ["value", userId],
     ]),
-  ];
+  ]
 
   if (query.type) {
     filters.push(
@@ -25,7 +25,7 @@ export function buildDebtsCriteria(
         ["operator", Operator.EQUAL],
         ["value", query.type],
       ])
-    );
+    )
   }
 
   if (query.isActive !== undefined) {
@@ -35,7 +35,7 @@ export function buildDebtsCriteria(
         ["operator", Operator.EQUAL],
         ["value", query.isActive === "true"],
       ])
-    );
+    )
   }
 
   if (query.q) {
@@ -45,21 +45,21 @@ export function buildDebtsCriteria(
         ["operator", Operator.CONTAINS],
         ["value", query.q],
       ])
-    );
+    )
   }
 
-  const limit = query.limit ? Number(query.limit) : 20;
-  const page = query.page ? Number(query.page) : 1;
-  const order = buildOrder(query.sort, Order.asc("name"));
+  const limit = query.limit ? Number(query.limit) : 20
+  const page = query.page ? Number(query.page) : 1
+  const order = buildOrder(query.sort, Order.asc("name"))
 
-  return new Criteria(Filters.fromValues(filters), order, limit, page);
+  return new Criteria(Filters.fromValues(filters), order, limit, page)
 }
 
 function buildOrder(sort?: string, fallback?: Order): Order {
   if (!sort) {
-    return fallback ?? Order.none();
+    return fallback ?? Order.none()
   }
-  const orderType = sort.startsWith("-") ? "desc" : "asc";
-  const orderBy = sort.startsWith("-") ? sort.slice(1) : sort;
-  return Order.fromValues(orderBy, orderType);
+  const orderType = sort.startsWith("-") ? "desc" : "asc"
+  const orderBy = sort.startsWith("-") ? sort.slice(1) : sort
+  return Order.fromValues(orderBy, orderType)
 }

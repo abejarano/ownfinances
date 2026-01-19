@@ -1,8 +1,8 @@
 export interface UserSettingsPrimitives {
-  userId: string;
-  autoGenerateRecurring: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  userId: string
+  autoGenerateRecurring: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export class UserSettings {
@@ -14,8 +14,8 @@ export class UserSettings {
   ) {}
 
   static create(userId: string): UserSettings {
-    const now = new Date();
-    return new UserSettings(userId, false, now, now);
+    const now = new Date()
+    return new UserSettings(userId, false, now, now)
   }
 
   static fromPrimitives(data: UserSettingsPrimitives): UserSettings {
@@ -24,7 +24,7 @@ export class UserSettings {
       data.autoGenerateRecurring,
       new Date(data.createdAt),
       new Date(data.updatedAt)
-    );
+    )
   }
 
   toPrimitives(): UserSettingsPrimitives {
@@ -33,23 +33,23 @@ export class UserSettings {
       autoGenerateRecurring: this.autoGenerateRecurring,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
-    };
+    }
   }
 
   getUserId(): string {
-    return this.userId;
+    return this.userId
   }
 
   getId(): string {
-    return this.userId;
+    return this.userId
   }
 
   getAutoGenerateRecurring(): boolean {
-    return this.autoGenerateRecurring;
+    return this.autoGenerateRecurring
   }
 
   setAutoGenerateRecurring(value: boolean): void {
-    this.autoGenerateRecurring = value;
-    this.updatedAt = new Date();
+    this.autoGenerateRecurring = value
+    this.updatedAt = new Date()
   }
 }

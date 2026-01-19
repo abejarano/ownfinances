@@ -1,27 +1,29 @@
-import { IRepository, MongoRepository } from "@abejarano/ts-mongodb-criteria";
-import { RecurringRule } from "../models/recurring/recurring_rule";
-import type { RecurringRulePrimitives } from "../models/recurring/recurring_rule";
-import { Collection } from "mongodb";
+import {
+  MongoRepository,
+  type IRepository,
+} from "@abejarano/ts-mongodb-criteria"
+import { Collection } from "mongodb"
+import { RecurringRule } from "../models/recurring/recurring_rule"
 
 export class RecurringRuleMongoRepository
   extends MongoRepository<RecurringRule>
   implements IRepository<RecurringRule>
 {
-  private static instance: RecurringRuleMongoRepository;
+  private static instance: RecurringRuleMongoRepository
 
   private constructor() {
-    super(RecurringRule);
+    super(RecurringRule)
   }
 
   public static getInstance(): RecurringRuleMongoRepository {
     if (!this.instance) {
-      this.instance = new RecurringRuleMongoRepository();
+      this.instance = new RecurringRuleMongoRepository()
     }
-    return this.instance;
+    return this.instance
   }
 
   collectionName(): string {
-    return "recurring_rules";
+    return "recurring_rules"
   }
 
   async ensureIndexes(collection: Collection): Promise<void> {
@@ -34,34 +36,34 @@ export class RecurringRuleMongoRepository
           signature: { $exists: true },
         },
       }
-    );
-    await collection.createIndex({ userId: 1, isActive: 1, startDate: -1 });
+    )
+    await collection.createIndex({ userId: 1, isActive: 1, startDate: -1 })
   }
 
   async searchActive(userId: string): Promise<RecurringRule[]> {
-    const collection = await this.collection<RecurringRule>();
+    const collection = await this.collection<RecurringRule>()
     const results = await collection
       .find({
         userId,
         isActive: true,
       })
       .sort({ startDate: -1 })
-      .toArray();
+      .toArray()
 
     return results.map((doc) => {
       return RecurringRule.fromPrimitives({
         ...(doc as any),
         id: doc._id.toString(),
-      });
-    });
+      })
+    })
   }
 
   async deactivateActiveDuplicatesBySignature(input: {
-    userId: string;
-    signature: string;
-    keepRecurringRuleId: string;
+    userId: string
+    signature: string
+    keepRecurringRuleId: string
   }): Promise<number> {
-    const collection = await this.collection();
+    const collection = await this.collection()
     const result = await collection.updateMany(
       {
         userId: input.userId,
@@ -70,12 +72,12 @@ export class RecurringRuleMongoRepository
         recurringRuleId: { $ne: input.keepRecurringRuleId },
       },
       { $set: { isActive: false } }
-    );
-    return result.modifiedCount;
+    )
+    return result.modifiedCount
   }
 
   async remove(recurringRuleId: string): Promise<void> {
-    const collection = await this.collection();
-    await collection.deleteOne({ recurringRuleId });
+    const collection = await this.collection()
+    await collection.deleteOne({ recurringRuleId })
   }
 }

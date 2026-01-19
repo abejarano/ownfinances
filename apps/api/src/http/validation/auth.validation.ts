@@ -1,97 +1,129 @@
-import { t } from "elysia";
-import { TypeCompiler } from "elysia/type-system";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import * as v from "valibot"
+import { HttpResponse } from "../../bootstrap/response"
 
 export type AuthRegisterPayload = {
-  email: string;
-  password: string;
-  name?: string;
-};
+  email: string
+  password: string
+  name?: string
+}
 
 export type AuthLoginPayload = {
-  email: string;
-  password: string;
-};
+  email: string
+  password: string
+}
 
 export type AuthRefreshPayload = {
-  refreshToken: string;
-};
+  refreshToken: string
+}
 
 export type AuthLogoutPayload = {
-  refreshToken: string;
-};
+  refreshToken: string
+}
 
-const RegisterSchema = t.Object(
-  {
-    email: t.String({ minLength: 1 }),
-    password: t.String({ minLength: 1 }),
-    name: t.Optional(t.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
+const RegisterSchema = v.strictObject({
+  email: v.pipe(v.string(), v.minLength(1)),
+  password: v.pipe(v.string(), v.minLength(1)),
+  name: v.optional(v.pipe(v.string(), v.minLength(1))),
+})
 
-const LoginSchema = t.Object(
-  {
-    email: t.String({ minLength: 1 }),
-    password: t.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
+const LoginSchema = v.strictObject({
+  email: v.pipe(v.string(), v.minLength(1)),
+  password: v.pipe(v.string(), v.minLength(1)),
+})
 
-const RefreshSchema = t.Object(
-  {
-    refreshToken: t.String({ minLength: 1 }),
-  },
-  { additionalProperties: false },
-);
+const RefreshSchema = v.strictObject({
+  refreshToken: v.pipe(v.string(), v.minLength(1)),
+})
 
-const LogoutSchema = RefreshSchema;
-
-const registerCompiler = TypeCompiler.Compile(RegisterSchema);
-const loginCompiler = TypeCompiler.Compile(LoginSchema);
-const refreshCompiler = TypeCompiler.Compile(RefreshSchema);
-const logoutCompiler = TypeCompiler.Compile(LogoutSchema);
+const LogoutSchema = RefreshSchema
 
 export function validateAuthRegisterPayload(
-  payload: AuthRegisterPayload,
-): string | null {
-  if (registerCompiler.Check(payload)) return null;
-  for (const error of registerCompiler.Errors(payload)) {
-    if (error.path === "/email") return "Email obrigatório";
-    if (error.path === "/password") return "Senha obrigatória";
-    if (error.path === "/name") return "Nome invalido";
-  }
-  return "Payload invalido";
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) {
+  const payload = req.body as AuthRegisterPayload
+
+  const result = v.safeParse(RegisterSchema, payload)
+  if (result.success) return next()
+
+  if (!result.issues) return res.status(422).send("Payload invalido")
+  const flattened = v.flatten(result.issues)
+  if (flattened.nested?.email) return res.status(422).send("Email obrigatório")
+  if (flattened.nested?.password)
+    return res.status(422).send("Senha obrigatória")
+  if (flattened.nested?.name) return res.status(422).send("Nome invalido")
+
+  return res.status(422).send("Payload invalido")
 }
 
 export function validateAuthLoginPayload(
-  payload: AuthLoginPayload,
-): string | null {
-  if (loginCompiler.Check(payload)) return null;
-  for (const error of loginCompiler.Errors(payload)) {
-    if (error.path === "/email") return "Credenciais inválidas";
-    if (error.path === "/password") return "Credenciais inválidas";
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) {
+  try {
+    const payload = req.body as AuthLoginPayload
+
+    const result = v.safeParse(LoginSchema, payload)
+    if (result.success) return next()
+
+    if (!result.issues) return res.status(422).send("Payload invalido")
+    const flattened = v.flatten(result.issues)
+
+    if (flattened.nested?.email) return res.status(422).send("Informe o E-mail")
+
+    if (flattened.nested?.password)
+      return res.status(422).send("Informe a senha")
+
+    return res.status(422).send("Payload invalido")
+  } catch (e) {
+    console.log(`errrr ${e}`)
+    return HttpResponse(res, { error: "Error interno", status: 500 })
   }
-  return "Payload invalido";
 }
 
 export function validateAuthRefreshPayload(
-  payload: AuthRefreshPayload,
-): string | null {
-  if (refreshCompiler.Check(payload)) return null;
-  for (const error of refreshCompiler.Errors(payload)) {
-    if (error.path === "/refreshToken")
-      return "Sessão expirada, entre novamente";
-  }
-  return "Payload invalido";
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) {
+  const payload = req.body as AuthRefreshPayload
+
+  const result = v.safeParse(RefreshSchema, payload)
+  if (result.success) return next()
+
+  if (!result.issues) return res.status(422).send("Payload invalido")
+
+  const flattened = v.flatten(result.issues)
+  if (flattened.nested?.refreshToken)
+    return res.status(422).send("Sessão expirada, entre novamente")
+
+  return res.status(422).send("Payload invalido")
 }
 
 export function validateAuthLogoutPayload(
-  payload: AuthLogoutPayload,
-): string | null {
-  if (logoutCompiler.Check(payload)) return null;
-  for (const error of logoutCompiler.Errors(payload)) {
-    if (error.path === "/refreshToken")
-      return "Sessão expirada, entre novamente";
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) {
+  const payload = req.body as AuthLogoutPayload
+
+  const result = v.safeParse(LogoutSchema, payload)
+  if (result.success) {
+    return next()
   }
-  return "Payload invalido";
+
+  if (!result.issues) return res.status(422).send("Payload invalido")
+
+  const flattened = v.flatten(result.issues)
+  if (flattened.nested?.refreshToken)
+    return res.status(422).send("Sessão expirada, entre novamente")
+
+  return res.status(422).send("Payload invalido")
 }

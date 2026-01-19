@@ -1,73 +1,96 @@
-import type { TransactionsImportService } from "../../services/transactions_import_service";
-import { badRequest } from "../errors";
+import type { TransactionsImportService } from "../../services/transactions_import_service"
 
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  Use,
+  type ServerResponse,
+} from "bun-platform-kit"
+import { AuthMiddleware } from "../middleware/auth.middleware"
+import type { Auth } from "mongodb"
+import type { AuthenticatedRequest } from "../../@types/request"
+import { HttpResponse } from "../../bootstrap/response"
+import { Deps } from "../../bootstrap/deps"
+
+@Controller("/transactions")
 export class TransactionsImportController {
-  constructor(
-    private readonly importService: TransactionsImportService
-  ) {}
+  private readonly importService: TransactionsImportService
+  constructor() {
+    const deps = Deps.getInstance()
+    this.importService = deps.transactionsImportService
+  }
 
-  async preview({
-    body,
-    set,
-    userId,
-  }: {
-    body: any;
-    set: { status: number };
-    userId?: string;
-  }) {
+  @Post("/import")
+  @Post("/import/preview")
+  @Use([AuthMiddleware])
+  async preview(
+    @Body() body: any,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
-      // Elysia parsea multipart automáticamente
-      // El body puede tener accountId como campo y file como File
-      const accountId = body.accountId;
-      const file = body.file;
+      const accountId = body.accountId
+      //TODO hay que validar que funcione
+      const file = req?.files?.file
 
       if (!file) {
-        return badRequest(set, "Falta o arquivo CSV");
+        return HttpResponse(res, {
+          status: 400,
+          value: { message: "Falta o arquivo CSV" },
+        })
       }
 
-      // En Bun, File tiene método text()
-      const fileContent = typeof file === "string" ? file : await file.text();
+      const fileContent = typeof file === "string" ? file : await file.text()
       const result = await this.importService.process(
-        userId ?? "",
+        req.userId ?? "",
         accountId,
         fileContent,
         "preview"
-      );
-      return result;
+      )
+      return HttpResponse(res, { status: 200, value: result })
     } catch (error: any) {
-      return badRequest(set, error.message || "Erro ao processar preview");
+      return HttpResponse(res, {
+        status: 400,
+        value: { message: error.message || "Erro ao processar preview" },
+      })
     }
   }
 
-  async import({
-    body,
-    set,
-    userId,
-  }: {
-    body: any;
-    set: { status: number };
-    userId?: string;
-  }) {
+  @Post("/import")
+  @Use([AuthMiddleware])
+  async import(
+    @Body() body: any,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
     try {
-      // Elysia parsea multipart automáticamente
-      const accountId = body.accountId;
-      const file = body.file;
+      const accountId = body.accountId
+      //TODO hay que validar que funcione
+      const file = req?.files?.file
 
       if (!file) {
-        return badRequest(set, "Falta o arquivo CSV");
+        return HttpResponse(res, {
+          status: 400,
+          value: { message: "Falta o arquivo CSV" },
+        })
       }
 
-      // En Bun, File tiene método text()
-      const fileContent = typeof file === "string" ? file : await file.text();
+      const fileContent = typeof file === "string" ? file : await file.text()
       const result = await this.importService.process(
-        userId ?? "",
+        req.userId ?? "",
         accountId,
         fileContent,
         "import"
-      );
-      return result;
+      )
+      return HttpResponse(res, { status: 200, value: result })
     } catch (error: any) {
-      return badRequest(set, error.message || "Erro ao iniciar import");
+      return HttpResponse(res, {
+        status: 400,
+        value: { message: error.message || "Erro ao processar preview" },
+      })
     }
   }
 }

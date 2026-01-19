@@ -1,34 +1,39 @@
-import { unauthorized as unauthorizedResponse } from "../errors";
+import type {
+  NextFunction,
+  ServerRequest,
+  ServerResponse,
+} from "bun-platform-kit"
+import { jwtVerify } from "jose"
+import { env } from "../../shared/env"
 
-export type AuthContext = {
-  headers: Record<string, string | undefined>;
-  set: { status: number };
-  jwt?: { verify(token?: string): Promise<any | false> };
-  userId?: string;
-};
+const encoder = new TextEncoder()
 
-export async function requireAuth(ctx: AuthContext) {
-  const authHeader = ctx.headers?.authorization;
+export const AuthMiddleware = async (
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) => {
+  const jwtSecret = env.JWT_SECRET
+  const authHeader = req.headers?.authorization as string
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return respondUnauthorized(ctx);
+    return res.status(401).send("Sessão expirada, entre novamente")
   }
 
-  const token = authHeader.replace("Bearer ", "").trim();
+  if (!jwtSecret) {
+    return res.status(500).send("JWT secret no configurado")
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim()
   try {
-    if (!ctx.jwt) {
-      return respondUnauthorized(ctx);
+    const { payload } = await jwtVerify(token, encoder.encode(jwtSecret))
+    if (!payload.sub) {
+      return res.status(401).send("Sessão expirada, entre novamente")
     }
-    const decoded = await ctx.jwt.verify(token);
-    if (!decoded || typeof decoded !== "object" || !("sub" in decoded)) {
-      return respondUnauthorized(ctx);
-    }
-    ctx.userId = (decoded as { sub?: string }).sub;
-    return null;
-  } catch (_) {
-    return respondUnauthorized(ctx);
-  }
-}
 
-function respondUnauthorized(ctx: AuthContext) {
-  return unauthorizedResponse(ctx.set, "Sessão expirada, entre novamente");
+    ;(req as { userId?: string }).userId = payload.sub
+    return next()
+  } catch (_) {
+    return res.status(401).send("Sessão expirada, entre novamente")
+  }
 }

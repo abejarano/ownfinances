@@ -1,4 +1,4 @@
-# ARCHITECTURE.md — Desquadra API (Bun + Elysia + Mongo)
+# ARCHITECTURE.md — Desquadra API (Bun + bun-platform-kit + Mongo)
 
 Objetivo: API estable, multi-tenant real, Clean Architecture estricta, contratos consistentes y UX-friendly.
 
@@ -17,9 +17,9 @@ Objetivo: API estable, multi-tenant real, Clean Architecture estricta, contratos
 
 ## 1) Clean Architecture (dependencias)
 
-HTTP (Elysia)
-→ Controllers (Interface Adapters)
-→ Application Services (Use Cases)
+HTTP (bun-platform-kit)
+→ Controllers (Interface Adapters) with decoration for define routes.
+→ Services (Use Cases)
 → Models (Entities + Rules + Interfaces)
 ← Infrastructure (Mongo Repos)
 
@@ -34,59 +34,62 @@ Regla #5: IDs deben ser `createMongoId()` (24 hex) para compatibilidad con Mongo
 ## 2) Estructura obligatoria
 
 apps/api/src/
-  main.ts
-  bootstrap/
-    app.ts
-    deps.ts
-    mongo.ts
-  http/
-    routes/
-    controllers/
-    middleware/
-    criteria/
-    presenters/
-    errors.ts
-  application/
-    services/
-  models/
-    auth/
-    category/
-    account/
-    transaction/
-    budget/
-    report/
-    ...
-  repositories/
-  dev/
-    seed.ts
-  contracts/
-    openapi.snapshot.json (generado)
+main.ts
+bootstrap/
+app.ts
+deps.ts
+mongo.ts
+http/
+routes/
+controllers/
+middleware/
+criteria/
+presenters/
+errors.ts
+application/
+services/
+models/
+auth/
+category/
+account/
+transaction/
+budget/
+report/
+...
+repositories/
+dev/
+seed.ts
+contracts/
+openapi.snapshot.json (generado)
 
 ---
 
 ## 3) Contrato de respuestas (OBLIGATORIO)
 
 ### 3.1 Éxito
+
 - GET list: Paginate<Primitives>
 - GET by id / POST / PUT: Primitives
 - Acciones: { ok: true } o payload explícito
 
 Paginate<T> (shape estable):
 {
-  "results": T[],
-  "page": number,
-  "limit": number,
-  "total": number,
-  "pages": number
+"results": T[],
+"page": number,
+"limit": number,
+"total": number,
+"pages": number
 }
 
 ### 3.2 Error (siempre igual)
+
 {
-  "error": string,
-  "code"?: string
+"error": string,
+"code"?: string
 }
 
 Status:
+
 - 400 validation
 - 401 not authenticated
 - 403 not authorized (si aplica)
@@ -99,13 +102,16 @@ Status:
 ## 4) Modelado: dinero y fechas
 
 ### 4.1 Transaction.date
+
 - Guardar como string "YYYY-MM-DD" (local date)
 - createdAt/updatedAt: ISO string UTC
 
 ### 4.2 Amount
+
 Recomendación:
+
 - usar amountMinor (centavos) como int, y exponer amount en UI con formatter
-Si todavía usas number, documentar ADR y evitar floats peligrosos.
+  Si todavía usas number, documentar ADR y evitar floats peligrosos.
 
 ---
 
@@ -114,7 +120,7 @@ Si todavía usas number, documentar ADR y evitar floats peligrosos.
 - Access token ~15min
 - Refresh token ~30d, guardado hasheado, rotation obligatoria
 - CORS habilitado para Flutter web
-- Rate limit en /auth/* (básico)
+- Rate limit en /auth/\* (básico)
 - No loggear tokens/PII
 
 ---
@@ -146,6 +152,7 @@ Si todavía usas number, documentar ADR y evitar floats peligrosos.
 - remaining = planned - actual (negativo si superado)
 
 Agregar:
+
 - /reports/accounts/balances (por cuenta y moneda)
 - opcional: /reports/categories/top
 
