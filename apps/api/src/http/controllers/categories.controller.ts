@@ -12,7 +12,7 @@ import type {
 export class CategoriesController {
   constructor(
     private readonly repo: CategoryMongoRepository,
-    private readonly service: CategoriesService
+    private readonly service: CategoriesService,
   ) {}
 
   async list({
@@ -27,7 +27,7 @@ export class CategoriesController {
     return {
       ...result,
       results: result.results.map((item) =>
-        Category.fromPrimitives(item).toPrimitives()
+        Category.fromPrimitives(item).toPrimitives(),
       ),
     };
   }
@@ -76,7 +76,7 @@ export class CategoriesController {
     const { category, error, status } = await this.service.update(
       userId ?? "",
       params.id,
-      body
+      body,
     );
     if (error) {
       if (status === 404) return notFound(set, error);
@@ -96,7 +96,7 @@ export class CategoriesController {
   }) {
     const { ok, error, status } = await this.service.remove(
       userId ?? "",
-      params.id
+      params.id,
     );
     if (error) {
       if (status === 404) return notFound(set, error);

@@ -27,10 +27,11 @@ export class TransactionsImportController {
 
       // En Bun, File tiene método text()
       const fileContent = typeof file === "string" ? file : await file.text();
-      const result = await this.importService.preview(
+      const result = await this.importService.process(
         userId ?? "",
         accountId,
-        fileContent
+        fileContent,
+        "preview"
       );
       return result;
     } catch (error: any) {
@@ -58,10 +59,11 @@ export class TransactionsImportController {
 
       // En Bun, File tiene método text()
       const fileContent = typeof file === "string" ? file : await file.text();
-      const result = await this.importService.import(
+      const result = await this.importService.process(
         userId ?? "",
         accountId,
-        fileContent
+        fileContent,
+        "import"
       );
       return result;
     } catch (error: any) {

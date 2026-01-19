@@ -30,71 +30,35 @@ export class TransactionsImportService {
     private readonly accountRepo: AccountMongoRepository
   ) {}
 
-  async preview(
+  async process(
     userId: string,
     accountId: string,
-    csvContent: string
-  ): Promise<ImportPreview> {
+    csvContent: string,
+    mode: "preview" | "import"
+  ): Promise<ImportPreview | { jobId: string }> {
     const account = await this.accountRepo.one({ userId, accountId });
     if (!account) {
       throw new Error("Conta não encontrada");
     }
 
-    if (account.getType() !== AccountType.Bank ) {
+    const bankType = account.getBankType();
+    if (account.getType() !== AccountType.Bank || !bankType) {
       throw new Error("Conta deve ser do tipo banco com bankType definido");
     }
 
-    const adapter = getBankAdapter(account.getBankType()!);
+    const adapter = getBankAdapter(bankType);
     const rows = this.parseCSV(csvContent);
-    if (rows.length === 0) {
-      return { rows: [], totalRows: 0 };
+    const totalRows = Math.max(rows.length - 1, 0); // Excluir header
+
+    const preview = this.buildPreview(adapter, rows);
+    if (mode === "preview") {
+      return preview;
     }
-
-    const headers = rows[0];
-    const previewRows: ImportPreviewRow[] = [];
-    const maxPreview = Math.min(10, rows.length - 1);
-
-    for (let i = 1; i <= maxPreview; i++) {
-      const parsed = adapter.parseRow(rows[i], headers);
-      if (parsed) {
-        previewRows.push({
-          row: i,
-          date: parsed.date.toISOString().split("T")[0],
-          amount: parsed.amount,
-          type: parsed.type,
-          note: parsed.note || null,
-        });
-      }
-    }
-
-    return {
-      rows: previewRows,
-      totalRows: rows.length - 1,
-    };
-  }
-
-  async import(
-    userId: string,
-    accountId: string,
-    csvContent: string
-  ): Promise<{ jobId: string }> {
-    const account = await this.accountRepo.one({ userId, accountId });
-    if (!account) {
-      throw new Error("Conta não encontrada");
-    }
-
-    const primitives = account.toPrimitives();
-    if (primitives.type !== "bank" || !primitives.bankType) {
-      throw new Error("Conta deve ser do tipo banco com bankType definido");
-    }
-
-    const rows = this.parseCSV(csvContent);
-    const totalRows = rows.length - 1; // Excluir header
 
     const importJob = ImportJob.create({
       userId,
       accountId,
-      bankType: primitives.bankType,
+      bankType,
       totalRows,
     });
 
@@ -104,7 +68,7 @@ export class TransactionsImportService {
     this.processImportInBackground(
       userId,
       accountId,
-      primitives.bankType,
+      bankType,
       csvContent,
       importJob.getImportJobId()
     ).catch((error) => {
@@ -319,5 +283,33 @@ export class TransactionsImportService {
       result.push(current.trim());
       return result;
     });
+  }
+
+  private buildPreview(adapter: BankAdapter, rows: string[][]): ImportPreview {
+    if (rows.length === 0) {
+      return { rows: [], totalRows: 0 };
+    }
+
+    const headers = rows[0];
+    const previewRows: ImportPreviewRow[] = [];
+    const maxPreview = Math.min(10, rows.length - 1);
+
+    for (let i = 1; i <= maxPreview; i++) {
+      const parsed = adapter.parseRow(rows[i], headers);
+      if (parsed) {
+        previewRows.push({
+          row: i,
+          date: parsed.date.toISOString().split("T")[0],
+          amount: parsed.amount,
+          type: parsed.type,
+          note: parsed.note || null,
+        });
+      }
+    }
+
+    return {
+      rows: previewRows,
+      totalRows: rows.length - 1,
+    };
   }
 }
