@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
-import "package:go_router/go_router.dart";
+
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/money_input.dart";
 import "package:ownfinances/core/presentation/components/pickers.dart";
@@ -21,13 +21,7 @@ class DebtsScreen extends StatelessWidget {
     final state = context.watch<DebtsController>().state;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Dividas"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go("/dashboard"),
-        ),
-      ),
+      appBar: AppBar(title: const Text("Dividas")),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

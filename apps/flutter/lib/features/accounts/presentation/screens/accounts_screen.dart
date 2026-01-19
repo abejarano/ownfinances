@@ -25,10 +25,7 @@ class AccountsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Contas"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go("/dashboard"),
-        ),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.swap_horiz),

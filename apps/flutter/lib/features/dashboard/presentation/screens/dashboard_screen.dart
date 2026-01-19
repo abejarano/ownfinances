@@ -1,14 +1,13 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:provider/provider.dart";
-import "package:ownfinances/core/presentation/components/buttons.dart";
-import "package:ownfinances/core/presentation/components/cards.dart";
+
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
-import "package:ownfinances/features/recurring/presentation/widgets/catchup_banner.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_month_summary_card.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -20,105 +19,183 @@ class DashboardScreen extends StatelessWidget {
     final summary = reportsState.summary;
     final periodLabel = formatMonth(reportsState.date);
 
+    // Alerts Logic
     final overspent = summary?.overspentCategories ?? [];
     final categoryMap = {for (final cat in categories) cat.id: cat.name};
-    final overspentName = overspent.isEmpty
-        ? null
-        : categoryMap[overspent.first];
+    final List<Widget> alerts = [];
+
+    // Alert 1: Overspent
+    if (overspent.isNotEmpty) {
+      final firstName =
+          categoryMap[overspent.first] ?? "Categoria desconhecida";
+      final count = overspent.length;
+      final text = count > 1
+          ? "Estourou $count categorias"
+          : "Estourou $firstName";
+      alerts.add(
+        _AlertCard(text: text, icon: Icons.error_outline, color: Colors.red),
+      );
+    }
+
+    // Alert 2: Deficit (Example logic, can be refined)
+    if ((summary?.totals.actualNet ?? 0) < 0 &&
+        (summary?.totals.remainingExpense ?? 0) <= 0) {
+      alerts.add(
+        const _AlertCard(
+          text: "Você fechou o mês no vermelho",
+          icon: Icons.trending_down,
+          color: Colors.orange,
+        ),
+      );
+    }
+
+    // Limit to 2 alerts
+    final displayAlerts = alerts.take(2).toList();
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Resumo do mes", style: Theme.of(context).textTheme.titleMedium),
+        // 1. Month Summary
+        Text("Resumo do mês", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
-        InlineSummaryCard(
-          title: periodLabel,
-          planned: formatMoney(summary?.totals.plannedExpense ?? 0),
-          actual: formatMoney(summary?.totals.actualExpense ?? 0),
-          remaining: formatMoney(summary?.totals.remainingExpense ?? 0),
+        DashboardMonthSummaryCard(
+          summary: summary,
+          periodLabel: periodLabel,
+          onTap: () => context.go(
+            "/reports",
+          ), // Or /budget, keeping consistent with old which was /budget? Old was /budget. Let's send to Reports or Budget? Budget seems more detailed.
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          "Neto planejado: ${formatMoney(summary?.totals.plannedNet ?? 0)} • Neto real: ${formatMoney(summary?.totals.actualNet ?? 0)}",
-          style: TextStyle(
-            color: (summary?.totals.actualNet ?? 0) < 0
-                ? Colors.redAccent
-                : Colors.greenAccent,
-          ),
-        ),
-        if (overspent.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            overspentName == null
-                ? "Estourou ${overspent.length} categorias"
-                : "Estourou $overspentName",
-            style: const TextStyle(color: AppColors.accent),
+
+        // 2. Alerts (if any)
+        if (displayAlerts.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          ...displayAlerts.map(
+            (a) => Padding(padding: const EdgeInsets.only(bottom: 8), child: a),
           ),
         ],
-        const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(
-          label: "Ver detalhes",
-          onPressed: () => context.go("/budget"),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        const RecurrenceSummaryCard(),
+
+        // 3. Recurrence Summary
         const SizedBox(height: AppSpacing.md),
-        const CatchupBanner(),
+        const RecurrenceSummaryCard(),
+
+        // 4. Quick Actions
         const SizedBox(height: AppSpacing.lg),
-        Text("Acoes rapidas", style: Theme.of(context).textTheme.titleMedium),
+        Text("Ações rápidas", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
-        QuickActionCard(
-          icon: Icons.arrow_downward,
-          title: "Registrar gasto",
-          subtitle: "Saiu ${formatMoney(summary?.totals.actualExpense ?? 0)}",
-          onTap: () => context.push("/transactions/new?type=expense"),
+
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionButton(
+                icon: Icons.arrow_downward,
+                label: "Gasto",
+                color: Colors.red,
+                onTap: () => context.push("/transactions/new?type=expense"),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _QuickActionButton(
+                icon: Icons.arrow_upward,
+                label: "Receita",
+                color: Colors.green,
+                onTap: () => context.push("/transactions/new?type=income"),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _QuickActionButton(
+                icon: Icons.compare_arrows,
+                label: "Trasnferir",
+                color: Colors.blue,
+                onTap: () => context.push("/transactions/new?type=transfer"),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.sm),
-        QuickActionCard(
-          icon: Icons.arrow_upward,
-          title: "Registrar receita",
-          subtitle: "Entrou ${formatMoney(summary?.totals.actualIncome ?? 0)}",
-          onTap: () => context.push("/transactions/new?type=income"),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        QuickActionCard(
-          icon: Icons.compare_arrows,
-          title: "Transferir",
-          subtitle: "Mover entre contas",
-          onTap: () => context.push("/transactions/new?type=transfer"),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          "Gestao de regras",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        QuickActionCard(
-          icon: Icons.add,
-          title: "Criar regra",
-          subtitle: "Programar gasto/receita",
-          onTap: () => context.push("/recurring/new"),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        Text("Gestao", style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(
-          label: "Dividas",
-          onPressed: () => context.go("/debts"),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(label: "Metas", onPressed: () => context.go("/goals")),
-        const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(
-          label: "Categorias",
-          onPressed: () => context.go("/categories"),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(
-          label: "Contas",
-          onPressed: () => context.go("/accounts"),
-        ),
+
+        const SizedBox(height: 80),
       ],
+    );
+  }
+}
+
+class _AlertCard extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final Color color;
+
+  const _AlertCard({
+    required this.text,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: color.withOpacity(0.8),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

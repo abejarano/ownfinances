@@ -17,6 +17,7 @@ import "package:ownfinances/features/categories/presentation/screens/categories_
 import "package:ownfinances/features/accounts/presentation/screens/accounts_screen.dart";
 import "package:ownfinances/features/recurring/presentation/screens/recurring_wizard_screen.dart";
 import "package:ownfinances/features/recurring/presentation/screens/recurring_plan_screen.dart";
+import "package:ownfinances/features/recurring/presentation/screens/recurring_hub_screen.dart";
 import "package:ownfinances/features/templates/presentation/screens/template_list_screen.dart";
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
 import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
@@ -111,6 +112,10 @@ GoRouter createRouter({
       GoRoute(
         path: "/accounts",
         builder: (context, state) => const AccountsScreen(),
+      ),
+      GoRoute(
+        path: "/recurring",
+        builder: (context, state) => const RecurringHubScreen(),
       ),
       GoRoute(
         path: "/recurring/new",

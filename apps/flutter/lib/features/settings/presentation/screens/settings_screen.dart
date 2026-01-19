@@ -118,41 +118,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // Other settings
-        Text("Geral", style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppSpacing.sm),
-        ListTile(
-          title: const Text("Moeda"),
-          subtitle: const Text("BRL (R\$)"),
-          onTap: () {},
-        ),
-        ListTile(
-          title: const Text("Periodo"),
-          subtitle: const Text("Mensal"),
-          onTap: () {},
-        ),
-
         const SizedBox(height: AppSpacing.md),
         Text("Gestão", style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSpacing.sm),
         ListTile(
           title: const Text("Categorias"),
-          onTap: () => context.go("/categories"),
+          onTap: () => context.push("/categories"),
         ),
         ListTile(
           title: const Text("Contas"),
-          onTap: () => context.go("/accounts"),
+          onTap: () => context.push("/accounts"),
         ),
         ListTile(
           title: const Text("Dividas"),
-          onTap: () => context.go("/debts"),
+          onTap: () => context.push("/debts"),
         ),
-        ListTile(title: const Text("Metas"), onTap: () => context.go("/goals")),
+        ListTile(
+          title: const Text("Metas"),
+          onTap: () => context.push("/goals"),
+        ),
 
         const SizedBox(height: AppSpacing.md),
-        Text("Avançado", style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppSpacing.sm),
-
         ListTile(
           title: const Text("Sair"),
           onTap: () async {

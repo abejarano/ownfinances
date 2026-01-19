@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
-import "package:go_router/go_router.dart";
+
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/money_input.dart";
 import "package:ownfinances/core/presentation/components/pickers.dart";
@@ -21,13 +21,7 @@ class GoalsScreen extends StatelessWidget {
     final state = context.watch<GoalsController>().state;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Metas"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go("/dashboard"),
-        ),
-      ),
+      appBar: AppBar(title: const Text("Metas")),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -61,7 +55,8 @@ class GoalsScreen extends StatelessWidget {
                       goal: goal,
                       projection: projection,
                       onAdd: () => _openContributionForm(context, goal),
-                      onQuickAdd: () => _quickContribution(context, goal, projection),
+                      onQuickAdd: () =>
+                          _quickContribution(context, goal, projection),
                       onEdit: () =>
                           _openGoalWizard(context, controller, goal: goal),
                       onDelete: () async {
@@ -232,10 +227,12 @@ class GoalsScreen extends StatelessWidget {
                               ? null
                               : () async {
                                   final name = nameController.text.trim();
-                                  final targetAmount =
-                                      parseMoney(targetController.text.trim());
-                                  final monthlyAmount =
-                                      parseMoney(monthlyController.text.trim());
+                                  final targetAmount = parseMoney(
+                                    targetController.text.trim(),
+                                  );
+                                  final monthlyAmount = parseMoney(
+                                    monthlyController.text.trim(),
+                                  );
 
                                   // Validar mínimos
                                   if (name.isEmpty) {
@@ -453,8 +450,8 @@ class GoalsScreen extends StatelessWidget {
         .toList();
 
     // Determinar valor sugerido
-    final suggestedAmount = goal.monthlyContribution ??
-        projection?.monthlyContributionSuggested;
+    final suggestedAmount =
+        goal.monthlyContribution ?? projection?.monthlyContributionSuggested;
     if (suggestedAmount == null || suggestedAmount <= 0) {
       if (context.mounted) {
         showStandardSnackbar(
@@ -466,7 +463,8 @@ class GoalsScreen extends StatelessWidget {
     }
 
     // Determinar cuenta por defecto
-    String? accountId = controller.state.lastAccountId ??
+    String? accountId =
+        controller.state.lastAccountId ??
         goal.linkedAccountId ??
         (accountItems.isNotEmpty ? accountItems.first.id : null);
 
@@ -518,11 +516,13 @@ class _GoalCard extends StatelessWidget {
   });
 
   Widget _buildProjectionText() {
-    final monthlyContribution = goal.monthlyContribution ??
-        projection?.monthlyContributionSuggested;
+    final monthlyContribution =
+        goal.monthlyContribution ?? projection?.monthlyContributionSuggested;
     final targetDate = goal.targetDate ?? projection?.targetDateEstimated;
 
-    if (monthlyContribution != null && monthlyContribution > 0 && targetDate != null) {
+    if (monthlyContribution != null &&
+        monthlyContribution > 0 &&
+        targetDate != null) {
       // Caso ideal: tiene aporte mensal y fecha alvo
       return Text(
         "Se guardar ${formatMoney(monthlyContribution)}/mês, chega em ${formatDate(targetDate)}.",
