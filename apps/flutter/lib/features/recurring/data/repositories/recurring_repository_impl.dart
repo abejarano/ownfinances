@@ -10,9 +10,10 @@ class RecurringRepositoryImpl implements RecurringRepository {
   @override
   Future<RecurringRule> create(Map<String, dynamic> payload) async {
     final result = await _remoteDataSource.create(payload);
-    // Backend returns the created rule directly as JSON?
-    // Usually it's raw JSON object.
-    return RecurringRule.fromJson(result);
+    // Backend returns { "rule": {...} }
+    // We check if "rule" key exists, otherwise assume root
+    final data = result.containsKey('rule') ? result['rule'] : result;
+    return RecurringRule.fromJson(data);
   }
 
   @override
@@ -65,5 +66,15 @@ class RecurringRepositoryImpl implements RecurringRepository {
   @override
   Future<Map<String, dynamic>> getCatchupSummary() {
     return _remoteDataSource.getCatchupSummary();
+  }
+
+  @override
+  Future<void> ignore(String ruleId, DateTime date) {
+    return _remoteDataSource.ignore(ruleId, date);
+  }
+
+  @override
+  Future<void> undoIgnore(String ruleId, DateTime date) {
+    return _remoteDataSource.undoIgnore(ruleId, date);
   }
 }

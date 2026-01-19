@@ -5,24 +5,35 @@ class CsvImportRemoteDataSource {
 
   CsvImportRemoteDataSource(this.apiClient);
 
-  Future<Map<String, dynamic>> preview(String accountId, String csvContent) async {
+  Future<Map<String, dynamic>> preview(
+    String accountId,
+    String csvContent,
+  ) async {
     // Crear FormData para multipart
-    final formData = {
-      "accountId": accountId,
-      "file": csvContent,
-    };
-    return apiClient.post("/transactions/import/preview", formData, isMultipart: true);
+    final formData = {"accountId": accountId, "file": csvContent};
+    final response = await apiClient.post(
+      "/transactions/import/preview",
+      formData,
+      isMultipart: true,
+    );
+    return response as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> import(String accountId, String csvContent) async {
-    final formData = {
-      "accountId": accountId,
-      "file": csvContent,
-    };
-    return apiClient.post("/transactions/import", formData, isMultipart: true);
+  Future<Map<String, dynamic>> import(
+    String accountId,
+    String csvContent,
+  ) async {
+    final formData = {"accountId": accountId, "file": csvContent};
+    final response = await apiClient.post(
+      "/transactions/import",
+      formData,
+      isMultipart: true,
+    );
+    return response as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> getImportJob(String jobId) {
-    return apiClient.get("/imports/$jobId");
+  Future<Map<String, dynamic>> getImportJob(String jobId) async {
+    final response = await apiClient.get("/imports/$jobId");
+    return response as Map<String, dynamic>;
   }
 }

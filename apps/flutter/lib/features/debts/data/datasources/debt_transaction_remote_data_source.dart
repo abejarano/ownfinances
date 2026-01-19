@@ -5,7 +5,8 @@ class DebtTransactionRemoteDataSource {
 
   DebtTransactionRemoteDataSource(this.apiClient);
 
-  Future<Map<String, dynamic>> create(Map<String, dynamic> payload) {
-    return apiClient.post("/debt_transactions", payload);
+  Future<Map<String, dynamic>> create(Map<String, dynamic> payload) async {
+    final response = await apiClient.post("/debt_transactions", payload);
+    return response as Map<String, dynamic>;
   }
 }

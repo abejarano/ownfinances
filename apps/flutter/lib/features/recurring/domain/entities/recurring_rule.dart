@@ -23,14 +23,14 @@ class RecurringRule {
 
   factory RecurringRule.fromJson(Map<String, dynamic> json) {
     return RecurringRule(
-      id: json['ruleId'],
+      id: json['recurringRuleId'] ?? json['ruleId'],
       userId: json['userId'],
       frequency: json['frequency'],
       interval: json['interval'],
       startDate: DateTime.parse(json['startDate']),
       endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
       template: RecurringTemplate.fromJson(json['template']),
-      active: json['active'],
+      active: json['isActive'] ?? json['active'],
       lastRunAt: json['lastRunAt'] != null
           ? DateTime.parse(json['lastRunAt'])
           : null,
@@ -101,13 +101,13 @@ class RecurringTemplate {
 }
 
 class RecurringPreviewItem {
-  final String ruleId;
+  final String recurringRuleId;
   final DateTime date;
   final RecurringTemplate template;
   final String status; // 'new' | 'already_generated'
 
   RecurringPreviewItem({
-    required this.ruleId,
+    required this.recurringRuleId,
     required this.date,
     required this.template,
     required this.status,
@@ -115,7 +115,7 @@ class RecurringPreviewItem {
 
   factory RecurringPreviewItem.fromJson(Map<String, dynamic> json) {
     return RecurringPreviewItem(
-      ruleId: json['ruleId'],
+      recurringRuleId: json['recurringRuleId'],
       date: DateTime.parse(json['date']),
       template: RecurringTemplate.fromJson(json['template']),
       status: json['status'],

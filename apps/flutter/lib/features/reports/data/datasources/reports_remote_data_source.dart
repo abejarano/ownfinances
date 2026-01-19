@@ -8,20 +8,22 @@ class ReportsRemoteDataSource {
   Future<Map<String, dynamic>> summary({
     required String period,
     required DateTime date,
-  }) {
-    return apiClient.get(
+  }) async {
+    final response = await apiClient.get(
       "/reports/summary",
       query: {"period": period, "date": date.toIso8601String()},
     );
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> balances({
     required String period,
     required DateTime date,
-  }) {
-    return apiClient.get(
+  }) async {
+    final response = await apiClient.get(
       "/reports/balances",
       query: {"period": period, "date": date.toIso8601String()},
     );
+    return response as Map<String, dynamic>;
   }
 }

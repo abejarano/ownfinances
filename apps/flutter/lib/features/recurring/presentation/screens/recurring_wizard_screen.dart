@@ -21,26 +21,33 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
 
-  // Form State
-  String _frequency = "monthly";
-  int _interval = 1;
-  DateTime _startDate = DateTime.now();
+  // Day of month (1-31)
+  int _dayOfMonth = DateTime.now().day;
 
   // Template State
   double _amount = 0;
-  String _type = "expense";
+  String _type = "expense"; // Default to expense
   String _currency = "BRL";
   String? _categoryId;
   String? _fromAccountId;
-  String? _toAccountId;
+  String? _toAccountId; // For Income
 
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize day to today, or 28 if today > 28 to be safe?
+    // Requirement: 1..28 recommended, or explict 29-31 rules.
+    // Let's default to today but allow user to pick.
+  }
+
   void _nextPage() {
     FocusScope.of(context).unfocus();
-    if (_currentStep == 1) {
-      // Validate Amount
+
+    if (_currentStep == 0) {
+      // Step 1: Type & Value
       final val = parseMoney(_amountController.text);
       if (val <= 0) {
         showStandardSnackbar(context, "O valor deve ser maior que 0");
@@ -48,23 +55,24 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
       }
       _amount = val;
     }
-    if (_currentStep == 2) {
-      // Validate Category/Account
+
+    if (_currentStep == 1) {
+      // Step 2: Day, Account, Category
       if (_type == "expense" && _fromAccountId == null) {
-        showStandardSnackbar(context, "Falta escolher conta de saida");
+        showStandardSnackbar(context, "Falta escolher conta de saída");
         return;
       }
       if (_type == "income" && _toAccountId == null) {
         showStandardSnackbar(context, "Falta escolher conta de entrada");
         return;
       }
-      if (_type != "transfer" && _categoryId == null) {
+      if (_categoryId == null) {
         showStandardSnackbar(context, "Falta escolher categoria");
         return;
       }
     }
 
-    if (_currentStep < 3) {
+    if (_currentStep < 2) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -88,11 +96,66 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
 
   Future<void> _finish() async {
     final controller = context.read<RecurringController>();
+
+    // Construct Start Date based on Day of Month
+    // If today's day > selected day, start next month? Or current month?
+    // "Since when?" assumed next cycle or immediately if possible.
+    // Let's use logic: Start Date = (Current Year/Month) with selected Day.
+    // If that date is in the past, maybe start next month?
+    // Actually simplicity: Just set startDate to next occurrence of that day.
+
+    final now = DateTime.now();
+    DateTime startDate = DateTime(
+      now.year,
+      now.month,
+      _dayOfMonth > 28 ? 1 : _dayOfMonth,
+    ); // Safety for 31s
+
+    // If we want exact day logic for 31:
+    // JS/Dart DateTime(2024, 2, 31) -> March 2/3.
+    // We want to store the PRECISE "intended" start date so backend calculateDates works.
+    // If user picked 31, and we are in Feb, we can't emit Feb 31.
+    // We should emit a date that represents the anchor.
+    // Valid strategy: Find the next valid date that matches the day.
+    // E.g. User picks 31.
+    // Jan 31 -> OK.
+    // Feb -> Next valid is Feb 29 (leap) or Feb 28? No, wait.
+    // If I send StartDate=Feb 28, backend might think anchor is 28.
+    // If I send StartDate=Jan 31, backend anchor is 31.
+    // So better to anchor on a month that HAS that day.
+
+    // Algorithm: Start from current month. If current month has that day, use it.
+    // If not (e.g. Feb 30), move to next month (Mar 30).
+    // If day is past today, perfect. If before today, maybe start next month?
+    // Let's just default to finding the *first valid occurrence* on or after Today.
+
+    DateTime anchorDate = now;
+    // Simple loop to find valid anchor
+    for (int i = 0; i < 12; i++) {
+      final y = anchorDate.year;
+      final m = anchorDate.month;
+      final lastDay = DateTime(y, m + 1, 0).day;
+
+      // If user wants 31, and this month has 30, we skip this month for anchor?
+      // Or we clamp?
+      // If we clamp, we lose the "31" intent.
+      // So we should find a month where day exists to preserve intent.
+      if (_dayOfMonth <= lastDay) {
+        final candidate = DateTime(y, m, _dayOfMonth);
+        if (candidate.isAfter(now.subtract(const Duration(days: 1)))) {
+          startDate = candidate;
+          break;
+        }
+      }
+      // Move to next month
+      anchorDate = DateTime(y, m + 1, 1);
+    }
+
     final payload = {
-      "frequency": _frequency,
-      "interval": _interval,
-      "startDate": _startDate.toIso8601String(),
-      "endDate": _endDate?.toIso8601String(),
+      "frequency": "monthly",
+      "interval": 1,
+      "startDate": startDate.toIso8601String(),
+      "endDate": null, // MVP: No end date
       "template": {
         "amount": _amount,
         "type": _type,
@@ -124,7 +187,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Nova Recorrencia"),
+        title: const Text("Nova Recorrência"),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -133,7 +196,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
-        children: [_buildStep1(), _buildStep2(), _buildStep3(), _buildStep4()],
+        children: [_buildStep1(), _buildStep2(), _buildStep3()],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -146,7 +209,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
             if (_currentStep > 0) const SizedBox(width: 16),
             Expanded(
               child: PrimaryButton(
-                label: _currentStep == 3 ? "Criar recorrencia" : "Proximo",
+                label: _currentStep == 2 ? "Criar recorrência" : "Próximo",
                 onPressed: _nextPage,
               ),
             ),
@@ -156,11 +219,6 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
     );
   }
 
-  // State
-  DateTime? _endDate;
-
-  // ... (previous code)
-
   Widget _buildStep1() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -168,63 +226,49 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Com que frequencia?",
+            "O que se repete todo mês?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
-          ListTile(
-            title: const Text("Frecuencia"),
-            trailing: DropdownButton<String>(
-              value: _frequency,
-              items: const [
-                DropdownMenuItem(value: "monthly", child: Text("Mensual")),
-                DropdownMenuItem(value: "weekly", child: Text("Semanal")),
-                DropdownMenuItem(value: "yearly", child: Text("Anual")),
-              ],
-              onChanged: (v) => setState(() => _frequency = v!),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _TypeCard(
+                  label: "Despesa",
+                  icon: Icons.arrow_downward,
+                  color: Colors.red,
+                  selected: _type == "expense",
+                  onTap: () {
+                    setState(() {
+                      _type = "expense";
+                      _toAccountId = null;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _TypeCard(
+                  label: "Receita",
+                  icon: Icons.arrow_upward,
+                  color: Colors.green,
+                  selected: _type == "income",
+                  onTap: () {
+                    setState(() {
+                      _type = "income";
+                      _fromAccountId = null;
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-          ListTile(
-            title: const Text("Cada (Intervalo)"),
-            trailing: DropdownButton<int>(
-              value: _interval,
-              items: [1, 2, 3, 4, 5, 6, 12]
-                  .map((i) => DropdownMenuItem(value: i, child: Text("$i")))
-                  .toList(),
-              onChanged: (v) => setState(() => _interval = v!),
-            ),
-          ),
-          ListTile(
-            title: const Text("Desde quando?"),
-            subtitle: Text(formatDate(_startDate)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: () async {
-              final d = await showDatePicker(
-                context: context,
-                initialDate: _startDate,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2030),
-              );
-              if (d != null) setState(() => _startDate = d);
-            },
-          ),
-          ListTile(
-            title: const Text("Data fim (Opcional)"),
-            subtitle: Text(
-              _endDate == null ? "Sem limite" : formatDate(_endDate!),
-            ),
-            trailing: const Icon(Icons.event_busy),
-            onTap: () async {
-              final d = await showDatePicker(
-                context: context,
-                initialDate:
-                    _endDate ?? _startDate.add(const Duration(days: 365)),
-                firstDate: _startDate,
-                lastDate: DateTime(2035),
-              );
-              if (d != null) setState(() => _endDate = d);
-            },
-            onLongPress: () => setState(() => _endDate = null),
+          const SizedBox(height: 32),
+          MoneyInput(label: "Valor", controller: _amountController),
+          const SizedBox(height: 8),
+          Text(
+            "Você poderá ajustar esse valor mês a mês se precisar.",
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
@@ -232,50 +276,11 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
   }
 
   Widget _buildStep2() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Qual valor normalmente?",
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 8,
-            children: [
-              _ChoiceChip(
-                label: "Gasto",
-                selected: _type == "expense",
-                onTap: () => setState(() => _type = "expense"),
-              ),
-              _ChoiceChip(
-                label: "Receita",
-                selected: _type == "income",
-                onTap: () => setState(() => _type = "income"),
-              ),
-              // Transfer not supported well in simplified wizard yet, stick to expense/income for MVP
-              _ChoiceChip(
-                label: "Transferencia",
-                selected: _type == "transfer",
-                onTap: () => setState(() => _type = "transfer"),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          MoneyInput(label: "Valor", controller: _amountController),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStep3() {
     final categoriesState = context.watch<CategoriesController>().state;
     final accountsState = context.watch<AccountsController>().state;
 
     final cats = categoriesState.items
-        .where((c) => _type == "transfer" ? false : c.kind == _type)
+        .where((c) => c.kind == _type)
         .map((c) => PickerItem(id: c.id, label: c.name))
         .toList();
 
@@ -283,133 +288,207 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
         .map((c) => PickerItem(id: c.id, label: c.name))
         .toList();
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "De qual conta sai?",
+            "Quando e de onde?",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
-          if (_type != "income")
+
+          // Day Picker
+          Text("Todo mês, dia", style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 50,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 31,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final day = index + 1;
+                final isSelected = _dayOfMonth == day;
+                return ChoiceChip(
+                  label: Text(day.toString()),
+                  selected: isSelected,
+                  onSelected: (_) => setState(() => _dayOfMonth = day),
+                );
+              },
+            ),
+          ),
+          if (_dayOfMonth >= 29)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                "⚠️ Em meses sem dia $_dayOfMonth, será usado o último dia.",
+                style: const TextStyle(color: Colors.orange),
+              ),
+            ),
+
+          const SizedBox(height: 24),
+
+          if (_type == "expense")
             AccountPicker(
-              label: "Conta de saida",
+              label: "Conta de saída",
               items: accs,
               value: _fromAccountId,
               onSelected: (i) => setState(() => _fromAccountId = i.id),
             ),
-          const SizedBox(height: 16),
-          if (_type == "income" || _type == "transfer")
+          if (_type == "income")
             AccountPicker(
               label: "Conta de entrada",
               items: accs,
               value: _toAccountId,
               onSelected: (i) => setState(() => _toAccountId = i.id),
             ),
-          const SizedBox(height: 16),
-          if (_type != "transfer")
-            CategoryPicker(
-              label: "Categoria",
-              items: cats,
-              value: _categoryId,
-              onSelected: (i) => setState(() => _categoryId = i.id),
-            ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          CategoryPicker(
+            label: "Categoria",
+            items: cats,
+            value: _categoryId,
+            onSelected: (i) => setState(() => _categoryId = i.id),
+          ),
+
+          const SizedBox(height: 24),
           TextField(
             controller: _noteController,
-            decoration: const InputDecoration(labelText: "Nota (Ex: Aluguel)"),
+            decoration: const InputDecoration(
+              labelText: "Nota (Opcional, ex: Aluguel)",
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStep4() {
-    // Generate Human Preview
-    String frequencyText;
-    if (_frequency == 'monthly') {
-      frequencyText = "Todo mês, dia ${_startDate.day}";
-    } else if (_frequency == 'weekly') {
-      // rough mapping
-      const weekdays = [
-        "",
-        "Segunda",
-        "Terça",
-        "Quarta",
-        "Quinta",
-        "Sexta",
-        "Sábado",
-        "Domingo",
-      ];
-      frequencyText = "Toda semana, ${weekdays[_startDate.weekday]}";
-    } else {
-      frequencyText = "Anual, em ${formatDate(_startDate)}";
-    }
-
-    if (_interval > 1) {
-      frequencyText +=
-          " (a cada $_interval ${_frequency == 'monthly' ? 'meses' : (_frequency == 'weekly' ? 'semanas' : 'anos')})";
-    }
-
+  Widget _buildStep3() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Confirmar regra",
+            "Confirmar recorrência",
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(8),
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _SummaryRow(
+                    label: "O que",
+                    value:
+                        "${_type == 'expense' ? 'Despesa' : 'Receita'} de ${formatMoney(_amount)}",
+                  ),
+                  const Divider(),
+                  _SummaryRow(
+                    label: "Quando",
+                    value:
+                        "Todo mês, dia $_dayOfMonth${_dayOfMonth >= 29 ? ' (ou último dia)' : ''}",
+                  ),
+                  const Divider(),
+                  _SummaryRow(
+                    label: "Categoria",
+                    value: _categoryId == null
+                        ? "-"
+                        : (context
+                              .read<CategoriesController>()
+                              .state
+                              .items
+                              .firstWhere((e) => e.id == _categoryId)
+                              .name),
+                  ),
+                  const Divider(),
+                  _SummaryRow(
+                    label: "Conta",
+                    value:
+                        (_type == 'expense' ? _fromAccountId : _toAccountId) ==
+                            null
+                        ? "-"
+                        : (context
+                              .read<AccountsController>()
+                              .state
+                              .items
+                              .firstWhere(
+                                (e) =>
+                                    e.id ==
+                                    (_type == 'expense'
+                                        ? _fromAccountId
+                                        : _toAccountId),
+                              )
+                              .name),
+                  ),
+                  if (_noteController.text.isNotEmpty) ...[
+                    const Divider(),
+                    _SummaryRow(label: "Nota", value: _noteController.text),
+                  ],
+                ],
+              ),
             ),
-            child: Text(
-              "$frequencyText • ${formatMoney(_amount)} • $_type",
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
           ),
-          const SizedBox(height: 24),
-          _SummaryRow(
-            label: "Frequencia",
-            value: "$_frequency (Cada $_interval)",
+          const SizedBox(height: 16),
+          const Text(
+            "Nenhuma transação será criada agora. Você usará o 'Planejar Mês' para gerar os lançamentos.",
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
           ),
-          _SummaryRow(label: "Inicio", value: formatDate(_startDate)),
-          _SummaryRow(
-            label: "Fim",
-            value: _endDate == null ? "Indefinido" : formatDate(_endDate!),
-          ),
-          _SummaryRow(label: "Tipo", value: _type),
-          _SummaryRow(label: "Valor", value: formatMoney(_amount)),
-          _SummaryRow(label: "Nota", value: _noteController.text),
         ],
       ),
     );
   }
 }
 
-class _ChoiceChip extends StatelessWidget {
+class _TypeCard extends StatelessWidget {
   final String label;
+  final IconData icon;
+  final Color color;
   final bool selected;
   final VoidCallback onTap;
-  const _ChoiceChip({
+
+  const _TypeCard({
     required this.label,
+    required this.icon,
+    required this.color,
     required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: selected ? color : Colors.grey.shade300,
+            width: selected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: selected ? color.withOpacity(0.1) : Colors.transparent,
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: selected ? color : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -426,8 +505,8 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(value),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );

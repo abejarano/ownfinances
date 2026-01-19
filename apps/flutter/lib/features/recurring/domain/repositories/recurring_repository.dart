@@ -14,4 +14,6 @@ abstract class RecurringRepository {
   );
   Future<Map<String, dynamic>> getPendingSummary();
   Future<Map<String, dynamic>> getCatchupSummary();
+  Future<void> ignore(String ruleId, DateTime date);
+  Future<void> undoIgnore(String ruleId, DateTime date);
 }

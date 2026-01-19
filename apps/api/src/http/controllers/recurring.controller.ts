@@ -93,7 +93,8 @@ export class RecurringController {
       date = new Date()
     }
 
-    return this.service.preview(req.userId!, period, date)
+    const result = await this.service.preview(req.userId!, period, date)
+    return HttpResponse(res, result)
   }
 
   @Get("/pending-summary")
@@ -216,7 +217,8 @@ export class RecurringController {
       date = new Date()
     }
 
-    return this.service.run(req.userId!, period, date)
+    const result = await this.service.run(req.userId!, period, date)
+    return HttpResponse(res, result)
   }
 
   @Post("/:id/materialize")
@@ -249,6 +251,32 @@ export class RecurringController {
       date,
       body.template
     )
+    return HttpResponse(res, result)
+  }
+
+  @Post("/:id/ignore")
+  @Use([AuthMiddleware])
+  async ignore(
+    @Param("id") id: string,
+    @Body() body: { date: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const date = new Date(body.date)
+    const result = await this.service.ignore(req.userId!, id, date)
+    return HttpResponse(res, result)
+  }
+
+  @Post("/:id/undo-ignore")
+  @Use([AuthMiddleware])
+  async undoIgnore(
+    @Param("id") id: string,
+    @Body() body: { date: string },
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const date = new Date(body.date)
+    const result = await this.service.undoIgnore(req.userId!, id, date)
     return HttpResponse(res, result)
   }
 }

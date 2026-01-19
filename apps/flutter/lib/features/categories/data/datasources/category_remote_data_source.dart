@@ -9,8 +9,8 @@ class CategoryRemoteDataSource {
     String? kind,
     bool? isActive,
     String? query,
-  }) {
-    return apiClient.get(
+  }) async {
+    final response = await apiClient.get(
       "/categories",
       query: {
         if (kind != null) "kind": kind,
@@ -21,6 +21,7 @@ class CategoryRemoteDataSource {
         "sort": "name",
       },
     );
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> create({
@@ -30,8 +31,8 @@ class CategoryRemoteDataSource {
     String? color,
     String? icon,
     bool isActive = true,
-  }) {
-    return apiClient.post("/categories", {
+  }) async {
+    final response = await apiClient.post("/categories", {
       "name": name,
       "kind": kind,
       if (parentId != null && parentId.isNotEmpty) "parentId": parentId,
@@ -39,6 +40,7 @@ class CategoryRemoteDataSource {
       if (icon != null && icon.isNotEmpty) "icon": icon,
       "isActive": isActive,
     });
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> update(
@@ -49,8 +51,8 @@ class CategoryRemoteDataSource {
     String? color,
     String? icon,
     required bool isActive,
-  }) {
-    return apiClient.put("/categories/$id", {
+  }) async {
+    final response = await apiClient.put("/categories/$id", {
       "name": name,
       "kind": kind,
       "parentId": parentId,
@@ -58,6 +60,7 @@ class CategoryRemoteDataSource {
       "icon": icon,
       "isActive": isActive,
     });
+    return response as Map<String, dynamic>;
   }
 
   Future<void> delete(String id) async {

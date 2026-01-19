@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:ownfinances/core/presentation/components/cards.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/features/recurring/application/controllers/recurring_controller.dart';
-import 'package:ownfinances/features/recurring/presentation/modals/recurrence_preview_modal.dart';
 import 'package:intl/intl.dart';
 
 class RecurrenceSummaryCard extends StatefulWidget {
@@ -72,50 +71,38 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
                   Text(
                     "Tudo pronto ✅",
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               )
             else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Você tem $count lançamento${count > 1 ? 's' : ''} para gerar ($monthLabel)",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (_) => ChangeNotifierProvider.value(
-                                value: context.read<RecurringController>(),
-                                child: const RecurrencePreviewModal(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text("Gerar agora"),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      OutlinedButton(
-                        onPressed: () {
-                          context.push('/transactions/pending');
-                        },
-                        child: const Text("Ver detalhes"),
-                      ),
-                    ],
-                  ),
-                ],
+              Text(
+                "Você tem $count lançamento${count > 1 ? 's' : ''} para gerar ($monthLabel)",
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      context.push('/recurring/plan');
+                    },
+                    icon: const Icon(Icons.calendar_month),
+                    label: const Text("Planejar mês"),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                OutlinedButton(
+                  onPressed: () {
+                    context.push('/transactions/pending');
+                  },
+                  child: const Text("Ver detalhes"),
+                ),
+              ],
+            ),
           ],
         ),
       ),

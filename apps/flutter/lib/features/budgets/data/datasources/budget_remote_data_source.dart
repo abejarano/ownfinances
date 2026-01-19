@@ -9,11 +9,12 @@ class BudgetRemoteDataSource {
   Future<Map<String, dynamic>> current({
     required String period,
     required DateTime date,
-  }) {
-    return apiClient.get(
+  }) async {
+    final response = await apiClient.get(
       "/budgets/current",
       query: {"period": period, "date": date.toIso8601String()},
     );
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> create({
@@ -21,21 +22,23 @@ class BudgetRemoteDataSource {
     required DateTime startDate,
     required DateTime endDate,
     required List<BudgetLine> lines,
-  }) {
-    return apiClient.post("/budgets", {
+  }) async {
+    final response = await apiClient.post("/budgets", {
       "periodType": period,
       "startDate": startDate.toIso8601String(),
       "endDate": endDate.toIso8601String(),
       "lines": lines.map((line) => line.toJson()).toList(),
     });
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> update(
     String id, {
     required List<BudgetLine> lines,
-  }) {
-    return apiClient.put("/budgets/$id", {
+  }) async {
+    final response = await apiClient.put("/budgets/$id", {
       "lines": lines.map((line) => line.toJson()).toList(),
     });
+    return response as Map<String, dynamic>;
   }
 }

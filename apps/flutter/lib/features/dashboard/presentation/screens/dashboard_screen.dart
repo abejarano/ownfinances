@@ -7,7 +7,6 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
-import "package:ownfinances/features/recurring/presentation/modals/recurrence_preview_modal.dart";
 import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
 import "package:ownfinances/features/recurring/presentation/widgets/catchup_banner.dart";
 
@@ -42,8 +41,9 @@ class DashboardScreen extends StatelessWidget {
         Text(
           "Neto planejado: ${formatMoney(summary?.totals.plannedNet ?? 0)} • Neto real: ${formatMoney(summary?.totals.actualNet ?? 0)}",
           style: TextStyle(
-            color:
-                (summary?.totals.actualNet ?? 0) < 0 ? Colors.redAccent : Colors.greenAccent,
+            color: (summary?.totals.actualNet ?? 0) < 0
+                ? Colors.redAccent
+                : Colors.greenAccent,
           ),
         ),
         if (overspent.isNotEmpty) ...[
@@ -65,10 +65,7 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         const CatchupBanner(),
         const SizedBox(height: AppSpacing.lg),
-        Text(
-          "Acoes rapidas",
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text("Acoes rapidas", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.arrow_downward,
@@ -91,7 +88,10 @@ class DashboardScreen extends StatelessWidget {
           onTap: () => context.push("/transactions/new?type=transfer"),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Text("Gestao de regras", style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          "Gestao de regras",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: AppSpacing.sm),
         QuickActionCard(
           icon: Icons.add,
@@ -107,10 +107,7 @@ class DashboardScreen extends StatelessWidget {
           onPressed: () => context.go("/debts"),
         ),
         const SizedBox(height: AppSpacing.sm),
-        SecondaryButton(
-          label: "Metas",
-          onPressed: () => context.go("/goals"),
-        ),
+        SecondaryButton(label: "Metas", onPressed: () => context.go("/goals")),
         const SizedBox(height: AppSpacing.sm),
         SecondaryButton(
           label: "Categorias",

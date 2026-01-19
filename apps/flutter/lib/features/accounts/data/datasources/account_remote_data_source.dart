@@ -9,8 +9,8 @@ class AccountRemoteDataSource {
     String? type,
     bool? isActive,
     String? query,
-  }) {
-    return apiClient.get(
+  }) async {
+    final response = await apiClient.get(
       "/accounts",
       query: {
         if (type != null) "type": type,
@@ -21,6 +21,7 @@ class AccountRemoteDataSource {
         "sort": "name",
       },
     );
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> create({
@@ -29,14 +30,15 @@ class AccountRemoteDataSource {
     String currency = "BRL",
     bool isActive = true,
     String? bankType,
-  }) {
-    return apiClient.post("/accounts", {
+  }) async {
+    final response = await apiClient.post("/accounts", {
       "name": name,
       "type": type,
       "currency": currency,
       "isActive": isActive,
       if (bankType != null) "bankType": bankType,
     });
+    return response as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> update(
@@ -46,14 +48,15 @@ class AccountRemoteDataSource {
     required String currency,
     required bool isActive,
     String? bankType,
-  }) {
-    return apiClient.put("/accounts/$id", {
+  }) async {
+    final response = await apiClient.put("/accounts/$id", {
       "name": name,
       "type": type,
       "currency": currency,
       "isActive": isActive,
       if (bankType != null) "bankType": bankType,
     });
+    return response as Map<String, dynamic>;
   }
 
   Future<void> delete(String id) async {

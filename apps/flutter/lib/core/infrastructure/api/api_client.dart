@@ -13,15 +13,12 @@ class ApiClient {
   ApiClient({required this.baseUrl, required this.storage, http.Client? client})
     : _client = client ?? http.Client();
 
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? query,
-  }) async {
+  Future<dynamic> get(String path, {Map<String, String>? query}) async {
     final response = await _send("GET", path, query: query);
     return _parse(response);
   }
 
-  Future<Map<String, dynamic>> post(
+  Future<dynamic> post(
     String path,
     dynamic body, {
     Map<String, String>? query,
@@ -37,7 +34,7 @@ class ApiClient {
     return _parse(response);
   }
 
-  Future<Map<String, dynamic>> put(
+  Future<dynamic> put(
     String path,
     Map<String, dynamic> body, {
     Map<String, String>? query,
@@ -46,10 +43,7 @@ class ApiClient {
     return _parse(response);
   }
 
-  Future<Map<String, dynamic>> delete(
-    String path, {
-    Map<String, String>? query,
-  }) async {
+  Future<dynamic> delete(String path, {Map<String, String>? query}) async {
     final response = await _send("DELETE", path, query: query);
     return _parse(response);
   }
@@ -141,19 +135,25 @@ class ApiClient {
     return true;
   }
 
-  Map<String, dynamic> _parse(http.Response response) {
+  dynamic _parse(http.Response response) {
     if (response.statusCode >= 400) {
       String message = "Erro inesperado";
       if (response.body.isNotEmpty) {
-        final payload = jsonDecode(response.body) as Map<String, dynamic>;
-        if (payload["error"] is String) {
-          message = payload["error"] as String;
+        try {
+          final payload = jsonDecode(response.body) as Map<String, dynamic>;
+          if (payload["error"] is String) {
+            message = payload["error"] as String;
+          }
+        } catch (_) {
+          // ignore parsing error
         }
       }
       throw ApiException(message, response.statusCode);
     }
-    if (response.body.isEmpty) return {};
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.body.isNotEmpty) {
+      return jsonDecode(response.body);
+    }
+    return {};
   }
 
   bool _isAuthPath(String path) {

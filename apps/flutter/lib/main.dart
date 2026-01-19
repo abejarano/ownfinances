@@ -5,7 +5,7 @@ import "package:intl/date_symbol_data_local.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/di/providers.dart";
 import "package:go_router/go_router.dart";
-import "package:provider/provider.dart";
+
 import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
 
 Future<void> main() async {

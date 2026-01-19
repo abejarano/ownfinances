@@ -143,10 +143,7 @@ class RecurringController extends ChangeNotifier {
       notifyListeners();
     } catch (error) {
       // Silently fail for summary, don't show error in UI
-      _state = _state.copyWith(
-        toGenerateCount: 0,
-        currentMonth: '',
-      );
+      _state = _state.copyWith(toGenerateCount: 0, currentMonth: '');
       notifyListeners();
     }
   }
@@ -158,6 +155,42 @@ class RecurringController extends ChangeNotifier {
       return catchup.map((item) => item as Map<String, dynamic>).toList();
     } catch (error) {
       return [];
+    }
+  }
+
+  Future<void> ignore(
+    String ruleId,
+    DateTime date, {
+    String period = 'monthly',
+  }) async {
+    _state = _state.copyWith(isLoading: true, error: null);
+    notifyListeners();
+    try {
+      await repository.ignore(ruleId, date);
+      // Refresh preview to show updated status
+      final monthDate = DateTime(date.year, date.month);
+      await preview(period, monthDate);
+    } catch (error) {
+      _state = _state.copyWith(isLoading: false, error: _message(error));
+      notifyListeners();
+    }
+  }
+
+  Future<void> undoIgnore(
+    String ruleId,
+    DateTime date, {
+    String period = 'monthly',
+  }) async {
+    _state = _state.copyWith(isLoading: true, error: null);
+    notifyListeners();
+    try {
+      await repository.undoIgnore(ruleId, date);
+      // Refresh preview
+      final monthDate = DateTime(date.year, date.month);
+      await preview(period, monthDate);
+    } catch (error) {
+      _state = _state.copyWith(isLoading: false, error: _message(error));
+      notifyListeners();
     }
   }
 }

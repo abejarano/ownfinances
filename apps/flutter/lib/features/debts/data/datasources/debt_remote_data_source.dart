@@ -5,28 +5,36 @@ class DebtRemoteDataSource {
 
   DebtRemoteDataSource(this.apiClient);
 
-  Future<Map<String, dynamic>> list() {
-    return apiClient.get("/debts", query: {"limit": "100"});
+  Future<Map<String, dynamic>> list() async {
+    final response = await apiClient.get("/debts", query: {"limit": "100"});
+    return response as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> create(Map<String, dynamic> payload) {
-    return apiClient.post("/debts", payload);
+  Future<Map<String, dynamic>> create(Map<String, dynamic> payload) async {
+    final response = await apiClient.post("/debts", payload);
+    return response as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> payload) {
-    return apiClient.put("/debts/$id", payload);
+  Future<Map<String, dynamic>> update(
+    String id,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.put("/debts/$id", payload);
+    return response as Map<String, dynamic>;
   }
 
   Future<void> delete(String id) {
     return apiClient.delete("/debts/$id");
   }
 
-  Future<Map<String, dynamic>> summary(String id) {
-    return apiClient.get("/debts/$id/summary");
+  Future<Map<String, dynamic>> summary(String id) async {
+    final response = await apiClient.get("/debts/$id/summary");
+    return response as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> history(String id, {String? month}) {
+  Future<Map<String, dynamic>> history(String id, {String? month}) async {
     final query = month != null ? {"month": month} : <String, String>{};
-    return apiClient.get("/debts/$id/history", query: query);
+    final response = await apiClient.get("/debts/$id/history", query: query);
+    return response as Map<String, dynamic>;
   }
 }

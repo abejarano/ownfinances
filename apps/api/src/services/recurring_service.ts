@@ -29,7 +29,7 @@ export interface RecurringPreviewItem {
   recurringRuleId: string
   date: Date
   template: RecurringRulePrimitives["template"]
-  status: "new" | "already_generated"
+  status: "new" | "already_generated" | "ignored"
 }
 
 export class RecurringService {
@@ -118,6 +118,63 @@ export class RecurringService {
     return { value: { ok: true }, status: 200 }
   }
 
+  async ignore(
+    userId: string,
+    recurringRuleId: string,
+    date: Date
+  ): Promise<Result<{ instance: GeneratedInstancePrimitives }>> {
+    const rule = await this.ruleRepo.one({ recurringRuleId })
+    if (!rule || rule.userId !== userId) {
+      return { error: "Recurrencia no encontrada", status: 404 }
+    }
+
+    // Check if already exists (generated or ignored)
+    const dateStr = date.toISOString().split("T")[0]
+    const uniqueKey = `${recurringRuleId}_${dateStr}`
+    const existing = await this.instanceRepo.one({ uniqueKey })
+
+    if (existing) {
+      // If already generated/ignored, we might want to ensure it is ignored now?
+      // For MVP, if it's already "generated" (has tx), we can't just ignore it without deleting tx.
+      // If it's "ignored", do nothing.
+      // Let's assume frontend calls this only on "new" items.
+      return { error: "Instance already processed", status: 400 }
+    }
+
+    const instance = GeneratedInstance.create(
+      recurringRuleId,
+      userId,
+      date,
+      undefined,
+      "ignored"
+    )
+
+    await this.instanceRepo.upsert(instance)
+    return { value: { instance: instance.toPrimitives() }, status: 201 }
+  }
+
+  async undoIgnore(
+    userId: string,
+    recurringRuleId: string,
+    date: Date
+  ): Promise<Result<{ ok: boolean }>> {
+    const dateStr = date.toISOString().split("T")[0]
+    const uniqueKey = `${recurringRuleId}_${dateStr}`
+    
+    const instance = await this.instanceRepo.one({ uniqueKey, userId })
+    if (!instance) {
+      return { error: "Instance not found", status: 404 }
+    }
+
+    const prim = instance.toPrimitives()
+    if (prim.status !== "ignored") {
+      return { error: "Instance is not ignored", status: 400 }
+    }
+
+    await this.instanceRepo.remove(prim.generatedInstanceId)
+    return { value: { ok: true }, status: 200 }
+  }
+
   async list(
     userId: string,
     limit = 50,
@@ -188,33 +245,55 @@ export class RecurringService {
     period: "monthly",
     date: Date
   ): Promise<Result<RecurringPreviewItem[]>> {
+    const startTotal = performance.now()
+    console.log(`[RecurringService] Preview started for user ${userId}, period ${period}, date ${date.toISOString()}`)
     const { start, end } = this.computeRange(period, date)
+
+    const startRules = performance.now()
     const rules = await this.getUserRules(userId)
+    console.log(`[RecurringService] Found ${rules.length} active rules (took ${(performance.now() - startRules).toFixed(2)}ms)`)
+
+    const startInstances = performance.now()
     const instancesInPeriod = await this.getInstancesInPeriod(
       userId,
       start,
       end
     )
+    console.log(`[RecurringService] Loaded instances (took ${(performance.now() - startInstances).toFixed(2)}ms)`)
 
     const result: RecurringPreviewItem[] = []
 
     for (const rule of rules) {
-      const rulePrimitives = rule.toPrimitives()
-      const dates = this.calculateDates(rule, start, end)
-      for (const d of dates) {
-        const dateStr = d.toISOString().split("T")[0]
-        const uniqueKey = `${rulePrimitives.recurringRuleId}_${dateStr}`
-        const exists = instancesInPeriod.has(uniqueKey)
+      const startRule = performance.now()
+      try {
+        const rulePrimitives = rule.toPrimitives()
+        const dates = this.calculateDates(rule, start, end)
+        for (const d of dates) {
+          const dateStr = d.toISOString().split("T")[0]
+          const uniqueKey = `${rulePrimitives.recurringRuleId}_${dateStr}`
+          const instanceState = instancesInPeriod.get(uniqueKey)
 
-        result.push({
-          recurringRuleId: rulePrimitives.recurringRuleId,
-          date: d,
-          template: rulePrimitives.template,
-          status: exists ? "already_generated" : "new",
-        })
+          let status: RecurringPreviewItem["status"] = "new"
+          if (instanceState === "created") status = "already_generated"
+          if (instanceState === "ignored") status = "ignored"
+
+          result.push({
+            recurringRuleId: rulePrimitives.recurringRuleId,
+            date: d,
+            template: rulePrimitives.template,
+            status,
+          })
+        }
+        const ruleTime = performance.now() - startRule
+        if (ruleTime > 100) {
+             console.warn(`[RecurringService] Slow rule ${rule.ruleId}: ${ruleTime.toFixed(2)}ms`)
+        }
+      } catch (e) {
+        console.error(`[RecurringService] Error processing rule ${rule.ruleId}:`, e)
       }
     }
 
+    console.log(`[RecurringService] Preview finished, returning ${result.length} items (Total: ${(performance.now() - startTotal).toFixed(2)}ms)`)
     return { value: result, status: 200 }
   }
 
@@ -386,7 +465,14 @@ export class RecurringService {
       userId: userId,
       date: { $gte: start, $lte: end },
     })
-    return new Set(instancesPage.map((i) => i.getUniqueKey()))
+    const map = new Map<string, "created" | "ignored">()
+    instancesPage.forEach((i) => {
+      const p = i.toPrimitives()
+      // Fallback for legacy data that doesn't have status yet -> 'created'
+      const status = (p as any).status || "created"
+      map.set(p.uniqueKey, status)
+    })
+    return map
   }
 
   private calculateDates(
@@ -395,31 +481,96 @@ export class RecurringService {
     windowEnd: Date
   ): Date[] {
     const dates: Date[] = []
-    let current = new Date(rule.startDate)
+    
+    // Safety: Ensure interval is at least 1
+    if (rule.interval < 1) {
+        console.warn(`[RecurringService] Rule ${rule.ruleId} has invalid interval ${rule.interval}, treating as 1`)
+        // Hack: treat as 1 explicitly for calculation without mutating rule object deeper
+        // Actually we can't mutate rule here easily, so let's just use a local var
+    }
+    const safeInterval = Math.max(1, rule.interval)
 
     // If start date is in future beyond window, no dates
-    if (current > windowEnd) return []
+    if (new Date(rule.startDate) > windowEnd) return []
     if (rule.endDate && rule.endDate < windowStart) return []
 
-    // Advance current to be at least windowStart or close to it
-    // For simplicity, we just iterate from startDate. Optimization possible for yearly.
+    const startDay = new Date(rule.startDate).getDate()
+    let current = new Date(rule.startDate)
+    
+    // Optimization: Jump to near windowStart to avoid iterating from ancient history
+    // We want 'current' to be the first occurrence >= windowStart (or just before it)
+    if (current < windowStart) {
+      if (rule.frequency === RecurringFrequency.Monthly) {
+        // Calculate months difference
+        const monthsDiff = (windowStart.getFullYear() - current.getFullYear()) * 12 + (windowStart.getMonth() - current.getMonth())
+        if (monthsDiff > 0) {
+          // How many intervals fit?
+          const intervalsToSkip = Math.floor(monthsDiff / safeInterval)
+          // Add them
+          if (intervalsToSkip > 0) {
+              current.setDate(1)
+              current.setMonth(current.getMonth() + (intervalsToSkip * safeInterval))
+              
+              const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
+              const targetDay = Math.min(startDay, daysInMonth)
+              current.setDate(targetDay)
+          }
+        }
+      } else if (rule.frequency === RecurringFrequency.Weekly) {
+         const oneWeekMs = 7 * 24 * 60 * 60 * 1000
+         const intervalMs = oneWeekMs * safeInterval
+         const diffMs = windowStart.getTime() - current.getTime()
+         if (diffMs > 0) {
+           const skips = Math.floor(diffMs / intervalMs)
+           if (skips > 0) {
+              current = new Date(current.getTime() + (skips * intervalMs))
+           }
+         }
+      } else if (rule.frequency === RecurringFrequency.Yearly) {
+         const diffYears = windowStart.getFullYear() - current.getFullYear()
+         if (diffYears > 0) {
+            const skips = Math.floor(diffYears / safeInterval)
+            if (skips > 0) {
+               current.setFullYear(current.getFullYear() + (skips * safeInterval))
+            }
+         }
+      }
+    }
 
     // Safety break
     let safety = 0
-    while (current <= windowEnd && safety < 1000) {
+    while (current <= windowEnd && safety < 2000) {
       if (rule.endDate && current > rule.endDate) break
+      
       if (current >= windowStart) {
         dates.push(new Date(current))
       }
 
+      const prevTime = current.getTime()
+
       // Advance
       if (rule.frequency === RecurringFrequency.Weekly) {
-        current.setDate(current.getDate() + 7 * rule.interval)
+        current.setDate(current.getDate() + 7 * safeInterval)
       } else if (rule.frequency === RecurringFrequency.Monthly) {
-        current.setMonth(current.getMonth() + rule.interval)
+        current.setDate(1)
+        current.setMonth(current.getMonth() + safeInterval)
+        
+        const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
+        const targetDay = Math.min(startDay, daysInMonth)
+        current.setDate(targetDay)
+
       } else if (rule.frequency === RecurringFrequency.Yearly) {
-        current.setFullYear(current.getFullYear() + rule.interval)
+        current.setFullYear(current.getFullYear() + safeInterval)
+      } else {
+         break
       }
+
+      // Infinite loop guard
+      if (current.getTime() === prevTime) {
+        console.error(`[RecurringService] Infinite loop detected for rule ${rule.ruleId}`)
+        break
+      }
+
       safety++
     }
 

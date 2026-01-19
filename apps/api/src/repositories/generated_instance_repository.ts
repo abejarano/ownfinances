@@ -42,4 +42,8 @@ export class GeneratedInstanceMongoRepository
       })
     )
   }
+  async remove(generatedInstanceId: string): Promise<void> {
+    const collection = await this.collection()
+    await collection.deleteOne({ generatedInstanceId })
+  }
 }

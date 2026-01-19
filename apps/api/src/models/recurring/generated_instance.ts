@@ -7,8 +7,9 @@ export type GeneratedInstancePrimitives = {
   recurringRuleId: string
   userId: string
   date: Date
-  transactionId: string
+  transactionId?: string
   uniqueKey: string // recurringRuleId_dateISO
+  status: "created" | "ignored"
 }
 
 export class GeneratedInstance extends AggregateRoot {
@@ -30,7 +31,8 @@ export class GeneratedInstance extends AggregateRoot {
     recurringRuleId: string,
     userId: string,
     date: Date,
-    transactionId: string
+    transactionId?: string,
+    status: "created" | "ignored" = "created"
   ): GeneratedInstance {
     // Normalize date to YYYY-MM-DD for unique key
     const dateStr = date.toISOString().split("T")[0]
@@ -43,6 +45,7 @@ export class GeneratedInstance extends AggregateRoot {
       date,
       transactionId,
       uniqueKey,
+      status,
     })
   }
 

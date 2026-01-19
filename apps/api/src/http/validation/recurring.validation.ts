@@ -48,21 +48,21 @@ export type RecurringSplitPayload = {
 const TemplateSchema = v.strictObject({
   type: v.enum_(TransactionType),
   amount: v.number(),
-  currency: v.optional(v.pipe(v.string(), v.minLength(1))),
-  categoryId: v.optional(v.pipe(v.string(), v.minLength(1))),
-  fromAccountId: v.optional(v.pipe(v.string(), v.minLength(1))),
-  toAccountId: v.optional(v.pipe(v.string(), v.minLength(1))),
-  note: v.optional(v.string()),
-  tags: v.optional(v.array(v.string())),
+  currency: v.nullish(v.pipe(v.string(), v.minLength(1))),
+  categoryId: v.nullish(v.pipe(v.string(), v.minLength(1))),
+  fromAccountId: v.nullish(v.pipe(v.string(), v.minLength(1))),
+  toAccountId: v.nullish(v.pipe(v.string(), v.minLength(1))),
+  note: v.nullish(v.string()),
+  tags: v.nullish(v.array(v.string())),
 })
 
 const RuleSchema = v.strictObject({
   frequency: v.enum_(RecurringFrequency),
   interval: v.pipe(v.number(), v.minValue(1)),
   startDate: v.union([v.string(), v.date()]),
-  endDate: v.optional(v.union([v.string(), v.date()])),
+  endDate: v.nullish(v.union([v.string(), v.date()])),
   template: TemplateSchema,
-  isActive: v.optional(v.boolean()),
+  isActive: v.nullish(v.boolean()),
 })
 
 const RunQuerySchema = v.strictObject({
