@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/features/recurring/application/controllers/recurring_controller.dart';
 import 'package:ownfinances/features/transactions/application/controllers/pending_transactions_controller.dart';
-import 'package:intl/intl.dart';
 
 class RecurrenceSummaryCard extends StatefulWidget {
   const RecurrenceSummaryCard({super.key});
@@ -112,35 +111,29 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
   }
 
   Widget _buildStateB(BuildContext context) {
-    return Card(
-      color: Colors.green.shade50,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.green.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green),
-            const SizedBox(width: 16),
-            const Expanded(
-              child: Text(
-                "Tudo pronto ✅",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                  fontSize: 16,
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green, size: 20),
+          const SizedBox(width: 8),
+          const Text(
+            "Recorrências: Tudo pronto ✅",
+            style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green),
+          ),
+          const Spacer(),
+          InkWell(
+            onTap: () => context.push('/recurring'),
+            child: Text(
+              "Ver regras",
+              style: TextStyle(
+                color: Colors.white,
+                decoration: TextDecoration.underline,
+                fontSize: 13,
               ),
             ),
-            TextButton(
-              onPressed: () => context.push('/recurring'),
-              child: const Text("Ver regras"),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

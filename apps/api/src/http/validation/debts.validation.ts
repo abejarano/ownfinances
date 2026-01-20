@@ -10,6 +10,7 @@ export type DebtCreatePayload = {
   name: string
   type: DebtType
   linkedAccountId?: string
+  paymentAccountId?: string
   currency?: string
   dueDay?: number
   minimumPayment?: number
@@ -28,7 +29,8 @@ const DebtTypeSchema = v.picklist([
 const DebtBaseSchema = v.strictObject({
   name: v.pipe(v.string(), v.minLength(1)),
   type: DebtTypeSchema,
-  linkedAccountId: v.optional(v.string()),
+  linkedAccountId: v.optional(v.string()), // Required logically for CC, but optional in schema to allow other types
+  paymentAccountId: v.optional(v.string()),
   currency: v.optional(v.pipe(v.string(), v.minLength(1))),
   dueDay: v.optional(v.number()),
   minimumPayment: v.optional(v.number()),
@@ -50,14 +52,23 @@ export function validateDebtPayload(isUpdate: boolean) {
     const schema = isUpdate ? DebtUpdateSchema : DebtCreateSchema
     const result = v.safeParse(schema, payload)
 
-    if (!result.issues) return res.status(422).send("Payload invalido")
+    if (!result.success) {
+      const flattened = v.flatten(result.issues)
+      if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
+      if (flattened.nested?.type)
+        return res.status(422).send("Tipo de deuda invalido")
+      if (flattened.nested?.currency)
+        return res.status(422).send("Moneda invalida")
 
-    const flattened = v.flatten(result.issues)
-    if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
-    if (flattened.nested?.type)
-      return res.status(422).send("Tipo de deuda invalido")
-    if (flattened.nested?.currency)
-      return res.status(422).send("Moneda invalida")
+      return res.status(422).send("Payload invalido")
+    }
+
+    const validatedData = payload as DebtCreatePayload
+
+    // Logic Rule: Credit Card MUST have linkedAccountId
+    if (validatedData.type === DebtType.CreditCard && !validatedData.linkedAccountId && !isUpdate) {
+       return res.status(422).send("Cartão de crédito deve ter uma conta vinculada")
+    }
 
     const data = payload as {
       dueDay?: number

@@ -1,6 +1,7 @@
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_transaction.dart";
+import "package:ownfinances/features/debts/domain/entities/debt_overview.dart";
 
 abstract class DebtRepository {
   Future<List<Debt>> list();
@@ -8,6 +9,7 @@ abstract class DebtRepository {
     required String name,
     required String type,
     String? linkedAccountId,
+    String? paymentAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -19,6 +21,7 @@ abstract class DebtRepository {
     String? name,
     String? type,
     String? linkedAccountId,
+    String? paymentAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -28,4 +31,5 @@ abstract class DebtRepository {
   Future<void> delete(String id);
   Future<DebtSummary> summary(String id);
   Future<List<DebtTransaction>> history(String id, {String? month});
+  Future<DebtOverview> getOverview();
 }

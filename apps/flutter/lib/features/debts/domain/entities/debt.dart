@@ -8,6 +8,7 @@ class Debt {
   final double? minimumPayment;
   final double? interestRateAnnual;
   final String? linkedAccountId;
+  final String? paymentAccountId;
   final bool isActive;
 
   const Debt({
@@ -15,6 +16,7 @@ class Debt {
     required this.name,
     required this.type,
     this.linkedAccountId,
+    this.paymentAccountId,
     required this.currency,
     required this.currentBalance,
     required this.dueDay,
@@ -29,6 +31,7 @@ class Debt {
       name: json["name"] as String,
       type: json["type"] as String,
       linkedAccountId: json["linkedAccountId"] as String?,
+      paymentAccountId: json["paymentAccountId"] as String?,
       currency: json["currency"] as String? ?? "BRL",
       currentBalance: (json["currentBalance"] as num?)?.toDouble() ?? 0,
       dueDay: json["dueDay"] as int?,

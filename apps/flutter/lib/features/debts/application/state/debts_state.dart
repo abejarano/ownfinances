@@ -1,5 +1,6 @@
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
+import "package:ownfinances/features/debts/domain/entities/debt_overview.dart";
 
 class DebtsState {
   final List<Debt> items;
@@ -7,6 +8,8 @@ class DebtsState {
   final bool isLoading;
   final String? error;
   final String? lastAccountId;
+  final DebtOverview? overview;
+  final bool isLoadingOverview;
 
   const DebtsState({
     required this.items,
@@ -14,6 +17,8 @@ class DebtsState {
     required this.isLoading,
     required this.error,
     required this.lastAccountId,
+    this.overview,
+    this.isLoadingOverview = false,
   });
 
   DebtsState copyWith({
@@ -22,6 +27,8 @@ class DebtsState {
     bool? isLoading,
     String? error,
     String? lastAccountId,
+    DebtOverview? overview,
+    bool? isLoadingOverview,
   }) {
     return DebtsState(
       items: items ?? this.items,
@@ -29,6 +36,8 @@ class DebtsState {
       isLoading: isLoading ?? this.isLoading,
       error: error,
       lastAccountId: lastAccountId ?? this.lastAccountId,
+      overview: overview ?? this.overview,
+      isLoadingOverview: isLoadingOverview ?? this.isLoadingOverview,
     );
   }
 
@@ -39,6 +48,8 @@ class DebtsState {
       isLoading: false,
       error: null,
       lastAccountId: null,
+      overview: null,
+      isLoadingOverview: false,
     );
   }
 }

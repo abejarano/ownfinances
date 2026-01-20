@@ -16,7 +16,21 @@ class DebtsController extends ChangeNotifier {
 
   DebtsState get state => _state;
 
+  Future<void> loadOverview() async {
+    _state = _state.copyWith(isLoadingOverview: true);
+    notifyListeners();
+    try {
+      final overview = await debtRepository.getOverview();
+      _state = _state.copyWith(overview: overview, isLoadingOverview: false);
+    } catch (_) {
+      // Allow silent failure or handle error specific to overview?
+      _state = _state.copyWith(isLoadingOverview: false);
+    }
+    notifyListeners();
+  }
+
   Future<void> load() async {
+    loadOverview(); // Fire and forget or await? Let's fire and allow parallel loading.
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
@@ -44,6 +58,7 @@ class DebtsController extends ChangeNotifier {
     required String name,
     required String type,
     String? linkedAccountId,
+    String? paymentAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -55,6 +70,7 @@ class DebtsController extends ChangeNotifier {
         name: name,
         type: type,
         linkedAccountId: linkedAccountId,
+        paymentAccountId: paymentAccountId,
         currency: currency,
         dueDay: dueDay,
         minimumPayment: minimumPayment,
@@ -75,6 +91,7 @@ class DebtsController extends ChangeNotifier {
     String? name,
     String? type,
     String? linkedAccountId,
+    String? paymentAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -87,6 +104,7 @@ class DebtsController extends ChangeNotifier {
         name: name,
         type: type,
         linkedAccountId: linkedAccountId,
+        paymentAccountId: paymentAccountId,
         currency: currency,
         dueDay: dueDay,
         minimumPayment: minimumPayment,

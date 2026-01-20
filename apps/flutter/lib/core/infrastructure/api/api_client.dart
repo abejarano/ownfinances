@@ -84,10 +84,15 @@ class ApiClient {
       request = multipartRequest;
     } else {
       // JSON request
-      headers["Content-Type"] = "application/json";
-      request = http.Request(method, uri)
-        ..headers.addAll(headers)
-        ..body = body == null ? "" : jsonEncode(body);
+      final jsonRequest = http.Request(method, uri);
+
+      if (body != null) {
+        headers["Content-Type"] = "application/json";
+        jsonRequest.body = jsonEncode(body);
+      }
+
+      jsonRequest.headers.addAll(headers);
+      request = jsonRequest;
     }
 
     final response = await _client.send(request).then(http.Response.fromStream);

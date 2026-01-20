@@ -8,6 +8,7 @@ import "package:ownfinances/features/categories/application/controllers/categori
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
 import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_month_summary_card.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_debts_card.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -74,11 +75,15 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
 
-        // 3. Recurrence Summary
+        // 3. Debts
+        const SizedBox(height: AppSpacing.md),
+        const DashboardDebtsCard(),
+
+        // 4. Recurrence Summary
         const SizedBox(height: AppSpacing.md),
         const RecurrenceSummaryCard(),
 
-        // 4. Quick Actions
+        // 5. Quick Actions
         const SizedBox(height: AppSpacing.lg),
         Text("Ações rápidas", style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
@@ -138,7 +143,7 @@ class _AlertCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        // border: Border.all(color: color.withOpacity(0.3)), // Removed border per PO
       ),
       child: Row(
         children: [

@@ -21,7 +21,7 @@ class DebtsScreen extends StatelessWidget {
     final state = context.watch<DebtsController>().state;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Dividas")),
+      appBar: AppBar(title: const Text("Dividas"), leading: const BackButton()),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -70,10 +70,10 @@ class DebtsScreen extends StatelessWidget {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text("Aviso"),
+                              title: const Text("Tudo pago!"),
                               content: const Text(
-                                "Você está em dia — não há saldo a pagar neste cartão.\n"
-                                "Quer registrar este pagamento mesmo assim?",
+                                "Você não tem dívida pendente neste cartão.\n"
+                                "Se registrar um pagamento agora, o cartão ficará com saldo positivo (crédito).",
                               ),
                               actions: [
                                 TextButton(
@@ -175,19 +175,27 @@ class DebtsScreen extends StatelessWidget {
     String type = item?.type ?? "credit_card";
     bool isActive = item?.isActive ?? true;
 
-    // Initialize with existing link
+    // Initialize with existing inputs
     String? linkedAccountId = item?.linkedAccountId;
+    String? paymentAccountId = item?.paymentAccountId;
+    bool isSubmitting = false;
 
-    final result = await showModalBottomSheet<bool>(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) {
-        // Read accounts state
-        final accountsState = context.watch<AccountsController>().state;
-        // Filter for credit cards
+        final accountsState = context.read<AccountsController>().state;
+
+        // 1. Credit Card Accounts (for linkedAccountId)
         final creditCardAccounts = accountsState.items
             .where((a) => a.type == "credit_card")
+            .map((a) => PickerItem(id: a.id, label: a.name))
+            .toList();
+
+        // 2. Paying Accounts (for paymentAccountId) - Bank, Cash, etc.
+        final payingAccounts = accountsState.items
+            .where((a) => ["bank", "cash", "wallet", "broker"].contains(a.type))
             .map((a) => PickerItem(id: a.id, label: a.name))
             .toList();
 
@@ -235,22 +243,41 @@ class DebtsScreen extends StatelessWidget {
                       }
                     },
                   ),
+
+                  // --- ACCOUNT SELECTION LOGIC ---
                   if (type == "credit_card") ...[
                     const SizedBox(height: AppSpacing.sm),
                     if (creditCardAccounts.isEmpty)
                       const Text(
-                        "Voce nao tem contas do tipo 'Cartao de Credito' para vincular. Crie uma conta primeiro.",
+                        "Voce nao tem contas do tipo 'Cartao de Credito'. Crie uma conta primeiro.",
                         style: TextStyle(color: Colors.orange, fontSize: 13),
                       )
                     else
                       AccountPicker(
-                        label: "Conta vinculada (para pagamentos)",
+                        label: "Conta do cartão (Onde caem as compras)",
                         items: creditCardAccounts,
                         value: linkedAccountId,
                         onSelected: (item) =>
                             setState(() => linkedAccountId = item.id),
                       ),
                   ],
+
+                  // Paying Account (Optional for all types now)
+                  const SizedBox(height: AppSpacing.sm),
+                  if (payingAccounts.isEmpty)
+                    const Text(
+                      "Sem contas bancárias/dinheiro para pagar a fatura.",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    )
+                  else
+                    AccountPicker(
+                      label: "Conta pagadora padrão (Opcional)",
+                      items: payingAccounts,
+                      value: paymentAccountId,
+                      onSelected: (item) =>
+                          setState(() => paymentAccountId = item.id),
+                    ),
+                  // ------------------------------
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: currencyController,
@@ -287,7 +314,73 @@ class DebtsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
                     label: "Salvar",
-                    onPressed: () => Navigator.of(context).pop(true),
+                    isLoading: isSubmitting,
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final name = nameController.text.trim();
+                            if (name.isEmpty) {
+                              showStandardSnackbar(context, "Nome obrigatorio");
+                              return;
+                            }
+
+                            final dueDay = int.tryParse(
+                              dueDayController.text.trim(),
+                            );
+                            final minimumPayment = parseMoney(
+                              minimumPaymentController.text.trim(),
+                            );
+                            final interest = double.tryParse(
+                              interestController.text.trim(),
+                            );
+
+                            setState(() => isSubmitting = true);
+
+                            String? error;
+                            if (item == null) {
+                              error = await controller.create(
+                                name: name,
+                                type: type,
+                                linkedAccountId: linkedAccountId,
+                                paymentAccountId: paymentAccountId,
+                                currency: currencyController.text.trim().isEmpty
+                                    ? "BRL"
+                                    : currencyController.text.trim(),
+                                dueDay: dueDay,
+                                minimumPayment: minimumPayment > 0
+                                    ? minimumPayment
+                                    : null,
+                                interestRateAnnual: interest,
+                                isActive: isActive,
+                              );
+                            } else {
+                              error = await controller.update(
+                                id: item.id,
+                                name: name,
+                                type: type,
+                                linkedAccountId: linkedAccountId,
+                                paymentAccountId: paymentAccountId,
+                                currency: currencyController.text.trim().isEmpty
+                                    ? "BRL"
+                                    : currencyController.text.trim(),
+                                dueDay: dueDay,
+                                minimumPayment: minimumPayment > 0
+                                    ? minimumPayment
+                                    : null,
+                                interestRateAnnual: interest,
+                                isActive: isActive,
+                              );
+                            }
+
+                            if (context.mounted) {
+                              setState(() => isSubmitting = false);
+                              if (error != null) {
+                                showStandardSnackbar(context, error);
+                              } else {
+                                Navigator.of(context).pop(); // Success
+                              }
+                            }
+                          },
                   ),
                 ],
               ),
@@ -296,54 +389,6 @@ class DebtsScreen extends StatelessWidget {
         );
       },
     );
-
-    if (result != true) return;
-
-    final name = nameController.text.trim();
-    if (name.isEmpty) {
-      if (context.mounted) {
-        showStandardSnackbar(context, "Nome obrigatorio");
-      }
-      return;
-    }
-
-    final dueDay = int.tryParse(dueDayController.text.trim());
-    final minimumPayment = parseMoney(minimumPaymentController.text.trim());
-    final interest = double.tryParse(interestController.text.trim());
-
-    String? error;
-    if (item == null) {
-      error = await controller.create(
-        name: name,
-        type: type,
-        linkedAccountId: linkedAccountId,
-        currency: currencyController.text.trim().isEmpty
-            ? "BRL"
-            : currencyController.text.trim(),
-        dueDay: dueDay,
-        minimumPayment: minimumPayment > 0 ? minimumPayment : null,
-        interestRateAnnual: interest,
-        isActive: isActive,
-      );
-    } else {
-      error = await controller.update(
-        id: item.id,
-        name: name,
-        type: type,
-        linkedAccountId: linkedAccountId,
-        currency: currencyController.text.trim().isEmpty
-            ? "BRL"
-            : currencyController.text.trim(),
-        dueDay: dueDay,
-        minimumPayment: minimumPayment > 0 ? minimumPayment : null,
-        interestRateAnnual: interest,
-        isActive: isActive,
-      );
-    }
-
-    if (error != null && context.mounted) {
-      showStandardSnackbar(context, error);
-    }
   }
 
   Future<void> _openDebtTransactionForm(
@@ -357,7 +402,7 @@ class DebtsScreen extends StatelessWidget {
     final amountController = TextEditingController();
     final noteController = TextEditingController();
     DateTime date = DateTime.now();
-    String? accountId = lastAccountId;
+    String? accountId = debt.paymentAccountId ?? lastAccountId;
     String? categoryId;
 
     final result = await showModalBottomSheet<bool>(
@@ -371,9 +416,16 @@ class DebtsScreen extends StatelessWidget {
             final accountItems = accountsState.items
                 .map((acc) => PickerItem(id: acc.id, label: acc.name))
                 .toList();
+
+            // Validate pre-selected accountId still exists
+            if (accountId != null &&
+                !accountItems.any((i) => i.id == accountId)) {
+              accountId = null;
+            }
             if (accountId == null && accountItems.isNotEmpty) {
               accountId = accountItems.first.id;
             }
+
             final categoriesState = context.watch<CategoriesController>().state;
             final categoryItems = categoriesState.items
                 .where((cat) => cat.kind == "expense")
@@ -435,7 +487,7 @@ class DebtsScreen extends StatelessWidget {
                     const Text("Voce nao tem contas ativas.")
                   else
                     AccountPicker(
-                      label: "Conta",
+                      label: "Conta de onde sai o pagamento",
                       items: accountItems,
                       value: accountId,
                       onSelected: (item) => setState(() => accountId = item.id),
@@ -467,24 +519,19 @@ class DebtsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   Builder(
                     builder: (context) {
-                      final isCCCharge =
-                          type == "charge" && debt.type == "credit_card";
+                      final requiresAccount = type == "payment";
                       final requiresCategory =
-                          isCCCharge ||
                           type == "charge" ||
                           (type == "payment" && debt.type != "credit_card");
 
                       bool isValid = true;
-                      if (isCCCharge) {
-                        // Account implied
-                        if (categoryId == null) isValid = false;
-                      } else {
-                        // Account required
-                        if (accountItems.isEmpty) isValid = false;
-                        // Category logic
-                        if (requiresCategory && categoryId == null)
-                          isValid = false;
-                      }
+
+                      // Check Account
+                      if (requiresAccount && accountId == null) isValid = false;
+
+                      // Check Category
+                      if (requiresCategory && categoryId == null)
+                        isValid = false;
 
                       return PrimaryButton(
                         label: "Salvar",

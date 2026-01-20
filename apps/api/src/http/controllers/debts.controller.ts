@@ -1,15 +1,9 @@
-import type { DebtMongoRepository } from "../../repositories/debt_repository"
-import { Debt } from "../../models/debt"
-import type { DebtPrimitives } from "../../models/debt"
-import type { DebtsService } from "../../services/debts_service"
-import { buildDebtsCriteria } from "../criteria/debts.criteria"
 import {
   Body,
   Controller,
   Delete,
   Get,
   Param,
-  Patch,
   Post,
   Put,
   Query,
@@ -19,14 +13,19 @@ import {
   type ServerResponse,
 } from "bun-platform-kit"
 import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
+import type { DebtPrimitives } from "../../models/debt"
+import { Debt } from "../../models/debt"
+import type { DebtMongoRepository } from "../../repositories/debt_repository"
+import type { DebtsService } from "../../services/debts_service"
+import { buildDebtsCriteria } from "../criteria/debts.criteria"
+import { AuthMiddleware } from "../middleware/auth.middleware"
 import {
   validateDebtPayload,
   type DebtCreatePayload,
   type DebtUpdatePayload,
 } from "../validation/debts.validation"
-import { AuthMiddleware } from "../middleware/auth.middleware"
-import { Deps } from "../../bootstrap/deps"
 
 @Controller("/debts")
 export class DebtsController {
@@ -37,6 +36,27 @@ export class DebtsController {
     const deps = Deps.getInstance()
     this.repo = deps.debtRepo
     this.service = deps.debtsService
+  }
+
+  @Get("/overview")
+  @Use([AuthMiddleware])
+  async overview(@Req() req: AuthenticatedRequest, @Res() res: ServerResponse) {
+    try {
+      if (!req.userId) {
+        return HttpResponse(res, {
+          status: 401,
+          error: "Unauthorized: Missing Main User ID",
+        })
+      }
+      const result = await this.service.overview(req.userId)
+      return HttpResponse(res, result)
+    } catch (e) {
+      console.error("Error in DebtsController.overview:", e)
+      return HttpResponse(res, {
+        status: 500,
+        error: "Internal server error",
+      })
+    }
   }
 
   @Get("/")
@@ -70,6 +90,7 @@ export class DebtsController {
   }
 
   @Get("/history/:id")
+  @Use([AuthMiddleware])
   async history(
     @Param("id") id: string,
     @Query() query: Record<string, string | undefined>,
@@ -135,7 +156,20 @@ export class DebtsController {
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const result = await this.service.remove(req.userId ?? "", id)
-    return HttpResponse(res, result)
+    console.log("ANGELLLL")
+
+    try {
+      console.log("DebtsController.remove called with id:", id)
+      if (!req.userId) {
+        return HttpResponse(res, { status: 401, error: "Unauthorized" })
+      }
+      return HttpResponse(res, await this.service.remove(req.userId, id))
+    } catch (e: any) {
+      console.error("DebtsController.remove error:", e)
+      return HttpResponse(res, {
+        status: 400,
+        error: `Bad Request: ${e.message || e}`,
+      })
+    }
   }
 }

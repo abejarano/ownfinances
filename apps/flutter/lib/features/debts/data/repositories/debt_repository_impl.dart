@@ -1,6 +1,7 @@
 import "package:ownfinances/features/debts/data/datasources/debt_remote_data_source.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
+import "package:ownfinances/features/debts/domain/entities/debt_overview.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_transaction.dart";
 import "package:ownfinances/features/debts/domain/repositories/debt_repository.dart";
 
@@ -23,6 +24,7 @@ class DebtRepositoryImpl implements DebtRepository {
     required String name,
     required String type,
     String? linkedAccountId,
+    String? paymentAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -33,13 +35,14 @@ class DebtRepositoryImpl implements DebtRepository {
       "name": name,
       "type": type,
       "linkedAccountId": linkedAccountId,
+      "paymentAccountId": paymentAccountId,
       "currency": currency,
       "dueDay": dueDay,
       "minimumPayment": minimumPayment,
       "interestRateAnnual": interestRateAnnual,
       "isActive": isActive,
     });
-    return Debt.fromJson(payload);
+    return Debt.fromJson(payload["debt"] as Map<String, dynamic>);
   }
 
   @override
@@ -48,6 +51,7 @@ class DebtRepositoryImpl implements DebtRepository {
     String? name,
     String? type,
     String? linkedAccountId,
+    String? paymentAccountId,
     String? currency,
     int? dueDay,
     double? minimumPayment,
@@ -58,13 +62,14 @@ class DebtRepositoryImpl implements DebtRepository {
       "name": name,
       "type": type,
       "linkedAccountId": linkedAccountId,
+      "paymentAccountId": paymentAccountId,
       "currency": currency,
       "dueDay": dueDay,
       "minimumPayment": minimumPayment,
       "interestRateAnnual": interestRateAnnual,
       "isActive": isActive,
     });
-    return Debt.fromJson(payload);
+    return Debt.fromJson(payload["debt"] as Map<String, dynamic>);
   }
 
   @override
@@ -85,5 +90,11 @@ class DebtRepositoryImpl implements DebtRepository {
     return results
         .map((item) => DebtTransaction.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<DebtOverview> getOverview() async {
+    final payload = await remote.getOverview();
+    return DebtOverview.fromJson(payload);
   }
 }

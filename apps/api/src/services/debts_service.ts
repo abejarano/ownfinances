@@ -1,4 +1,11 @@
-import type { Paginate } from "@abejarano/ts-mongodb-criteria"
+import {
+  Criteria,
+  Filters,
+  Operator,
+  Order,
+  type FilterInputValue,
+  type Paginate,
+} from "@abejarano/ts-mongodb-criteria"
 import type { Result } from "../bootstrap/response"
 import { buildDebtTransactionsCriteria } from "../http/criteria/debt_transactions.criteria"
 import type {
@@ -216,6 +223,157 @@ export class DebtsService {
       value: {
         ...result,
         results: result.results.map((item) => item),
+      },
+      status: 200,
+    }
+  }
+
+  async overview(
+    userId: string
+  ): Promise<
+    Result<{
+      totalAmountDue: number
+      totalPaidThisMonth: number
+      nextDue: {
+        debtId: string
+        name: string
+        date: Date
+        amountDue: number
+        isOverdue: boolean
+      } | null
+      flags: { hasOverdue: boolean }
+      counts: { activeDebts: number }
+    }>
+  > {
+    // Build criteria for active debts
+    // Build criteria for active debts
+    const filters = [
+      new Map<string, FilterInputValue>([
+        ["field", "userId"],
+        ["operator", Operator.EQUAL],
+        ["value", userId],
+      ]),
+      new Map<string, FilterInputValue>([
+        ["field", "isActive"],
+        ["operator", Operator.EQUAL],
+        ["value", true],
+      ]),
+    ]
+    // @ts-ignore
+    const criteria = new Criteria(Filters.fromValues(filters), Order.none())
+
+    const allDebts = await this.debts.list<DebtPrimitives>(criteria)
+    const activeDebts = allDebts.results.map((d) =>
+      Debt.fromPrimitives(d).toPrimitives()
+    )
+
+    if (activeDebts.length === 0) {
+      return {
+        value: {
+          totalAmountDue: 0,
+          totalPaidThisMonth: 0,
+          nextDue: null,
+          flags: { hasOverdue: false },
+          counts: { activeDebts: 0 },
+        },
+        status: 200,
+      }
+    }
+
+    const now = new Date()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const monthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    )
+
+    const debtsData = await Promise.all(
+      activeDebts.map(async (debt) => {
+        const totals = await this.debtTransactions.sumByDebt(userId, {
+          debtId: debt.debtId,
+        })
+        let balance = 0
+        totals.forEach((t) => {
+          if (t.type === DebtTransactionType.Payment) balance -= t.total
+          else balance += t.total
+        })
+        const amountDue = Math.max(0, balance)
+
+        const paymentsRows = await this.debtTransactions.sumByDebt(userId, {
+          debtId: debt.debtId,
+          start: monthStart,
+          end: monthEnd,
+          types: [DebtTransactionType.Payment],
+        })
+        const paidMonth = paymentsRows.reduce((acc, r) => acc + r.total, 0)
+
+        const nextDate = this.nextDueDate(debt.dueDay, now)
+
+        return {
+          debt,
+          amountDue,
+          paidMonth,
+          nextDate,
+          balance,
+        }
+      })
+    )
+
+    const totalAmountDue = debtsData.reduce((acc, d) => acc + d.amountDue, 0)
+    const totalPaidThisMonth = debtsData.reduce(
+      (acc, d) => acc + d.paidMonth,
+      0
+    )
+
+    const todayStart = startOfDay(now)
+    const overdueDebts = debtsData.filter(
+      (d) => d.nextDate && d.nextDate < todayStart && d.amountDue > 0
+    )
+    const futureDebts = debtsData.filter(
+      (d) => d.nextDate && d.nextDate >= todayStart && d.amountDue > 0
+    )
+
+    let nextDueItem = null
+    const hasOverdue = overdueDebts.length > 0
+
+    if (hasOverdue) {
+      overdueDebts.sort((a, b) => a.nextDate!.getTime() - b.nextDate!.getTime())
+      const selected = overdueDebts[0]
+      if (selected) {
+        nextDueItem = {
+          debtId: selected.debt.id ?? "",
+          name: selected.debt.name,
+          date: selected.nextDate!,
+          amountDue: selected.amountDue,
+          isOverdue: true,
+        }
+      }
+    } else if (futureDebts.length > 0) {
+      futureDebts.sort((a, b) => a.nextDate!.getTime() - b.nextDate!.getTime())
+      const selected = futureDebts[0]
+      if (selected) {
+        nextDueItem = {
+          debtId: selected.debt.id ?? "",
+          name: selected.debt.name,
+          date: selected.nextDate!,
+          amountDue: selected.amountDue,
+          isOverdue: false,
+        }
+      }
+    }
+
+    return {
+      value: {
+        totalAmountDue,
+        totalPaidThisMonth,
+        nextDue: nextDueItem,
+        flags: { hasOverdue },
+        counts: { activeDebts: activeDebts.length },
       },
       status: 200,
     }

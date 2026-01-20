@@ -59,99 +59,88 @@ export class DebtTransactionsService {
     await this.debtTransactions.upsert(tx)
 
     // Crear transacción relacionada según el tipo
+    // Crear transacción relacionada según el tipo
     if (payload.type === DebtTransactionType.Charge) {
+      // 1. COMPRA (CHARGE): Aumenta deuda
       if (debtPrimitives.type === "credit_card") {
-        // Compra con TC: Gasto desde la cuenta vinculada
+        // --- CASO TC: Gasto desde la cuenta de la tarjeta (linkedAccountId) ---
         if (!debtPrimitives.linkedAccountId) {
-          return {
-            error:
-              "Este cartão precisa estar vinculado a uma conta do tipo Cartão.",
-            status: 400,
-          }
+            return {
+              error: "Este cartão deve estar vinculado a uma conta do tipo Cartão.",
+              status: 400,
+            }
         }
         if (!payload.categoryId) {
-          return { error: "Falta escolher uma categoria", status: 400 }
+          return { error: "Compra no cartão exige categoria.", status: 400 }
         }
 
         const transaction = Transaction.create({
           userId,
-          type: TransactionType.Expense,
+          type: TransactionType.Expense, // Es un gasto REAL
           date,
           amount: payload.amount!,
           currency,
           categoryId: payload.categoryId,
-          fromAccountId: debtPrimitives.linkedAccountId, // Sale del la cuenta tarjeta
+          fromAccountId: debtPrimitives.linkedAccountId, // Sale de la Tarjeta
           toAccountId: null,
           note: payload.note ?? `Compra em ${debtPrimitives.name}`,
-          status: TransactionStatus.Cleared, // Default cleared
-        })
-        await this.transactions.upsert(transaction)
-      } else {
-        // Charge for Loan/Other (increase principal? fee?)
-        // Maintain existing behavior but ensure category if needed?
-        // Current logic required category for Charge.
-        if (payload.categoryId) {
-          const transaction = Transaction.create({
-            userId,
-            type: TransactionType.Expense,
-            date,
-            amount: payload.amount!,
-            currency,
-            categoryId: payload.categoryId,
-            fromAccountId: null, // Unknown source for abstract debt charge
-            toAccountId: null,
-            note: payload.note ?? `Compra em ${debtPrimitives.name}`,
-            status: TransactionStatus.Cleared,
-          })
-          await this.transactions.upsert(transaction)
-        }
-      }
-    } else if (
-      payload.type === DebtTransactionType.Payment &&
-      payload.accountId
-    ) {
-      if (debtPrimitives.type === "credit_card") {
-        // Pago de tarjeta es una Transferencia
-        if (!debtPrimitives.linkedAccountId) {
-          // Esto no debería pasar si la validación funciona, pero por seguridad:
-          return {
-            error:
-              "Este cartão precisa estar vinculado a uma conta do tipo Cartão.",
-            status: 400,
-          }
-        }
-        const transaction = Transaction.create({
-          userId,
-          type: TransactionType.Transfer,
-          date,
-          amount: payload.amount!,
-          currency,
-          categoryId: null,
-          fromAccountId: payload.accountId,
-          toAccountId: debtPrimitives.linkedAccountId,
-          note: payload.note ?? `Pagamento do cartão ${debtPrimitives.name}`,
           status: TransactionStatus.Cleared,
         })
         await this.transactions.upsert(transaction)
       } else {
-        // Pago de préstamo es un Gasto
-        if (!payload.categoryId) {
-          return { error: "Falta escolher uma categoria", status: 400 }
-        }
-        const transaction = Transaction.create({
-          userId,
-          type: TransactionType.Expense,
-          date,
-          amount: payload.amount!,
-          currency,
-          categoryId: payload.categoryId,
-          fromAccountId: payload.accountId,
-          toAccountId: null,
-          note: payload.note ?? `Parcela do empréstimo ${debtPrimitives.name}`,
-          status: TransactionStatus.Cleared,
-        })
-        await this.transactions.upsert(transaction)
+        // --- CASO PRESTAMO: Aumenta deuda sin mover dinero real o es fee ---
+        // (Mantenemos comportamiento actual: NO crea transacción real por defecto,
+        // o si queremos que refleje algo, sería un Expense sin cuenta?
+        // El usuario dijo: "Crea también debt_transactions... para aumentar balance".
+        // No especificó que Charge en Loan cree Transaction bancaria.
+        // Asumimos que Charge en Loan es solo "Sumar Deuda".)
       }
+    } else if (payload.type === DebtTransactionType.Payment && payload.accountId) {
+       // 2. PAGO (PAYMENT): Disminuye deuda
+       if (debtPrimitives.type === "credit_card") {
+         // --- CASO TC: Transferencia desde Banco (paymentAccountId) a Tarjeta (linkedAccountId) ---
+         if (!debtPrimitives.linkedAccountId) {
+            return {
+              error: "Este cartão deve estar vinculado a uma conta do tipo Cartão para receber pagamentos.",
+              status: 400,
+            }
+         }
+         // No requiere categoría porque es Transferencia
+
+         const transaction = Transaction.create({
+           userId,
+           type: TransactionType.Transfer,
+           date,
+           amount: payload.amount!,
+           currency,
+           categoryId: null, // Transferencias no llevan categoría
+           fromAccountId: payload.accountId, // Sale del Banco
+           toAccountId: debtPrimitives.linkedAccountId, // Entra a la Tarjeta (bajando su deuda neta)
+           note: payload.note ?? `Pagamento fatura ${debtPrimitives.name}`,
+           status: TransactionStatus.Cleared,
+         })
+         await this.transactions.upsert(transaction)
+
+       } else {
+         // --- CASO PRESTAMO: Gasto desde Banco (paymentAccountId) ---
+         if (!payload.categoryId) {
+           return { error: "Pagamento de empréstimo requer categoria.", status: 400 }
+         }
+
+         const transaction = Transaction.create({
+           userId,
+           type: TransactionType.Expense,
+           date,
+           amount: payload.amount!,
+           currency,
+           categoryId: payload.categoryId,
+           fromAccountId: payload.accountId, // Sale del Banco
+           toAccountId: null,
+           note: payload.note ?? `Pagamento empréstimo ${debtPrimitives.name}`,
+           status: TransactionStatus.Cleared,
+         })
+         await this.transactions.upsert(transaction)
+       }
     }
 
     return { value: { debtTransaction: tx.toPrimitives() }, status: 201 }

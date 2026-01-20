@@ -137,6 +137,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: const Text("Metas"),
           onTap: () => context.push("/goals"),
         ),
+        ListTile(
+          title: const Text("Recorrências"),
+          onTap: () => context.push("/recurring"),
+        ),
 
         const SizedBox(height: AppSpacing.md),
         ListTile(

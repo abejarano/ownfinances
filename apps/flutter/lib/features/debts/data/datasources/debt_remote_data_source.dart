@@ -37,4 +37,9 @@ class DebtRemoteDataSource {
     final response = await apiClient.get("/debts/$id/history", query: query);
     return response as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> getOverview() async {
+    final response = await apiClient.get("/debts/overview");
+    return response as Map<String, dynamic>;
+  }
 }
