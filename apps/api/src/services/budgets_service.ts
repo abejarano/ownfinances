@@ -73,4 +73,43 @@ export class BudgetsService {
     }
     return { ok: true }
   }
+
+  async removeLine(
+    userId: string,
+    periodType: string,
+    startDate: Date,
+    endDate: Date,
+    categoryId: string
+  ): Promise<Result<BudgetPrimitives>> {
+    const existing = await this.budgets.one({
+      userId,
+      periodType,
+      startDate,
+      endDate,
+    })
+
+    if (!existing) {
+      return { error: "Presupuesto no encontrado para este periodo", status: 404 }
+    }
+
+    const primitives = existing.toPrimitives()
+    const newLines = primitives.lines.filter(
+      (line) => line.categoryId !== categoryId
+    )
+
+    if (newLines.length === primitives.lines.length) {
+      // Category not found in lines, treating as success (idempotent) or error?
+      // Ticket says "noop (200 ok)".
+      return { value: primitives, status: 200 }
+    }
+
+    const updated = Budget.fromPrimitives({
+      ...primitives,
+      lines: newLines,
+      updatedAt: new Date(),
+    })
+
+    await this.budgets.upsert(updated)
+    return { value: updated.toPrimitives(), status: 200 }
+  }
 }

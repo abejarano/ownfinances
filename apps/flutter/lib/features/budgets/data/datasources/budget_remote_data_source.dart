@@ -41,4 +41,16 @@ class BudgetRemoteDataSource {
     });
     return response as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> removeLine({
+    required String period,
+    required DateTime date,
+    required String categoryId,
+  }) async {
+    final response = await apiClient.delete(
+      "/budgets/current/lines/$categoryId",
+      query: {"period": period, "date": date.toIso8601String()},
+    );
+    return response as Map<String, dynamic>;
+  }
 }

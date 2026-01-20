@@ -654,65 +654,6 @@ class DebtsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _openHistoryDialog(
-    BuildContext context,
-    DebtsController controller,
-    String debtId,
-  ) async {
-    final now = DateTime.now();
-    final month = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-
-    final history = await controller.loadHistory(debtId, month: month);
-
-    if (!context.mounted) return;
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Historial do mês"),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: history.isEmpty
-              ? const Text("Nenhum movimento este mês.")
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    final tx = history[index];
-                    final isCharge = tx.type == "charge";
-                    final isPayment = tx.type == "payment";
-                    return ListTile(
-                      title: Text(
-                        isCharge
-                            ? "Compra"
-                            : isPayment
-                            ? "Pagamento"
-                            : tx.type,
-                      ),
-                      subtitle: Text(
-                        "${formatDate(tx.date)}${tx.note != null ? ' • ${tx.note}' : ''}",
-                      ),
-                      trailing: Text(
-                        "${isPayment ? '-' : '+'}${formatMoney(tx.amount)}",
-                        style: TextStyle(
-                          color: isPayment ? Colors.red : Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Fechar"),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _createQuickAccount(
     BuildContext context,
     String type,

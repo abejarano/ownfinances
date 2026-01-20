@@ -123,80 +123,131 @@ class _BudgetScreenState extends State<BudgetScreen> {
         const SizedBox(height: AppSpacing.lg),
         if (budgetState.isLoading) const LinearProgressIndicator(),
         const SizedBox(height: AppSpacing.sm),
-        ...categoriesState.items.map((category) {
-          final controller = _controllers.putIfAbsent(category.id, () {
-            final initial = budgetState.plannedByCategory[category.id] ?? 0;
-            return TextEditingController(
-              text: initial > 0 ? formatMoney(initial) : "",
-            );
-          });
-          final planned = budgetState.plannedByCategory[category.id] ?? 0;
-          if (planned > 0 && controller.text.isEmpty) {
-            controller.text = formatMoney(planned);
-          }
-          final line = summaryMap[category.id];
-          final actual = line?.actual ?? 0;
-          final remaining = line?.remaining ?? 0;
-          final progressPct = line?.progressPct ?? 0;
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(category.name),
-                  const SizedBox(height: AppSpacing.xs),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: MoneyInput(
-                          label: "Planejado",
-                          controller: controller,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("Atual ${formatMoney(actual)}"),
-                          Text(
-                            "Restante ${formatMoney(remaining)}",
-                            style: const TextStyle(color: AppColors.muted),
-                          ),
-                          Text(
-                            "Progresso ${progressPct.toStringAsFixed(0)}%",
-                            style: const TextStyle(color: AppColors.muted),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-        const SizedBox(height: AppSpacing.md),
-        PrimaryButton(
-          label: "Salvar orcamento",
-          onPressed: () async {
-            for (final entry in _controllers.entries) {
-              context.read<BudgetController>().updatePlanned(
-                entry.key,
-                parseMoney(entry.value.text),
+        if (budgetState.budget == null && !budgetState.isLoading)
+          _EmptyBudgetState(
+            month: formatMonth(date),
+            onCreate: () => _createBudget(context, period, date),
+          )
+        else
+          ...categoriesState.items.map((category) {
+            // Only show categories that are actually in the budget lines
+            // OR if we are in "creation mode" (but here we assume budget exists)
+            // Wait, the ticket says "Remove from budget". So we should only show items that are IN the budget?
+            // "Quando budget != null: Mostrar lista de categorías del presupuesto del mes."
+            // But currently it iterates ALL categories.
+            // If I remove a category, I need it to disappear.
+            // So I should filter categoriesState.items by what is in budgetState.plannedByCategory?
+            // Or just iterate budgetState.plannedByCategory?
+            // But I need the Category Name, which is in categoriesState. Or I need to join them.
+
+            // Current implementation:
+            // ...categoriesState.items.map((category) { ... })
+            // This shows ALL categories even if not in budget.
+            // Ticket says: "Cada categoría debe permitir: “Remover do orçamento deste mês” ... Al remover: desaparece de la lista"
+
+            // So if budget != null, we should ONLY show categories that have a planned amount (or are implicitly in the budget).
+            // But `plannedByCategory` has the amounts.
+
+            final planned = budgetState.plannedByCategory[category.id];
+            if (planned == null) return const SizedBox.shrink();
+
+            final controller = _controllers.putIfAbsent(category.id, () {
+              return TextEditingController(
+                text: planned > 0 ? formatMoney(planned) : "",
               );
+            });
+            // Update controller if value changed externally (e.g. reload)
+            if (planned != parseMoney(controller.text)) {
+              controller.text = planned > 0 ? formatMoney(planned) : "";
             }
-            final error = await context.read<BudgetController>().save(period);
-            if (error != null && context.mounted) {
-              showStandardSnackbar(context, error);
-              return;
-            }
-            await context.read<ReportsController>().load();
-            if (context.mounted) {
-              showStandardSnackbar(context, "Orcamento salvo");
-            }
-          },
-        ),
+
+            final line = summaryMap[category.id];
+            final actual = line?.actual ?? 0;
+            final remaining = line?.remaining ?? 0;
+            final progressPct = line?.progressPct ?? 0;
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(category.name),
+                        PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == 'remove') {
+                              _removeCategory(
+                                context,
+                                period,
+                                date,
+                                category.id,
+                              );
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'remove',
+                              child: Text('Remover do mês'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: MoneyInput(
+                            label: "Planejado",
+                            controller: controller,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text("Atual ${formatMoney(actual)}"),
+                            Text(
+                              "Restante ${formatMoney(remaining)}",
+                              style: const TextStyle(color: AppColors.muted),
+                            ),
+                            Text(
+                              "Progresso ${progressPct.toStringAsFixed(0)}%",
+                              style: const TextStyle(color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        const SizedBox(height: AppSpacing.md),
+        if (budgetState.budget != null)
+          PrimaryButton(
+            label: "Salvar orcamento",
+            onPressed: () async {
+              for (final entry in _controllers.entries) {
+                context.read<BudgetController>().updatePlanned(
+                  entry.key,
+                  parseMoney(entry.value.text),
+                );
+              }
+              final error = await context.read<BudgetController>().save(period);
+              if (error != null && context.mounted) {
+                showStandardSnackbar(context, error);
+                return;
+              }
+              await context.read<ReportsController>().load();
+              if (context.mounted) {
+                showStandardSnackbar(context, "Orcamento salvo");
+              }
+            },
+          ),
       ],
     );
   }
@@ -219,5 +270,88 @@ class _BudgetScreenState extends State<BudgetScreen> {
         );
       }
     }
+  }
+
+  Future<void> _createBudget(
+    BuildContext context,
+    String period,
+    DateTime date,
+  ) async {
+    final categories = context.read<CategoriesController>().state.items;
+
+    // Initialize with 0 for all categories
+    for (final cat in categories) {
+      context.read<BudgetController>().updatePlanned(cat.id, 0.0);
+    }
+
+    final error = await context.read<BudgetController>().save(period);
+    if (error != null && context.mounted) {
+      showStandardSnackbar(context, error);
+    }
+  }
+
+  Future<void> _removeCategory(
+    BuildContext context,
+    String period,
+    DateTime date,
+    String categoryId,
+  ) async {
+    final error = await context.read<BudgetController>().removeCategory(
+      period,
+      date,
+      categoryId,
+    );
+    if (error != null && context.mounted) {
+      showStandardSnackbar(context, error);
+    } else if (context.mounted) {
+      showStandardSnackbar(
+        context,
+        "Categoria removida do orçamento deste mês",
+      );
+    }
+  }
+}
+
+class _EmptyBudgetState extends StatelessWidget {
+  final String month;
+  final VoidCallback onCreate;
+
+  const _EmptyBudgetState({
+    super.key,
+    required this.month,
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.xl,
+          horizontal: AppSpacing.md,
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.money_off, size: 64, color: AppColors.muted),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              "Sem orçamento para este mês",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              "Crie um orçamento para planejar seus gastos por categoria.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            PrimaryButton(
+              label: "Criar orçamento deste mês",
+              onPressed: onCreate,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

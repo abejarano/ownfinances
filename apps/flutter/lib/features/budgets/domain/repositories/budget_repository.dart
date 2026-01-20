@@ -14,4 +14,10 @@ abstract class BudgetRepository {
     required DateTime endDate,
     required List<BudgetLine> lines,
   });
+
+  Future<Budget> removeLine({
+    required String period,
+    required DateTime date,
+    required String categoryId,
+  });
 }

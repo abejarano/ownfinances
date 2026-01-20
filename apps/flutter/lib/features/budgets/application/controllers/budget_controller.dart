@@ -12,11 +12,20 @@ class BudgetController extends ChangeNotifier {
 
   BudgetState get state => _state;
 
+  DateTime? _loadingDate; // Guard for race conditions
+
   Future<void> load({required String period, required DateTime date}) async {
-    _state = _state.copyWith(isLoading: true, error: null);
+    _loadingDate = date;
+
+    // Clear state completely before loading to prevent stale data
+    _state = BudgetState.initial.copyWith(isLoading: true);
     notifyListeners();
     try {
       final current = await repository.current(period: period, date: date);
+
+      // If another load started for a different date, ignore this result
+      if (_loadingDate != date) return;
+
       final planned = <String, double>{};
       if (current.budget != null) {
         for (final line in current.budget!.lines) {
@@ -59,6 +68,32 @@ class BudgetController extends ChangeNotifier {
         lines: lines,
       );
       _state = _state.copyWith(budget: saved);
+      notifyListeners();
+      return null;
+    } catch (error) {
+      return _message(error);
+    }
+  }
+
+  Future<String?> removeCategory(
+    String period,
+    DateTime date,
+    String categoryId,
+  ) async {
+    try {
+      final updatedBudget = await repository.removeLine(
+        period: period,
+        date: date,
+        categoryId: categoryId,
+      );
+
+      final nextPlanned = Map<String, double>.from(_state.plannedByCategory);
+      nextPlanned.remove(categoryId);
+
+      _state = _state.copyWith(
+        budget: updatedBudget,
+        plannedByCategory: nextPlanned,
+      );
       notifyListeners();
       return null;
     } catch (error) {

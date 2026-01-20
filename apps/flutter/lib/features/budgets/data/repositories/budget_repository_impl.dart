@@ -46,4 +46,18 @@ class BudgetRepositoryImpl implements BudgetRepository {
         : await remote.update(id, lines: lines);
     return Budget.fromJson(payload);
   }
+
+  @override
+  Future<Budget> removeLine({
+    required String period,
+    required DateTime date,
+    required String categoryId,
+  }) async {
+    final payload = await remote.removeLine(
+      period: period,
+      date: date,
+      categoryId: categoryId,
+    );
+    return Budget.fromJson(payload);
+  }
 }

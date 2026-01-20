@@ -12,6 +12,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -47,7 +48,7 @@ export class BudgetsController {
     @Res() res: ServerResponse
   ) {
     try {
-      const criteria = buildBudgetsCriteria(query, req.userId)
+      const criteria = buildBudgetsCriteria(query, req.userId ?? "")
       const result = await this.repo.list<BudgetPrimitives>(criteria)
 
       return HttpResponse(res, { value: result, status: 200 })
@@ -123,6 +124,7 @@ export class BudgetsController {
     return HttpResponse(res, { value: budget.toPrimitives(), status: 200 })
   }
 
+  @Put("/:id")
   @Patch("/:id")
   @Use([AuthMiddleware, validateBudgetPayload(false)])
   async update(
@@ -153,5 +155,35 @@ export class BudgetsController {
     }
 
     return HttpResponse(res, { value: { ok: true }, status: 200 })
+  }
+
+  @Delete("/current/lines/:categoryId")
+  @Use([AuthMiddleware])
+  async removeLine(
+    @Param("categoryId") categoryId: string,
+    @Query() query: Record<string, string | undefined>,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const period = query.period as BudgetPeriodType | undefined
+    const date = query.date ? new Date(query.date) : new Date()
+
+    if (!period) {
+      return HttpResponse(res, { error: "Falta el periodo", status: 400 })
+    }
+    if (Number.isNaN(date.getTime())) {
+      return HttpResponse(res, { error: "Fecha invalida", status: 400 })
+    }
+
+    const range = computePeriodRange(period, date)
+    const response = await this.service.removeLine(
+      req.userId ?? "",
+      period,
+      range.start,
+      range.end,
+      categoryId
+    )
+
+    return HttpResponse(res, response)
   }
 }
