@@ -277,14 +277,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
     String period,
     DateTime date,
   ) async {
-    final categories = context.read<CategoriesController>().state.items;
-
-    // Initialize with 0 for all categories
-    for (final cat in categories) {
-      context.read<BudgetController>().updatePlanned(cat.id, 0.0);
-    }
-
-    final error = await context.read<BudgetController>().save(period);
+    final error = await context.read<BudgetController>().createFromPrevious(
+      period,
+      date,
+    );
     if (error != null && context.mounted) {
       showStandardSnackbar(context, error);
     }
