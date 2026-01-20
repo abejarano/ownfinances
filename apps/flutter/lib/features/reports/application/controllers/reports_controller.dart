@@ -64,9 +64,26 @@ class ReportsController extends ChangeNotifier {
   }
 
   Future<void> setDate(DateTime date) async {
+    if (_state.date == date) return;
     _state = _state.copyWith(date: date);
     notifyListeners();
     await load();
+  }
+
+  Future<void> setParams({String? period, DateTime? date}) async {
+    var changed = false;
+    if (period != null && period != _state.period) {
+      _state = _state.copyWith(period: period);
+      changed = true;
+    }
+    if (date != null && date != _state.date) {
+      _state = _state.copyWith(date: date);
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+      await load();
+    }
   }
 
   String _message(Object error) {

@@ -10,6 +10,7 @@ import "package:ownfinances/features/budgets/application/controllers/budget_cont
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
+import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -29,6 +30,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
       _reports = context.read<ReportsController>();
       _reports?.addListener(_onReportsChange);
       final reportsState = _reports!.state;
+      _lastPeriod = reportsState.period;
+      _lastDate = reportsState.date;
+
       context.read<BudgetController>().load(
         period: reportsState.period,
         date: reportsState.date,
@@ -45,14 +49,32 @@ class _BudgetScreenState extends State<BudgetScreen> {
     super.dispose();
   }
 
+  DateTime? _lastDate;
+  String? _lastPeriod;
+
   void _onReportsChange() {
     final reports = _reports;
     if (reports == null) return;
     final reportsState = reports.state;
+
+    // Only load if period or date ACTUALLY changed
+    if (reportsState.period == _lastPeriod &&
+        isSameMonth(reportsState.date, _lastDate)) {
+      return;
+    }
+
+    _lastPeriod = reportsState.period;
+    _lastDate = reportsState.date;
+
     context.read<BudgetController>().load(
       period: reportsState.period,
       date: reportsState.date,
     );
+  }
+
+  bool isSameMonth(DateTime a, DateTime? b) {
+    if (b == null) return false;
+    return a.year == b.year && a.month == b.month;
   }
 
   @override
@@ -72,36 +94,15 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Orcamento", style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                value: period,
-                decoration: const InputDecoration(labelText: "Periodo"),
-                items: const [
-                  DropdownMenuItem(value: "monthly", child: Text("Mensal")),
-                  DropdownMenuItem(
-                    value: "quarterly",
-                    child: Text("Trimestral"),
-                  ),
-                  DropdownMenuItem(
-                    value: "semiannual",
-                    child: Text("Semestral"),
-                  ),
-                  DropdownMenuItem(value: "annual", child: Text("Anual")),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    context.read<ReportsController>().setPeriod(value);
-                  }
-                },
-              ),
+            Text(
+              "Orçamento do mês",
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(width: AppSpacing.sm),
             OutlinedButton.icon(
-              onPressed: () => _pickDate(context, date),
+              onPressed: () => _pickMonth(context, date),
               icon: const Icon(Icons.calendar_today),
               label: Text(formatMonth(date)),
             ),
@@ -116,8 +117,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          "Plano receitas: ${formatMoney(summary?.totals.plannedIncome ?? 0)} • Plano gastos: ${formatMoney(summary?.totals.plannedExpense ?? 0)} • Plano liquido: ${formatMoney(summary?.totals.plannedNet ?? 0)}",
-          style: const TextStyle(color: AppColors.muted),
+          "Receitas planejadas: ${formatMoney(summary?.totals.plannedIncome ?? 0)} • Gastos planejados: ${formatMoney(summary?.totals.plannedExpense ?? 0)} • Saldo planejado: ${formatMoney(summary?.totals.plannedNet ?? 0)}",
+          style: const TextStyle(color: AppColors.muted, fontSize: 13),
         ),
         const SizedBox(height: AppSpacing.lg),
         if (budgetState.isLoading) const LinearProgressIndicator(),
@@ -200,15 +201,23 @@ class _BudgetScreenState extends State<BudgetScreen> {
     );
   }
 
-  Future<void> _pickDate(BuildContext context, DateTime current) async {
-    final selected = await showDatePicker(
+  Future<void> _pickMonth(BuildContext context, DateTime current) async {
+    final selected = await showDialog<DateTime>(
       context: context,
-      initialDate: current,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      builder: (context) => MonthPickerDialog(
+        initialDate: current,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2100),
+      ),
     );
+
     if (selected != null) {
-      context.read<ReportsController>().setDate(selected);
+      if (context.mounted) {
+        context.read<ReportsController>().setParams(
+          date: selected,
+          period: "monthly",
+        );
+      }
     }
   }
 }

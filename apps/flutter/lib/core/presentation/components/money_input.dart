@@ -5,8 +5,16 @@ import "package:intl/intl.dart";
 class MoneyInput extends StatefulWidget {
   final String label;
   final TextEditingController controller;
+  final String? helperText;
+  final bool enabled;
 
-  const MoneyInput({super.key, required this.label, required this.controller});
+  const MoneyInput({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.helperText,
+    this.enabled = true,
+  });
 
   @override
   State<MoneyInput> createState() => _MoneyInputState();
@@ -27,7 +35,11 @@ class _MoneyInputState extends State<MoneyInput> {
       controller: widget.controller,
       keyboardType: TextInputType.number,
       inputFormatters: [_MoneyInputFormatter(_format)],
-      decoration: InputDecoration(labelText: widget.label),
+      enabled: widget.enabled,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        helperText: widget.helperText,
+      ),
     );
   }
 }

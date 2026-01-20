@@ -15,6 +15,7 @@ export type DebtCreatePayload = {
   dueDay?: number
   minimumPayment?: number
   interestRateAnnual?: number
+  initialBalance?: number
   isActive?: boolean
 }
 
@@ -35,6 +36,7 @@ const DebtBaseSchema = v.strictObject({
   dueDay: v.optional(v.number()),
   minimumPayment: v.optional(v.number()),
   interestRateAnnual: v.optional(v.number()),
+  initialBalance: v.optional(v.number()),
   isActive: v.optional(v.boolean()),
 })
 
@@ -52,16 +54,22 @@ export function validateDebtPayload(isUpdate: boolean) {
     const schema = isUpdate ? DebtUpdateSchema : DebtCreateSchema
     const result = v.safeParse(schema, payload)
 
-    if (!result.success) {
-      const flattened = v.flatten(result.issues)
-      if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
-      if (flattened.nested?.type)
-        return res.status(422).send("Tipo de deuda invalido")
-      if (flattened.nested?.currency)
-        return res.status(422).send("Moneda invalida")
+    console.log(result)
 
-      return res.status(422).send("Payload invalido")
+    if (result.success) {
+      return next()
     }
+    
+    const flattened = v.flatten(result.issues)
+    if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
+
+    if (flattened.nested?.type)
+      return res.status(422).send("Tipo de deuda invalido")
+
+    if (flattened.nested?.currency)
+      return res.status(422).send("Moneda invalida")
+
+      
 
     const validatedData = payload as DebtCreatePayload
 
@@ -88,6 +96,11 @@ export function validateDebtPayload(isUpdate: boolean) {
 
     if (data.interestRateAnnual !== undefined && data.interestRateAnnual < 0) {
       return res.status(422).send("La tasa debe ser mayor o igual a 0")
+    }
+
+    // @ts-ignore
+    if (validatedData.initialBalance !== undefined && validatedData.initialBalance < 0) {
+      return res.status(422).send("El saldo inicial debe ser mayor o igual a 0")
     }
 
     return next()

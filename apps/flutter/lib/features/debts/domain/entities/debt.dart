@@ -9,7 +9,10 @@ class Debt {
   final double? interestRateAnnual;
   final String? linkedAccountId;
   final String? paymentAccountId;
+  final double? initialBalance;
   final bool isActive;
+  final double amountDue;
+  final double creditBalance;
 
   const Debt({
     required this.id,
@@ -22,7 +25,10 @@ class Debt {
     required this.dueDay,
     required this.minimumPayment,
     required this.interestRateAnnual,
+    this.initialBalance,
     required this.isActive,
+    required this.amountDue,
+    required this.creditBalance,
   });
 
   factory Debt.fromJson(Map<String, dynamic> json) {
@@ -37,7 +43,10 @@ class Debt {
       dueDay: json["dueDay"] as int?,
       minimumPayment: (json["minimumPayment"] as num?)?.toDouble(),
       interestRateAnnual: (json["interestRateAnnual"] as num?)?.toDouble(),
+      initialBalance: (json["initialBalance"] as num?)?.toDouble(),
       isActive: json["isActive"] as bool? ?? true,
+      amountDue: (json["amountDue"] as num?)?.toDouble() ?? 0.0,
+      creditBalance: (json["creditBalance"] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

@@ -14,6 +14,7 @@ abstract class DebtRepository {
     int? dueDay,
     double? minimumPayment,
     double? interestRateAnnual,
+    double? initialBalance,
     bool? isActive,
   });
   Future<Debt> update(

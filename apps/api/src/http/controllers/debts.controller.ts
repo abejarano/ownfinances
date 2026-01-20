@@ -67,16 +67,8 @@ export class DebtsController {
     @Res() res: ServerResponse
   ) {
     const criteria = buildDebtsCriteria(query, req.userId ?? "")
-    const result = await this.repo.list<DebtPrimitives>(criteria)
-    return HttpResponse(res, {
-      value: {
-        ...result,
-        results: result.results.map((item) =>
-          Debt.fromPrimitives(item).toPrimitives()
-        ),
-      },
-      status: 200,
-    })
+    const result = await this.service.list(req.userId ?? "", criteria)
+    return HttpResponse(res, result)
   }
 
   @Get("/summary/:id")

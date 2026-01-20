@@ -16,7 +16,10 @@ import type {
 import type { DebtPrimitives } from "../models/debt"
 import { Debt } from "../models/debt"
 import type { DebtTransactionPrimitives } from "../models/debt_transaction"
-import { DebtTransactionType } from "../models/debt_transaction"
+import {
+  DebtTransaction,
+  DebtTransactionType,
+} from "../models/debt_transaction"
 import type { DebtMongoRepository } from "../repositories/debt_repository"
 import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository"
 
@@ -25,6 +28,51 @@ export class DebtsService {
     private readonly debts: DebtMongoRepository,
     private readonly debtTransactions: DebtTransactionMongoRepository
   ) {}
+
+  async list(
+    userId: string,
+    criteria: Criteria
+  ): Promise<Result<Paginate<DebtPrimitives>>> {
+    const debtsResult = await this.debts.list<DebtPrimitives>(criteria)
+    const transactionSums = await this.debtTransactions.sumByDebt(userId)
+
+    // Map: DebtId -> Balance
+    const balanceMap = new Map<string, number>()
+    
+    for (const row of transactionSums) {
+      const current = balanceMap.get(row.debtId) ?? 0
+      let modifier = 0
+      if (
+        row.type === DebtTransactionType.Charge ||
+        row.type === DebtTransactionType.Fee ||
+        row.type === DebtTransactionType.Interest
+      ) {
+        modifier = row.total
+      } else if (row.type === DebtTransactionType.Payment) {
+        modifier = -row.total
+      }
+      balanceMap.set(row.debtId, current + modifier)
+    }
+
+    const enriched = debtsResult.results.map((item) => {
+      const debt = Debt.fromPrimitives(item)
+      const primitives = debt.toPrimitives()
+      const computedBalance = balanceMap.get(primitives.debtId) ?? 0
+      
+      primitives.amountDue = Math.max(0, computedBalance)
+      primitives.creditBalance = computedBalance < 0 ? Math.abs(computedBalance) : 0
+      
+      return primitives
+    })
+
+    return {
+      value: {
+        ...debtsResult,
+        results: enriched,
+      },
+      status: 200,
+    }
+  }
 
   async create(
     userId: string,
@@ -39,10 +87,23 @@ export class DebtsService {
       dueDay: payload.dueDay,
       minimumPayment: payload.minimumPayment,
       interestRateAnnual: payload.interestRateAnnual,
+      initialBalance: payload.initialBalance,
       isActive: payload.isActive ?? true,
     })
 
     await this.debts.upsert(debt)
+
+    if (payload.initialBalance && payload.initialBalance > 0) {
+      const initialTx = DebtTransaction.create({
+        userId,
+        debtId: debt.getDebtId(),
+        type: DebtTransactionType.Charge,
+        amount: payload.initialBalance,
+        note: "Saldo inicial",
+        date: new Date(),
+      })
+      await this.debtTransactions.upsert(initialTx)
+    }
     return { value: { debt: debt.toPrimitives() }, status: 201 }
   }
 
@@ -54,6 +115,11 @@ export class DebtsService {
     const existing = await this.debts.one({ userId, debtId })
     if (!existing) {
       return { error: "Deuda no encontrada", status: 404 }
+    }
+
+    // Rule: initialBalance is not editable
+    if (payload.initialBalance) {
+      delete payload.initialBalance
     }
 
     const existingPrimitives = existing.toPrimitives()

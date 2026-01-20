@@ -115,29 +115,49 @@ class ApiClient {
     return response;
   }
 
+  Future<bool>? _refreshFuture;
+
   Future<bool> _refreshToken() async {
+    if (_refreshFuture != null) {
+      return _refreshFuture!;
+    }
+
+    _refreshFuture = _doRefreshToken();
+    try {
+      final result = await _refreshFuture;
+      return result ?? false;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<bool> _doRefreshToken() async {
     final state = await storage.read();
     final session = state.session;
     if (session == null) return false;
 
-    final response = await _client.post(
-      Uri.parse("$baseUrl/auth/refresh"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"refreshToken": session.refreshToken}),
-    );
+    try {
+      final response = await _client.post(
+        Uri.parse("$baseUrl/auth/refresh"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"refreshToken": session.refreshToken}),
+      );
 
-    if (response.statusCode != 200) {
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return false;
+      }
+
+      final payload = jsonDecode(response.body) as Map<String, dynamic>;
+      final updated = AuthSession(
+        user: session.user,
+        accessToken: payload["accessToken"] as String,
+        refreshToken: payload["refreshToken"] as String,
+      );
+      await storage.save(updated);
+      return true;
+    } catch (_) {
       return false;
     }
-
-    final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    final updated = AuthSession(
-      user: session.user,
-      accessToken: payload["accessToken"] as String,
-      refreshToken: payload["refreshToken"] as String,
-    );
-    await storage.save(updated);
-    return true;
   }
 
   dynamic _parse(http.Response response) {

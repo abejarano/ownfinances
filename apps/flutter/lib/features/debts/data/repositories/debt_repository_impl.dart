@@ -29,6 +29,7 @@ class DebtRepositoryImpl implements DebtRepository {
     int? dueDay,
     double? minimumPayment,
     double? interestRateAnnual,
+    double? initialBalance,
     bool? isActive,
   }) async {
     final payload = await remote.create({
@@ -40,6 +41,7 @@ class DebtRepositoryImpl implements DebtRepository {
       "dueDay": dueDay,
       "minimumPayment": minimumPayment,
       "interestRateAnnual": interestRateAnnual,
+      "initialBalance": initialBalance,
       "isActive": isActive,
     });
     return Debt.fromJson(payload["debt"] as Map<String, dynamic>);

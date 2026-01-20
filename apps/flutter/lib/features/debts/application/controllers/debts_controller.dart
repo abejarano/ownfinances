@@ -35,18 +35,10 @@ class DebtsController extends ChangeNotifier {
     notifyListeners();
     try {
       final items = await debtRepository.list();
-      final summaries = <String, DebtSummary>{};
-      for (final debt in items) {
-        try {
-          summaries[debt.id] = await debtRepository.summary(debt.id);
-        } catch (_) {
-          // Ignore summary errors per debt to keep list usable.
-        }
-      }
       _state = _state.copyWith(
         isLoading: false,
         items: items,
-        summaries: summaries,
+        // summaries: summaries, // No longer needed
       );
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
@@ -63,6 +55,7 @@ class DebtsController extends ChangeNotifier {
     int? dueDay,
     double? minimumPayment,
     double? interestRateAnnual,
+    double? initialBalance,
     bool? isActive,
   }) async {
     try {
@@ -75,6 +68,7 @@ class DebtsController extends ChangeNotifier {
         dueDay: dueDay,
         minimumPayment: minimumPayment,
         interestRateAnnual: interestRateAnnual,
+        initialBalance: initialBalance,
         isActive: isActive,
       );
       _state = _state.copyWith(items: [created, ..._state.items]);

@@ -162,7 +162,7 @@ GoRouter createRouter({
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.pie_chart),
-                label: "Presupuesto",
+                label: "Orçamentos",
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.settings),
@@ -204,7 +204,7 @@ int _indexFromLocation(String location) {
 
 String _titleFromLocation(String location) {
   if (location.startsWith("/transactions")) return "Transacciones";
-  if (location.startsWith("/budget")) return "Presupuesto";
+  if (location.startsWith("/budget")) return "Orçamentos";
   if (location.startsWith("/settings")) return "Config";
   return "Dashboard";
 }
