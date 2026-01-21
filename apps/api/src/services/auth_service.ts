@@ -146,7 +146,7 @@ export class AuthService {
 
         await this.users.upsert(user)
         await this.seedDefaultCategories(user.getUserId())
-        await this.seedDefaultAccount(user.getUserId())
+        // await this.seedDefaultAccount(user.getUserId()) // Commented to force Onboarding Wizard
       }
 
       // 5. Login (Issue Tokens)

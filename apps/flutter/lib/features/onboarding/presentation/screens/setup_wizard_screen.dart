@@ -31,6 +31,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   String _accountType = "bank";
   String? _bankType;
   bool _checkingExisting = true;
+  List<String> _creditCards = [];
 
   @override
   void initState() {
@@ -138,6 +139,21 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             }),
             onBankTypeChanged: (value) => setState(() => _bankType = value),
           ),
+          _CreditCardStep(
+            onCardAdded: (name) {
+              setState(() {
+                _creditCards = [..._creditCards, name];
+              });
+            },
+            onCardRemoved: (index) {
+              setState(() {
+                final list = [..._creditCards];
+                list.removeAt(index);
+                _creditCards = list;
+              });
+            },
+            cards: _creditCards,
+          ),
           _CategoriesStep(
             categories: categories,
             useExamples: _useExamples,
@@ -163,7 +179,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             if (_step > 0) const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: PrimaryButton(
-                label: _step == 3 ? "Finalizar" : "Proximo",
+                label: _step == 4 ? "Finalizar" : "Proximo",
                 onPressed: _isSaving ? null : _nextStep,
               ),
             ),
@@ -186,7 +202,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         return;
       }
     }
-    if (_step < 3) {
+    if (_step < 4) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
@@ -224,6 +240,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     try {
       final accountName = _accountNameController.text.trim();
       if (accountsState.items.isEmpty) {
+        // Create Main Account
         await accountRepo.create(
           name: accountName,
           type: _accountType,
@@ -231,6 +248,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           isActive: true,
           bankType: _accountType == "bank" ? _bankType : null,
         );
+
+        // Create Credit Cards
+        for (final cardName in _creditCards) {
+          await accountRepo.create(
+            name: cardName,
+            type: "credit_card",
+            currency: "BRL",
+            isActive: true,
+          );
+        }
       }
 
       final existingByName = {
@@ -288,7 +315,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       await context.read<CategoriesController>().load();
       await context.read<OnboardingController>().complete();
       if (context.mounted) {
-        context.go("/dashboard");
+        // Redirect to Plan Month as requested
+        context.go("/recurring/plan");
       }
     } catch (error) {
       if (mounted) {
@@ -510,4 +538,96 @@ class _CategorySeed {
     this.planned,
     this.selected = true,
   });
+}
+
+class _CreditCardStep extends StatefulWidget {
+  final ValueChanged<String> onCardAdded;
+  final ValueChanged<int> onCardRemoved;
+  final List<String> cards;
+
+  const _CreditCardStep({
+    required this.onCardAdded,
+    required this.onCardRemoved,
+    required this.cards,
+  });
+
+  @override
+  State<_CreditCardStep> createState() => _CreditCardStepState();
+}
+
+class _CreditCardStepState extends State<_CreditCardStep> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _add() {
+    final text = _controller.text.trim();
+    if (text.isNotEmpty) {
+      widget.onCardAdded(text);
+      _controller.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Cartoes de credito",
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text("Adicione seus cartoes para controlar faturas."),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  decoration: const InputDecoration(
+                    labelText: "Nome do cartao",
+                    hintText: "Ex: Nubank",
+                  ),
+                  onSubmitted: (_) => _add(),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              IconButton.filled(onPressed: _add, icon: const Icon(Icons.add)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (widget.cards.isEmpty)
+            const Text(
+              "Nenhum cartao adicionado. Clique em + para adicionar ou Proximo para pular.",
+              style: TextStyle(color: Colors.grey),
+            ),
+          Expanded(
+            child: ListView.separated(
+              itemCount: widget.cards.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final card = widget.cards[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.credit_card),
+                  title: Text(card),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => widget.onCardRemoved(index),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
