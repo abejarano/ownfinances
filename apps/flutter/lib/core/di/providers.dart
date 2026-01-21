@@ -1,3 +1,4 @@
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
@@ -70,7 +71,9 @@ class AppProviders extends StatelessWidget {
         Provider<OnboardingStorage>(create: (_) => OnboardingStorage()),
         Provider<ApiClient>(
           create: (context) => ApiClient(
-            baseUrl: "http://localhost:3000",
+            baseUrl: kReleaseMode
+                ? "https://desquadra.jaspesoft.com"
+                : "http://localhost:3000",
             storage: context.read<TokenStorage>(),
           ),
         ),
