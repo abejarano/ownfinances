@@ -3,7 +3,7 @@
 Monorepo para app de finanzas personales (Bun API + Flutter + MongoDB).
 
 ## Estructura
-- apps/api: API Bun (Elysia + MongoDB)
+- apps/api: API Bun (bun-platform-kit + MongoDB)
 - apps/flutter: Flutter (web + mobile)
 - packages/shared: tipos/DTOs compartidos
 - infra/docker: docker-compose mongodb
