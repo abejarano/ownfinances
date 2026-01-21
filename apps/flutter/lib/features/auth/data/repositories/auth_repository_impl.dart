@@ -23,9 +23,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<AuthSession>> register(String email, String password) async {
+  @override
+  Future<Result<AuthSession>> register(
+    String email,
+    String password, {
+    String? name,
+  }) async {
     try {
-      final session = await remote.register(email, password);
+      final session = await remote.register(email, password, name: name);
       await storage.save(session);
       return Result.success(session);
     } catch (_) {

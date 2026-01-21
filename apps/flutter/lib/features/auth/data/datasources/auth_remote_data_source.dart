@@ -6,10 +6,15 @@ class AuthRemoteDataSource {
 
   AuthRemoteDataSource(this.apiClient);
 
-  Future<AuthSession> register(String email, String password) async {
+  Future<AuthSession> register(
+    String email,
+    String password, {
+    String? name,
+  }) async {
     final payload = await apiClient.post("/auth/register", {
       "email": email,
       "password": password,
+      if (name != null) "name": name,
     });
     return AuthSession.fromJson(payload);
   }
