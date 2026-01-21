@@ -3,9 +3,10 @@ import { Category } from "../../models/category"
 import type { CategoryMongoRepository } from "../../repositories/category_repository"
 import type { CategoriesService } from "../../services/categories_service"
 import { buildCategoriesCriteria } from "../criteria/categories.criteria"
-import type {
-  CategoryCreatePayload,
-  CategoryUpdatePayload,
+import {
+  type CategoryCreatePayload,
+  type CategoryUpdatePayload,
+  validateCategoryPayload,
 } from "../validation/categories.validation"
 
 import {
@@ -14,8 +15,8 @@ import {
   Delete,
   Get,
   Param,
-  Patch,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -26,7 +27,6 @@ import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
 import { AuthMiddleware } from "../middleware/auth.middleware"
-import { validateBudgetPayload } from "../validation/budgets.validation"
 
 @Controller("/categories")
 export class CategoriesController {
@@ -62,7 +62,7 @@ export class CategoriesController {
   }
 
   @Post("/")
-  @Use([AuthMiddleware, validateBudgetPayload(false)])
+  @Use([AuthMiddleware, validateCategoryPayload(false)])
   async create(
     @Body() body: CategoryCreatePayload,
     @Req() req: AuthenticatedRequest,
@@ -76,7 +76,7 @@ export class CategoriesController {
   @Get("/:id")
   @Use([AuthMiddleware])
   async getById(
-    @Param("/:id") id: string,
+    @Param("id") id: string,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
@@ -94,10 +94,10 @@ export class CategoriesController {
     return HttpResponse(res, { value: category.toPrimitives(), status: 200 })
   }
 
-  @Patch("/:id")
-  @Use([AuthMiddleware, validateBudgetPayload(true)])
+  @Put("/:id")
+  @Use([AuthMiddleware, validateCategoryPayload(true)])
   async update(
-    @Param("/:id") id: string,
+    @Param("id") id: string,
     @Body() body: CategoryUpdatePayload,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
@@ -110,7 +110,7 @@ export class CategoriesController {
   @Delete("/:id")
   @Use([AuthMiddleware])
   async remove(
-    @Param("/:id") id: string,
+    @Param("id") id: string,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {

@@ -14,8 +14,17 @@ class ReportsController extends ChangeNotifier {
   ReportsState get state => _state;
 
   void applyImpactFromJson(Map<String, dynamic> impact) {
-    final summaryRaw = impact["summary"];
-    final balancesRaw = impact["balances"];
+    var summaryRaw = impact["summary"];
+    if (summaryRaw is Map<String, dynamic> && summaryRaw.containsKey("value")) {
+      summaryRaw = summaryRaw["value"];
+    }
+
+    var balancesRaw = impact["balances"];
+    if (balancesRaw is Map<String, dynamic> &&
+        balancesRaw.containsKey("value")) {
+      balancesRaw = balancesRaw["value"];
+    }
+
     final summary = summaryRaw is Map<String, dynamic>
         ? ReportSummary.fromJson(summaryRaw)
         : null;

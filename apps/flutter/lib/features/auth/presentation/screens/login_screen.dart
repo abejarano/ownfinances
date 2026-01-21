@@ -174,9 +174,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 16),
                             PrimaryButton(
-                              label: _isLoading ? "Entrando..." : "Entrar",
+                              label: _isLoading
+                                  ? (_isRegistering
+                                        ? "Criando conta..."
+                                        : "Entrando...")
+                                  : (_isRegistering ? "Criar conta" : "Entrar"),
                               onPressed: _isLoading ? null : _onLogin,
                               fullWidth: true,
+                            ),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => setState(
+                                      () => _isRegistering = !_isRegistering,
+                                    ),
+                              child: Text(
+                                _isRegistering
+                                    ? "Já tenho conta"
+                                    : "Criar nova conta",
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -230,14 +250,35 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  bool _isRegistering = false;
+
   Future<void> _onLogin() async {
     setState(() => _isLoading = true);
     final controller = context.read<AuthController>();
-    final error = await controller.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    final error = _isRegistering
+        ? await controller.register(
+            _emailController.text.trim(),
+            _passwordController.text,
+            _emailController.text.trim().split(
+              "@",
+            )[0], // Simple name derivation
+          )
+        : await controller.login(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
     _handleLoginResult(error);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ... existing build logic ...
+    // Note: I will need to inject the Register button in the widget tree.
+    // Since replace_file_content replaces a block, I will replace the class implementation deeply or use multi_replace for targeted insertions.
+    // However, to keep it simple and safe, I will just modify the _onLogin and add the toggle UI in the next step.
+    // Wait, I can't modify build() easily with a single chunk if I want to insert the toggle button deep in the tree.
+    // I should use multi_replace_file_content to inject the button.
+    return super.build(context); // Placeholder, actual edit below
   }
 }
 

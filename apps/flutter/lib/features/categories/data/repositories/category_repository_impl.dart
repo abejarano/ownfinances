@@ -46,7 +46,8 @@ class CategoryRepositoryImpl implements CategoryRepository {
       icon: icon,
       isActive: isActive,
     );
-    return Category.fromJson(payload);
+    final data = payload["category"] as Map<String, dynamic>? ?? payload;
+    return Category.fromJson(data);
   }
 
   @override
@@ -68,7 +69,8 @@ class CategoryRepositoryImpl implements CategoryRepository {
       icon: icon,
       isActive: isActive,
     );
-    return Category.fromJson(payload);
+    final data = payload["category"] as Map<String, dynamic>? ?? payload;
+    return Category.fromJson(data);
   }
 
   @override

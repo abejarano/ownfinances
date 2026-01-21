@@ -53,10 +53,14 @@ class AuthController extends ChangeNotifier {
     return result.failure?.message;
   }
 
-  Future<String?> register(String email, String password) async {
+  Future<String?> register(
+    String email,
+    String password, [
+    String? name,
+  ]) async {
     _state = _state.copyWith(status: AuthStatus.loading, message: null);
     notifyListeners();
-    final result = await repository.register(email, password);
+    final result = await repository.register(email, password, name: name);
     if (result.isSuccess) {
       _state = _state.copyWith(
         status: AuthStatus.authenticated,
