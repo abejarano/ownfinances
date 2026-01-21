@@ -111,7 +111,7 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: _QuickActionButton(
                 icon: Icons.compare_arrows,
-                label: "Trasnferir",
+                label: "Transferir",
                 color: Colors.blue,
                 onTap: () => context.push("/transactions/new?type=transfer"),
               ),

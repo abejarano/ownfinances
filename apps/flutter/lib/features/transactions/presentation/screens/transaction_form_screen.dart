@@ -257,10 +257,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               : _noteController.text.trim();
           final tags = _tagsController.text.isNotEmpty
               ? _tagsController.text
-                  .split(",")
-                  .map((e) => e.trim())
-                  .where((e) => e.isNotEmpty)
-                  .toList()
+                    .split(",")
+                    .map((e) => e.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList()
               : null;
 
           final template = <String, dynamic>{
@@ -323,18 +323,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       return dateOnly.add(const Duration(days: 7));
     }
     if (frequency == "yearly") {
-      return DateTime(
-        dateOnly.year + 1,
-        dateOnly.month,
-        dateOnly.day,
-      );
+      return DateTime(dateOnly.year + 1, dateOnly.month, dateOnly.day);
     }
     // monthly (default)
-    return DateTime(
-      dateOnly.year,
-      dateOnly.month + 1,
-      dateOnly.day,
-    );
+    return DateTime(dateOnly.year, dateOnly.month + 1, dateOnly.day);
   }
 
   // --- UI Components ---
@@ -664,28 +656,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                         if (_isRecurring)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: DropdownButtonFormField<String>(
-                              value: _recurrenceFrequency,
-                              dropdownColor: AppColors.surface,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: _darkInputDecoration("Frequência"),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: "weekly",
-                                  child: Text("Semanal"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "monthly",
-                                  child: Text("Mensal"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "yearly",
-                                  child: Text("Anual"),
-                                ),
-                              ],
-                              onChanged: (v) =>
-                                  setState(() => _recurrenceFrequency = v!),
+                            padding: const EdgeInsets.only(
+                              left: 16,
+                              right: 16,
+                              bottom: 16,
+                            ),
+                            child: Text(
+                              "A transação se repetirá mensalmente (padrão).",
+                              style: TextStyle(
+                                color: Colors.grey.shade400,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         SwitchListTile(

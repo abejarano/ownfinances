@@ -390,6 +390,15 @@ class DebtsScreen extends StatelessWidget {
                               return;
                             }
 
+                            if (type == "credit_card" &&
+                                linkedAccountId == null) {
+                              showStandardSnackbar(
+                                context,
+                                "Selecione a conta do cartão",
+                              );
+                              return;
+                            }
+
                             final dueDay = int.tryParse(
                               dueDayController.text.trim(),
                             );
