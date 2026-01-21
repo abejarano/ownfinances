@@ -3,6 +3,7 @@ import "package:google_sign_in/google_sign_in.dart";
 import "package:sign_in_with_apple/sign_in_with_apple.dart";
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
 import "package:ownfinances/features/auth/domain/repositories/auth_repository.dart";
+import "package:flutter/foundation.dart";
 
 class AuthController extends ChangeNotifier {
   final AuthRepository repository;
@@ -77,8 +78,12 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
     try {
       print("Event: login_social_started provider=google");
-      final googleSignIn = GoogleSignIn();
-      final account = await googleSignIn.signIn();
+      final googleSignIn = GoogleSignIn(
+        clientId: kIsWeb
+            ? "247774651903-luc5s66ie9j1433dir0d5jlo2dpns0l0.apps.googleusercontent.com"
+            : null,
+      );
+      var account = await googleSignIn.signIn();
       if (account == null) {
         _state = _state.copyWith(
           status: AuthStatus.unauthenticated,
@@ -88,17 +93,33 @@ class AuthController extends ChangeNotifier {
         return "Login cancelado";
       }
 
-      final auth = await account.authentication;
-      final token = auth.idToken;
+      // Workaround for Web: signIn() returns AccessToken but no ID Token.
+      // signInSilently() retrieves the ID Token if the user is authorized.
+      if (kIsWeb) {
+        try {
+          final silent = await googleSignIn.signInSilently();
+          if (silent != null) {
+            account = silent;
+          }
+        } catch (e) {
+          print("Warning: signInSilently failed on web: $e");
+        }
+      }
+
+      final auth = await account!.authentication;
+      // On Web, idToken may be null (Implicit Flow), but accessToken is available.
+      // Backend now supports validating Access Token via People API / UserInfo.
+      final token = auth.idToken ?? auth.accessToken;
+
       if (token == null) {
-        throw Exception("Falha ao obter token do Google");
+        throw Exception("Falha ao obter token (ID ou Access) do Google");
       }
 
       final result = await repository.socialLogin(
         "google",
         token,
-        account.email,
-        account.displayName,
+        account!.email,
+        account!.displayName,
       );
 
       if (result.isSuccess) {

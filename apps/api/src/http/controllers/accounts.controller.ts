@@ -40,8 +40,12 @@ export class AccountsController {
 
   @Post("/")
   @Use([AuthMiddleware, validateAccountPayload(false)])
-  async create(@Body() body: AccountCreatePayload, @Res() res: ServerResponse) {
-    const account = await this.service.create(body)
+  async create(
+    @Body() body: AccountCreatePayload,
+    @Req() req: AuthenticatedRequest,
+    @Res() res: ServerResponse
+  ) {
+    const account = await this.service.create(req.userId!, body)
     res.status(201).send(account)
   }
 

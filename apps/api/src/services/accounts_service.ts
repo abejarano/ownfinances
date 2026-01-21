@@ -14,9 +14,9 @@ export class AccountsService {
     private readonly transactions: TransactionMongoRepository
   ) {}
 
-  async create(payload: AccountCreatePayload) {
+  async create(userId: string, payload: AccountCreatePayload) {
     const account = Account.create({
-      userId: "",
+      userId: userId,
       name: payload.name!,
       type: payload.type!,
       bankType: payload.bankType ?? null,

@@ -27,104 +27,179 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AuthController>().state;
-
+    // Colors from "Desquadra Dark Calm" spec
+    const bg0 = Color(0xFF0B1220);
+    const textPrimary = Color(0xFFE5E7EB);
+    const textSecondary = Color.fromRGBO(229, 231, 235, 0.70);
+    const dividerColor = Color.fromRGBO(255, 255, 255, 0.10);
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Entrar")),
+      backgroundColor: bg0,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Entrar", style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: AppSpacing.sm),
-              const Text("Sem senha. Sem complicação."),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 36),
+                    // 1. Header
+                    Image.asset(
+                      "images/isotipo.png",
+                      height: 64,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.account_balance_wallet,
+                        size: 64,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Entrar",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                        fontFamily:
+                            "Manrope", // Assuming Manrope is loaded via GoogleFonts in AppTheme
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Sem senha. Sem complicação.",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: textSecondary,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 32,
+                    ), // Subtitle -> Google CTA: 24px (used 32 for better breath)
+                    // 2. Google CTA
+                    _SocialButton(
+                      label: "Continuar com Google",
+                      onPressed: _isLoading ? null : _onLoginGoogle,
+                      backgroundColor: Colors.white,
+                      textColor: const Color(0xFF111827),
+                      // TODO: Replace with official asset when available
+                      icon: Icons.g_mobiledata,
+                      isLoading: _isLoading,
+                    ),
 
-              const SizedBox(height: AppSpacing.lg),
-              // Social Login
-              PrimaryButton(
-                label: "Continuar com Google",
-                onPressed: _isLoading ? null : _onLoginGoogle,
-                icon: Icons.g_mobiledata,
-                backgroundColor: Colors.white,
-                textColor: Colors.black,
+                    if (isIOS) ...[
+                      const SizedBox(height: 16),
+                      _SocialButton(
+                        label: "Continuar com Apple",
+                        onPressed: _isLoading ? null : _onLoginApple,
+                        backgroundColor: Colors.black,
+                        textColor: Colors.white,
+                        icon: Icons.apple,
+                        isLoading: _isLoading,
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    // 3. Separator
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: dividerColor)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            "ou",
+                            style: TextStyle(
+                              color: const Color.fromRGBO(229, 231, 235, 0.60),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: dividerColor)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // 4. Email CTA
+                    if (!_showEmailForm)
+                      _OutlineButton(
+                        label: "Entrar com e-mail",
+                        onPressed: _isLoading
+                            ? null
+                            : () => setState(() => _showEmailForm = true),
+                      ),
+
+                    if (_showEmailForm) ...[
+                      // const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface2,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color.fromRGBO(255, 255, 255, 0.08),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              style: const TextStyle(color: textPrimary),
+                              decoration: const InputDecoration(
+                                labelText: "Email",
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                            const Divider(height: 24),
+                            TextField(
+                              controller: _passwordController,
+                              obscureText: true,
+                              style: const TextStyle(color: textPrimary),
+                              decoration: const InputDecoration(
+                                labelText: "Senha",
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            PrimaryButton(
+                              label: _isLoading ? "Entrando..." : "Entrar",
+                              onPressed: _isLoading ? null : _onLogin,
+                              fullWidth: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              if (isIOS) ...[
-                const SizedBox(height: AppSpacing.md),
-                PrimaryButton(
-                  label: "Continuar com Apple",
-                  onPressed: _isLoading ? null : _onLoginApple,
-                  backgroundColor: Colors.black,
-                  textColor: Colors.white,
-                  icon: Icons.apple,
+            ),
+
+            // 5. Footer
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24, top: 16),
+              child: Text(
+                "Usamos seu login apenas para acessar sua conta.",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: const Color.fromRGBO(229, 231, 235, 0.50),
                 ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(child: Divider()),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Text("ou"),
-                  ),
-                  Expanded(child: Divider()),
-                ],
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              SecondaryButton(
-                label: "Entrar com e-mail",
-                onPressed: _isLoading
-                    ? null
-                    : () {
-                        // Toggle logic or navigation if needed, for now just show fields
-                        // But PO said "Secondary button: Entrar com e-mail".
-                        // Logic: Maybe expand the form below?
-                        // For MVP, I'll keep the form visible below the "ou" but maybe hide it initially?
-                        // The Request says: "Pantalla de Login... Botones principales... Separador... Botón secundario: Entrar com e-mail".
-                        // It implies the email form is hidden or on a separate screen?
-                        // "Alternativa: Entrar com e-mail (se mantiene, pero no es el camino principal)"
-                        // Current implementation has the form visible.
-                        // I will put the form below the button, perhaps in an ExpansionTile or just visible.
-                        // I'll keep it simple: Social Buttons -> Divider -> Email Form (Title "Ou entre com email").
-                        // Wait, the design requested "Button: Entrar com email". If clicked, maybe show form?
-                        // Refactor: Hide form by default?
-                        setState(() {
-                          _showEmailForm = true;
-                        });
-                      },
-              ),
-              if (_showEmailForm) ...[
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: "Email"),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: "Senha"),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                PrimaryButton(
-                  label: _isLoading ? "Entrando..." : "Entrar",
-                  onPressed: _isLoading ? null : _onLogin,
-                ),
-              ],
-              const Spacer(),
-              const Center(
-                child: Text(
-                  "Usamos seu login apenas para acessar sua conta.",
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -151,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showStandardSnackbar(context, error);
       setState(() => _isLoading = false);
     } else if (mounted) {
-      context.go("/splash"); // Or dashboard
+      context.go("/splash");
     }
   }
 
@@ -163,5 +238,102 @@ class _LoginScreenState extends State<LoginScreen> {
       _passwordController.text,
     );
     _handleLoginResult(error);
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final Color backgroundColor;
+  final Color textColor;
+  final IconData icon;
+  final bool isLoading;
+
+  const _SocialButton({
+    required this.label,
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.icon,
+    required this.isLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 56,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: textColor,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 20,
+                    color: textColor,
+                  ), // TODO: Use image asset here
+                  const SizedBox(width: 12),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: textColor,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _OutlineButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+
+  const _OutlineButton({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 56,
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFE5E7EB),
+          side: const BorderSide(color: Color.fromRGBO(255, 255, 255, 0.14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
   }
 }

@@ -44,7 +44,7 @@ class AccountRepositoryImpl implements AccountRepository {
       isActive: isActive,
       bankType: bankType,
     );
-    return Account.fromJson(payload);
+    return Account.fromJson(payload["account"] as Map<String, dynamic>);
   }
 
   @override
@@ -64,7 +64,7 @@ class AccountRepositoryImpl implements AccountRepository {
       isActive: isActive,
       bankType: bankType,
     );
-    return Account.fromJson(payload);
+    return Account.fromJson(payload["account"] as Map<String, dynamic>);
   }
 
   @override

@@ -406,26 +406,43 @@ export class AuthService {
     await this.accounts.upsert(account)
   }
 
+  /* ... */
   private async verifySocialToken(
     provider: "google" | "apple",
     token: string
   ): Promise<{ email?: string; socialId: string } | null> {
     try {
       if (provider === "google") {
-        // GOOGLE
-        // TODO: Move CLIENT_ID to .env or use generic verify
-        // For now validating structure or using generic if library requires clientID
         const client = new OAuth2Client()
-        const ticket = await client.verifyIdToken({
-          idToken: token,
-          // audience: env.GOOGLE_CLIENT_ID, // Specify if available
-        })
-        const payload = ticket.getPayload()
-        if (!payload) return null
-        return {
-          email: payload.email,
-          socialId: payload.sub,
+        
+        // 1. Try treating as ID Token (Mobile Flow)
+        try {
+          const ticket = await client.verifyIdToken({
+            idToken: token,
+          })
+          const payload = ticket.getPayload()
+          if (payload) {
+            return {
+              email: payload.email,
+              socialId: payload.sub,
+            }
+          }
+        } catch (idTokenError) {
+          // 2. Fallback: Treat as Access Token (Web Flow)
+          // Use getTokenInfo to validate access token
+          try {
+             const tokenInfo = await client.getTokenInfo(token)
+             if (tokenInfo && tokenInfo.sub) {
+                return {
+                  email: tokenInfo.email,
+                  socialId: tokenInfo.sub, /* sub is the unique user ID */
+                }
+             }
+          } catch (accessTokenError) {
+            console.error("Google Token Verification Failed (ID & Access):", accessTokenError)
+          }
         }
+        return null
       } else {
         // APPLE
         const payload = await appleSignin.verifyIdToken(token, {

@@ -175,6 +175,8 @@ class DebtsScreen extends StatelessWidget {
     String? paymentAccountId = item?.paymentAccountId;
     bool isSubmitting = false;
 
+    final _formKey = GlobalKey<FormState>();
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -204,267 +206,309 @@ class DebtsScreen extends StatelessWidget {
                 bottom:
                     MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item == null ? "Nova divida" : "Editar divida",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: "Nome"),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  DropdownButtonFormField<String>(
-                    value: type,
-                    decoration: const InputDecoration(labelText: "Tipo"),
-                    items: const [
-                      DropdownMenuItem(
-                        value: "credit_card",
-                        child: Text("Cartao de credito"),
-                      ),
-                      DropdownMenuItem(
-                        value: "loan",
-                        child: Text("Emprestimo"),
-                      ),
-                      DropdownMenuItem(value: "other", child: Text("Outro")),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => type = value);
-                      }
-                    },
-                  ),
-
-                  // --- ACCOUNT SELECTION LOGIC ---
-                  if (type == "credit_card") ...[
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item == null ? "Nova divida" : "Editar divida",
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
-                    if (creditCardAccounts.isEmpty)
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: "Nome"),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Nome obrigatório";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    DropdownButtonFormField<String>(
+                      value: type,
+                      decoration: const InputDecoration(labelText: "Tipo"),
+                      items: const [
+                        DropdownMenuItem(
+                          value: "credit_card",
+                          child: Text("Cartao de credito"),
+                        ),
+                        DropdownMenuItem(
+                          value: "loan",
+                          child: Text("Emprestimo"),
+                        ),
+                        DropdownMenuItem(value: "other", child: Text("Outro")),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => type = value);
+                        }
+                      },
+                    ),
+
+                    // --- ACCOUNT SELECTION LOGIC ---
+                    if (type == "credit_card") ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      if (creditCardAccounts.isEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Você não tem contas do tipo 'Cartão de Crédito'.",
+                              style: TextStyle(
+                                color: AppColors.warning,
+                                fontSize: 13,
+                              ),
+                            ),
+                            TextButton.icon(
+                              icon: const Icon(Icons.add),
+                              label: const Text("Criar conta Cartão agora"),
+                              onPressed: () => _createQuickAccount(
+                                context,
+                                "credit_card",
+                                (id) => setState(() => linkedAccountId = id),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        AccountPicker(
+                          label: "Conta do cartão (Onde caem as compras)",
+                          items: creditCardAccounts,
+                          value: linkedAccountId,
+                          onSelected: (item) =>
+                              setState(() => linkedAccountId = item.id),
+                        ),
+                    ],
+
+                    // --- MOVED UP: Initial Balance ---
+                    const SizedBox(height: AppSpacing.sm),
+                    if (item == null)
+                      MoneyInput(
+                        label: "Saldo atual (opcional)",
+                        controller: initialBalanceController,
+                        helperText:
+                            "Se você já tem saldo a pagar neste cartão hoje, informe aqui. Se não, deixe 0.",
+                      )
+                    else
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Você não tem contas do tipo 'Cartão de Crédito'.",
-                            style: TextStyle(
-                              color: AppColors.warning,
-                              fontSize: 13,
-                            ),
+                          MoneyInput(
+                            label: "Saldo inicial",
+                            controller: initialBalanceController,
+                            enabled: false,
                           ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text("Criar conta Cartão agora"),
-                            onPressed: () => _createQuickAccount(
-                              context,
-                              "credit_card",
-                              (id) => setState(() => linkedAccountId = id),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Saldo inicial não pode ser alterado. Ajuste registrando uma compra/pagamento.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
+                      ),
+
+                    // Paying Account (Optional)
+                    const SizedBox(height: AppSpacing.sm),
+                    if (payingAccounts.isEmpty)
+                      const Text(
+                        "Sem contas bancárias/dinheiro para pagar a fatura.",
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 12,
+                        ),
                       )
                     else
-                      AccountPicker(
-                        label: "Conta do cartão (Onde caem as compras)",
-                        items: creditCardAccounts,
-                        value: linkedAccountId,
-                        onSelected: (item) =>
-                            setState(() => linkedAccountId = item.id),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AccountPicker(
+                            label: "Conta pagadora padrão (Opcional)",
+                            items: payingAccounts,
+                            value: paymentAccountId,
+                            onSelected: (item) =>
+                                setState(() => paymentAccountId = item.id),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Conta sugerida quando você registrar o pagamento da fatura.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
                       ),
-                  ],
+                    // ------------------------------
+                    const SizedBox(height: AppSpacing.sm),
 
-                  // --- MOVED UP: Initial Balance ---
-                  const SizedBox(height: AppSpacing.sm),
-                  if (item == null)
-                    MoneyInput(
-                      label: "Saldo atual (opcional)",
-                      controller: initialBalanceController,
-                      helperText:
-                          "Se você já tem saldo a pagar neste cartão hoje, informe aqui. Se não, deixe 0.",
-                    )
-                  else
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    // --- Moeda & Vencimento (Moved out of Advanced) ---
+                    Row(
                       children: [
-                        MoneyInput(
-                          label: "Saldo inicial",
-                          controller: initialBalanceController,
-                          enabled: false,
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          "Saldo inicial não pode ser alterado. Ajuste registrando uma compra/pagamento.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.muted,
-                            fontStyle: FontStyle.italic,
+                        Expanded(
+                          child: TextFormField(
+                            controller: currencyController,
+                            decoration: const InputDecoration(
+                              labelText: "Moeda",
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-
-                  // Paying Account (Optional)
-                  const SizedBox(height: AppSpacing.sm),
-                  if (payingAccounts.isEmpty)
-                    const Text(
-                      "Sem contas bancárias/dinheiro para pagar a fatura.",
-                      style: TextStyle(
-                        color: AppColors.textTertiary,
-                        fontSize: 12,
-                      ),
-                    )
-                  else
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AccountPicker(
-                          label: "Conta pagadora padrão (Opcional)",
-                          items: payingAccounts,
-                          value: paymentAccountId,
-                          onSelected: (item) =>
-                              setState(() => paymentAccountId = item.id),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          "Conta sugerida quando você registrar o pagamento da fatura.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.muted,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ),
-                  // ------------------------------
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // --- ADVANCED SECTION ---
-                  ExpansionTile(
-                    title: const Text("Avançado (opcional)"),
-                    tilePadding: EdgeInsets.zero,
-                    initiallyExpanded: false,
-                    children: [
-                      const SizedBox(height: AppSpacing.sm),
-                      TextField(
-                        controller: currencyController,
-                        decoration: const InputDecoration(labelText: "Moeda"),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      TextField(
-                        controller: dueDayController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: "Dia de vencimento",
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      MoneyInput(
-                        label: "Minimo a pagar",
-                        controller: minimumPaymentController,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      TextField(
-                        controller: interestController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: "Taxa anual (%)",
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text("Ativa"),
-                    value: isActive,
-                    onChanged: (value) => setState(() => isActive = value),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  PrimaryButton(
-                    label: "Salvar",
-                    isLoading: isSubmitting,
-                    onPressed: isSubmitting
-                        ? null
-                        : () async {
-                            final name = nameController.text.trim();
-                            if (name.isEmpty) {
-                              showStandardSnackbar(context, "Nome obrigatorio");
-                              return;
-                            }
-
-                            if (type == "credit_card" &&
-                                linkedAccountId == null) {
-                              showStandardSnackbar(
-                                context,
-                                "Selecione a conta do cartão",
-                              );
-                              return;
-                            }
-
-                            final dueDay = int.tryParse(
-                              dueDayController.text.trim(),
-                            );
-                            final minimumPayment = parseMoney(
-                              minimumPaymentController.text.trim(),
-                            );
-                            final interest = double.tryParse(
-                              interestController.text.trim(),
-                            );
-
-                            setState(() => isSubmitting = true);
-
-                            String? error;
-                            if (item == null) {
-                              error = await controller.create(
-                                name: name,
-                                type: type,
-                                linkedAccountId: linkedAccountId,
-                                paymentAccountId: paymentAccountId,
-                                currency: currencyController.text.trim().isEmpty
-                                    ? "BRL"
-                                    : currencyController.text.trim(),
-                                dueDay: dueDay,
-                                minimumPayment: minimumPayment > 0
-                                    ? minimumPayment
-                                    : null,
-                                interestRateAnnual: interest,
-                                initialBalance: parseMoney(
-                                  initialBalanceController.text,
-                                ),
-                                isActive: isActive,
-                              );
-                            } else {
-                              error = await controller.update(
-                                id: item.id,
-                                name: name,
-                                type: type,
-                                linkedAccountId: linkedAccountId,
-                                paymentAccountId: paymentAccountId,
-                                currency: currencyController.text.trim().isEmpty
-                                    ? "BRL"
-                                    : currencyController.text.trim(),
-                                dueDay: dueDay,
-                                minimumPayment: minimumPayment > 0
-                                    ? minimumPayment
-                                    : null,
-                                interestRateAnnual: interest,
-                                isActive: isActive,
-                              );
-                            }
-
-                            if (context.mounted) {
-                              setState(() => isSubmitting = false);
-                              if (error != null) {
-                                showStandardSnackbar(context, error);
-                              } else {
-                                Navigator.of(context).pop(); // Success
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: TextFormField(
+                            controller: dueDayController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: "Dia de vencimento",
+                              hintText: "Ex: 10",
+                            ),
+                            validator: (value) {
+                              final dueDay = int.tryParse(value?.trim() ?? "");
+                              if (type == "credit_card") {
+                                if (dueDay == null ||
+                                    dueDay < 1 ||
+                                    dueDay > 31) {
+                                  return "Entre 1 e 31";
+                                }
+                              } else if (value != null &&
+                                  value.isNotEmpty &&
+                                  (dueDay == null ||
+                                      dueDay < 1 ||
+                                      dueDay > 31)) {
+                                return "Entre 1 e 31";
                               }
-                            }
-                          },
-                  ),
-                ],
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+
+                    // --- ADVANCED SECTION ---
+                    ExpansionTile(
+                      title: const Text("Avançado (opcional)"),
+                      tilePadding: EdgeInsets.zero,
+                      initiallyExpanded: false,
+                      children: [
+                        const SizedBox(height: AppSpacing.sm),
+                        MoneyInput(
+                          label: "Minimo a pagar",
+                          controller: minimumPaymentController,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        TextField(
+                          controller: interestController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Taxa anual (%)",
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text("Ativa"),
+                      value: isActive,
+                      onChanged: (value) => setState(() => isActive = value),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    PrimaryButton(
+                      label: "Salvar",
+                      isLoading: isSubmitting,
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              if (!_formKey.currentState!.validate()) {
+                                return;
+                              }
+
+                              final name = nameController.text.trim();
+
+                              if (type == "credit_card" &&
+                                  linkedAccountId == null) {
+                                showStandardSnackbar(
+                                  context,
+                                  "Selecione a conta do cartão",
+                                );
+                                return;
+                              }
+
+                              final dueDay = int.tryParse(
+                                dueDayController.text.trim(),
+                              );
+
+                              final minimumPayment = parseMoney(
+                                minimumPaymentController.text.trim(),
+                              );
+                              final interest = double.tryParse(
+                                interestController.text.trim(),
+                              );
+
+                              setState(() => isSubmitting = true);
+
+                              String? error;
+                              if (item == null) {
+                                error = await controller.create(
+                                  name: name,
+                                  type: type,
+                                  linkedAccountId: linkedAccountId,
+                                  paymentAccountId: paymentAccountId,
+                                  currency:
+                                      currencyController.text.trim().isEmpty
+                                      ? "BRL"
+                                      : currencyController.text.trim(),
+                                  dueDay: dueDay,
+                                  minimumPayment: minimumPayment > 0
+                                      ? minimumPayment
+                                      : null,
+                                  interestRateAnnual: interest,
+                                  initialBalance: parseMoney(
+                                    initialBalanceController.text,
+                                  ),
+                                  isActive: isActive,
+                                );
+                              } else {
+                                error = await controller.update(
+                                  id: item.id,
+                                  name: name,
+                                  type: type,
+                                  linkedAccountId: linkedAccountId,
+                                  paymentAccountId: paymentAccountId,
+                                  currency:
+                                      currencyController.text.trim().isEmpty
+                                      ? "BRL"
+                                      : currencyController.text.trim(),
+                                  dueDay: dueDay,
+                                  minimumPayment: minimumPayment > 0
+                                      ? minimumPayment
+                                      : null,
+                                  interestRateAnnual: interest,
+                                  isActive: isActive,
+                                );
+                              }
+
+                              if (context.mounted) {
+                                setState(() => isSubmitting = false);
+                                if (error != null) {
+                                  showStandardSnackbar(context, error);
+                                } else {
+                                  Navigator.of(context).pop(); // Success
+                                }
+                              }
+                            },
+                    ),
+                  ],
+                ),
               ),
             );
           },

@@ -17,7 +17,7 @@
       "request": "launch",
       "name": "Flutter Web (Chrome)",
       "cwd": "${workspaceFolder}/apps/flutter",
-      "args": ["-d", "chrome"]
+      "args": ["-d", "chrome", "--web-port", "5000"]
     }
   ]
 }
