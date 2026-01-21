@@ -1,9 +1,14 @@
+import appleSignin from "apple-signin-auth"
 import argon2 from "argon2"
+import { OAuth2Client } from "google-auth-library"
 import crypto from "node:crypto"
 import type { Result } from "../bootstrap/response"
+import { Account, AccountType } from "../models/account"
 import { RefreshToken } from "../models/auth/refresh_token"
 import { User, type UserPrimitives } from "../models/auth/user"
 import { Category } from "../models/category"
+import { createMongoId } from "../models/shared/mongo_id"
+import type { AccountMongoRepository } from "../repositories/account_repository"
 import type { CategoryMongoRepository } from "../repositories/category_repository"
 import type { RefreshTokenMongoRepository } from "../repositories/refresh_token_mongo_repository"
 import type { UserMongoRepository } from "../repositories/user_mongo_repository"
@@ -18,7 +23,8 @@ export class AuthService {
   constructor(
     private readonly users: UserMongoRepository,
     private readonly refreshTokens: RefreshTokenMongoRepository,
-    private readonly categories: CategoryMongoRepository
+    private readonly categories: CategoryMongoRepository,
+    private readonly accounts: AccountMongoRepository
   ) {}
 
   async register(payload: {
@@ -59,6 +65,115 @@ export class AuthService {
         refreshToken: refresh.refreshToken,
       },
       status: 200,
+    }
+  }
+
+  async socialLogin(payload: {
+    provider: "google" | "apple"
+    token: string
+    email?: string // Optional, used as fallback or for Apple relay
+    name?: string
+    socialId?: string // Optional, passed by client if available, but we verify token
+  }): Promise<Result<UserRegisterResponse>> {
+    try {
+      // 1. Verify Token & Extract Info
+      const verification = await this.verifySocialToken(
+        payload.provider,
+        payload.token
+      )
+      if (!verification) {
+        return { error: "Token inválido ou expirado", status: 401 }
+      }
+
+      const { email: verifiedEmail, socialId: verifiedSocialId } = verification
+      const email = verifiedEmail ?? payload.email
+      const socialId = verifiedSocialId
+
+      if (!socialId) {
+        return { error: "Não foi possível identificar o usuário", status: 400 }
+      }
+
+      // 2. Lookup by Social ID
+      let user: User | null = null
+
+      if (payload.provider === "google") {
+        user = await this.users.one({ googleId: socialId })
+      } else {
+        user = await this.users.one({ appleId: socialId })
+      }
+
+      // 3. Lookup by Email (Link Account)
+      if (!user && email) {
+        user = await this.users.one({ email })
+        if (user) {
+          // Link existing user
+          const primitives = user.toPrimitives()
+          const updated = User.fromPrimitives({
+            ...primitives,
+            googleId:
+              payload.provider === "google"
+                ? socialId
+                : primitives.googleId ?? null,
+            appleId:
+              payload.provider === "apple"
+                ? socialId
+                : primitives.appleId ?? null,
+            updatedAt: new Date(),
+          })
+          await this.users.upsert(updated)
+          user = updated
+        }
+      }
+
+      // 4. Create New User
+      if (!user) {
+        if (!email) {
+          return {
+            error: "Email obrigatório para primeiro acesso",
+            status: 400,
+          }
+        }
+
+        const passwordHash = await argon2.hash(crypto.randomUUID()) // Random password
+
+        user = User.create({
+          email,
+          name: payload.name ?? null,
+          passwordHash,
+          googleId: payload.provider === "google" ? socialId : null,
+          appleId: payload.provider === "apple" ? socialId : null,
+        })
+
+        await this.users.upsert(user)
+        await this.seedDefaultCategories(user.getUserId())
+        await this.seedDefaultAccount(user.getUserId())
+      }
+
+      // 5. Login (Issue Tokens)
+      const primitives = user.toPrimitives()
+      const updatedLogin = User.fromPrimitives({
+        ...primitives,
+        lastLoginAt: new Date(),
+      })
+      await this.users.upsert(updatedLogin)
+
+      const refresh = await this.issueRefreshToken(user.getUserId())
+
+      return {
+        status: 200,
+        value: {
+          user: {
+            id: user.getId(),
+            name: user.getName(),
+            userId: user.getUserId(),
+            email: user.getEmail(),
+          },
+          refreshToken: refresh.refreshToken,
+        },
+      }
+    } catch (e) {
+      console.error(e)
+      return { error: "Erro no login social", status: 500 }
     }
   }
 
@@ -278,6 +393,55 @@ export class AuthService {
         )
       )
     )
+  }
+  private async seedDefaultAccount(userId: string) {
+    const account = Account.create({
+      userId,
+      name: "Carteira",
+      type: AccountType.Wallet,
+      bankType: null,
+      currency: "BRL",
+      isActive: true,
+    })
+    await this.accounts.upsert(account)
+  }
+
+  private async verifySocialToken(
+    provider: "google" | "apple",
+    token: string
+  ): Promise<{ email?: string; socialId: string } | null> {
+    try {
+      if (provider === "google") {
+        // GOOGLE
+        // TODO: Move CLIENT_ID to .env or use generic verify
+        // For now validating structure or using generic if library requires clientID
+        const client = new OAuth2Client()
+        const ticket = await client.verifyIdToken({
+          idToken: token,
+          // audience: env.GOOGLE_CLIENT_ID, // Specify if available
+        })
+        const payload = ticket.getPayload()
+        if (!payload) return null
+        return {
+          email: payload.email,
+          socialId: payload.sub,
+        }
+      } else {
+        // APPLE
+        const payload = await appleSignin.verifyIdToken(token, {
+          // audience: env.APPLE_CLIENT_ID, // Client ID - if needed
+          // ignoreExpiration: true, // Optional
+        })
+        if (!payload) return null
+        return {
+          email: payload.email,
+          socialId: payload.sub,
+        }
+      }
+    } catch (e) {
+      console.error("Social Token Error:", e)
+      return null
+    }
   }
 }
 

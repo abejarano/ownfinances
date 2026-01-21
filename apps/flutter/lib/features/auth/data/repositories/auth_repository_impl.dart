@@ -34,6 +34,22 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<AuthSession>> socialLogin(
+    String provider,
+    String token,
+    String? email,
+    String? name,
+  ) async {
+    try {
+      final session = await remote.socialLogin(provider, token, email, name);
+      await storage.save(session);
+      return Result.success(session);
+    } catch (_) {
+      return Result.error(const UnauthorizedFailure("Falha no login social"));
+    }
+  }
+
+  @override
   Future<Result<void>> logout(String refreshToken) async {
     try {
       await remote.logout(refreshToken);

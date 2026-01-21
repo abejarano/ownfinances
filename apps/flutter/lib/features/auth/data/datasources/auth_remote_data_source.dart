@@ -22,6 +22,21 @@ class AuthRemoteDataSource {
     return AuthSession.fromJson(payload);
   }
 
+  Future<AuthSession> socialLogin(
+    String provider,
+    String token,
+    String? email,
+    String? name,
+  ) async {
+    final payload = await apiClient.post("/auth/social-login", {
+      "provider": provider,
+      "token": token,
+      if (email != null) "email": email,
+      if (name != null) "name": name,
+    });
+    return AuthSession.fromJson(payload);
+  }
+
   Future<void> logout(String refreshToken) async {
     await apiClient.post("/auth/logout", {"refreshToken": refreshToken});
   }

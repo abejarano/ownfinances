@@ -6,8 +6,6 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/di/providers.dart";
 import "package:go_router/go_router.dart";
 
-import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting("pt_BR");
@@ -52,7 +50,8 @@ class OwnFinancesApp extends StatelessWidget {
           builder: (context) {
             final router = context.watch<GoRouter>();
             return MaterialApp.router(
-              title: "OwnFinances",
+              title: "Desquadra",
+              debugShowCheckedModeBanner: false,
               theme: AppTheme.darkCalm(),
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,

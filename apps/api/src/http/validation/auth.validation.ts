@@ -25,6 +25,14 @@ export type AuthLogoutPayload = {
   refreshToken: string
 }
 
+export type AuthSocialLoginPayload = {
+  provider: "google" | "apple"
+  token: string
+  email?: string
+  name?: string
+  socialId?: string
+}
+
 const RegisterSchema = v.strictObject({
   email: v.pipe(v.string(), v.minLength(1)),
   password: v.pipe(v.string(), v.minLength(1)),
@@ -41,6 +49,34 @@ const RefreshSchema = v.strictObject({
 })
 
 const LogoutSchema = RefreshSchema
+
+const SocialLoginSchema = v.strictObject({
+  provider: v.picklist(["google", "apple"]),
+  token: v.pipe(v.string(), v.minLength(1)),
+  email: v.optional(v.string()),
+  name: v.optional(v.string()),
+  socialId: v.optional(v.string()),
+})
+
+export function validateAuthSocialLoginPayload(
+  req: ServerRequest,
+  res: ServerResponse,
+  next: NextFunction
+) {
+  const payload = req.body as AuthSocialLoginPayload
+
+  const result = v.safeParse(SocialLoginSchema, payload)
+  if (result.success) return next()
+
+  if (!result.issues) return res.status(422).send("Payload invalido")
+  const flattened = v.flatten(result.issues)
+
+  if (flattened.nested?.provider)
+    return res.status(422).send("Provedor inválido (google ou apple)")
+  if (flattened.nested?.token) return res.status(422).send("Token obrigatório")
+
+  return res.status(422).send("Payload invalido")
+}
 
 export function validateAuthRegisterPayload(
   req: ServerRequest,

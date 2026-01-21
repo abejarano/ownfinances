@@ -7,6 +7,8 @@ export type UserPrimitives = {
   email: string
   name?: string | null
   passwordHash: string
+  googleId?: string | null
+  appleId?: string | null
   createdAt: Date
   updatedAt?: Date
   lastLoginAt?: Date
@@ -21,6 +23,8 @@ export class User extends AggregateRoot {
     email: string
     name?: string | null
     passwordHash: string
+    googleId?: string | null
+    appleId?: string | null
   }): User {
     const now = new Date()
 
@@ -29,6 +33,8 @@ export class User extends AggregateRoot {
       email: props.email,
       name: props.name ?? null,
       passwordHash: props.passwordHash,
+      googleId: props.googleId ?? null,
+      appleId: props.appleId ?? null,
       createdAt: now,
       updatedAt: now,
     })

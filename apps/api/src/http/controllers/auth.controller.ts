@@ -18,10 +18,12 @@ import {
   validateAuthLogoutPayload,
   validateAuthRefreshPayload,
   validateAuthRegisterPayload,
+  validateAuthSocialLoginPayload,
   type AuthLoginPayload,
   type AuthLogoutPayload,
   type AuthRefreshPayload,
   type AuthRegisterPayload,
+  type AuthSocialLoginPayload,
 } from "../validation/auth.validation"
 
 @Controller("/auth")
@@ -31,6 +33,39 @@ export class AuthController {
   constructor() {
     const deps = Deps.getInstance()
     this.authService = deps.authService
+  }
+
+  @Post("/social-login")
+  @Use(validateAuthSocialLoginPayload)
+  async socialLogin(
+    @Body() body: AuthSocialLoginPayload,
+    @Req() req: ServerRequest,
+    @Res() res: ServerResponse
+  ) {
+    try {
+      const result = await this.authService.socialLogin(body)
+
+      if (result.error) {
+        return HttpResponse(res, result)
+      }
+
+      const secretKey = new TextEncoder().encode(env.JWT_SECRET)
+
+      const accessToken = await new SignJWT({})
+        .setSubject(result.value!.user.userId)
+        .setExpirationTime(env.ACCESS_TOKEN_TTL)
+        .setProtectedHeader({ alg: "HS256" })
+        .sign(secretKey)
+
+      return res.status(200).json({
+        user: result.value!.user,
+        accessToken,
+        refreshToken: result.value!.refreshToken,
+      })
+    } catch (e) {
+      console.log(e)
+      HttpResponse(res, { error: "Error internal Server", status: 500 })
+    }
   }
 
   @Post("/login")

@@ -131,7 +131,8 @@ export class Deps {
           authService = new AuthService(
             this.userRepo,
             this.refreshTokenRepo,
-            this.categoryRepo
+            this.categoryRepo,
+            this.accountRepo
           )
         }
         return authService
