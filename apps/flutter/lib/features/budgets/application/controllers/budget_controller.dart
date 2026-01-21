@@ -103,41 +103,31 @@ class BudgetController extends ChangeNotifier {
 
   Future<String?> createFromPrevious(String period, DateTime date) async {
     try {
-      // 1. Calculate previous month
-      final previousDate = DateTime(date.year, date.month - 1, date.day);
+      Map<String, double> planned = {};
 
-      // 2. Fetch previous budget
-      final previous = await repository.current(
-        period: period,
-        date: previousDate,
-      );
+      // Search backwards up to 12 months for a budget to copy
+      for (int i = 1; i <= 12; i++) {
+        final previousDate = DateTime(date.year, date.month - i, 1);
+        final result = await repository.current(
+          period: period,
+          date: previousDate,
+        );
 
-      final planned = <String, double>{};
-
-      // 3. Populate planned with previous values if they exist
-      if (previous.budget != null) {
-        for (final line in previous.budget!.lines) {
-          if (line.plannedAmount > 0) {
-            planned[line.categoryId] = line.plannedAmount;
+        if (result.budget != null && result.budget!.lines.isNotEmpty) {
+          // Found a budget! Copy and break.
+          for (final line in result.budget!.lines) {
+            if (line.plannedAmount > 0) {
+              planned[line.categoryId] = line.plannedAmount;
+            }
           }
+          break;
         }
       }
 
-      // 4. Update state (local only, not saved yet? Or save immediately?)
-      // The user wants to "simply modify values".
-      // If we save immediate, it's a real budget.
-      // Existing _createBudget saved immediately.
-      // So let's save immediately to persist the "Copy".
-
-      // BUT if we simply update `_state.plannedByCategory`, the UI will show the values
-      // and the "Save" button is available.
-      // Ideally we save it so it becomes "created".
-
+      // 4. Update state with the copied values (or empty if none found)
       _state = _state.copyWith(plannedByCategory: planned);
 
-      // 5. Save to create the entity in backend
-      // Note: If 'planned' is empty (no prev budget), it saves with empty lines?
-      // Yes, similar to current behavior.
+      // 5. Save purely to persist this new 'copy' as the current month's budget
       return await save(period);
     } catch (error) {
       return _message(error);

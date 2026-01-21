@@ -1,3 +1,4 @@
+import "dart:ui";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:intl/intl.dart";
@@ -36,6 +37,7 @@ class _MoneyInputState extends State<MoneyInput> {
       keyboardType: TextInputType.number,
       inputFormatters: [_MoneyInputFormatter(_format)],
       enabled: widget.enabled,
+      style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
       decoration: InputDecoration(
         labelText: widget.label,
         helperText: widget.helperText,

@@ -5,6 +5,7 @@ import 'package:ownfinances/core/presentation/components/buttons.dart';
 import 'package:ownfinances/core/presentation/components/money_input.dart';
 import 'package:ownfinances/core/presentation/components/pickers.dart';
 import 'package:ownfinances/core/presentation/components/snackbar.dart';
+import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/accounts/application/controllers/accounts_controller.dart';
 import 'package:ownfinances/features/categories/application/controllers/categories_controller.dart';
@@ -110,24 +111,8 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
       now.month,
       _dayOfMonth > 28 ? 1 : _dayOfMonth,
     ); // Safety for 31s
-
-    // If we want exact day logic for 31:
-    // JS/Dart DateTime(2024, 2, 31) -> March 2/3.
-    // We want to store the PRECISE "intended" start date so backend calculateDates works.
-    // If user picked 31, and we are in Feb, we can't emit Feb 31.
-    // We should emit a date that represents the anchor.
-    // Valid strategy: Find the next valid date that matches the day.
-    // E.g. User picks 31.
-    // Jan 31 -> OK.
-    // Feb -> Next valid is Feb 29 (leap) or Feb 28? No, wait.
-    // If I send StartDate=Feb 28, backend might think anchor is 28.
-    // If I send StartDate=Jan 31, backend anchor is 31.
-    // So better to anchor on a month that HAS that day.
-
-    // Algorithm: Start from current month. If current month has that day, use it.
-    // If not (e.g. Feb 30), move to next month (Mar 30).
-    // If day is past today, perfect. If before today, maybe start next month?
-    // Let's just default to finding the *first valid occurrence* on or after Today.
+    // Logic for 29, 30, 31... handled by "closest match" logic if implementation allows.
+    // Simple MVP strategy: Find next valid occurrence on or after today.
 
     DateTime anchorDate = now;
     // Simple loop to find valid anchor
@@ -137,9 +122,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
       final lastDay = DateTime(y, m + 1, 0).day;
 
       // If user wants 31, and this month has 30, we skip this month for anchor?
-      // Or we clamp?
-      // If we clamp, we lose the "31" intent.
-      // So we should find a month where day exists to preserve intent.
+      // Or we clamp? if we clamp we lose intent. we find a month with that day.
       if (_dayOfMonth <= lastDay) {
         final candidate = DateTime(y, m, _dayOfMonth);
         if (candidate.isAfter(now.subtract(const Duration(days: 1)))) {
@@ -186,8 +169,11 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("Nova Recorrência"),
+        backgroundColor: AppColors.background,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -236,7 +222,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
                 child: _TypeCard(
                   label: "Despesa",
                   icon: Icons.arrow_downward,
-                  color: Colors.red,
+                  color: AppColors.warning, // Expense uses WARNING now
                   selected: _type == "expense",
                   onTap: () {
                     setState(() {
@@ -251,7 +237,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
                 child: _TypeCard(
                   label: "Receita",
                   icon: Icons.arrow_upward,
-                  color: Colors.green,
+                  color: AppColors.success, // Income uses SUCCESS
                   selected: _type == "income",
                   onTap: () {
                     setState(() {
@@ -268,7 +254,9 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 8),
           Text(
             "Você poderá ajustar esse valor mês a mês se precisar.",
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -315,6 +303,11 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
                   label: Text(day.toString()),
                   selected: isSelected,
                   onSelected: (_) => setState(() => _dayOfMonth = day),
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.surface2,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                  ),
                 );
               },
             ),
@@ -324,7 +317,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 "⚠️ Em meses sem dia $_dayOfMonth, será usado o último dia.",
-                style: const TextStyle(color: Colors.orange),
+                style: const TextStyle(color: AppColors.warning),
               ),
             ),
 
@@ -378,6 +371,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 24),
 
           Card(
+            // Uses default SURFACE-1 from theme
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -436,7 +430,7 @@ class _RecurringWizardScreenState extends State<RecurringWizardScreen> {
           const SizedBox(height: 16),
           const Text(
             "Nenhuma transação será criada agora. Você usará o 'Planejar Mês' para gerar os lançamentos.",
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppColors.textTertiary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -465,25 +459,32 @@ class _TypeCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
           border: Border.all(
-            color: selected ? color : Colors.grey.shade300,
+            color: selected
+                ? color.withValues(alpha: 0.5)
+                : AppColors.borderSoft,
             width: selected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: selected ? color.withOpacity(0.1) : Colors.transparent,
+          color: selected ? color.withValues(alpha: 0.15) : AppColors.surface1,
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 32),
+            Icon(
+              icon,
+              color: selected ? color : AppColors.textSecondary,
+              size: 32,
+            ),
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: selected ? color : Colors.grey,
+                color: selected ? color : AppColors.textSecondary,
               ),
             ),
           ],
@@ -505,8 +506,20 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
         ],
       ),
     );

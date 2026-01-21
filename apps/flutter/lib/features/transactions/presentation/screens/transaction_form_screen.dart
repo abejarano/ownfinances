@@ -142,13 +142,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       lastDate: DateTime(now.year + 5),
       builder: (context, child) {
         return Theme(
-          data: AppTheme.light().copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primary,
-              surface: AppColors.surface,
-              onSurface: Colors.white,
-            ),
-          ),
+          // Ensure DatePicker uses Dark Calm theme
+          data: AppTheme.darkCalm(),
           child: child!,
         );
       },
@@ -335,14 +330,26 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surface2, // Inputs/Selectors use SURFACE-2
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          _buildTypeBtn("Despesa", "expense", Colors.redAccent),
-          _buildTypeBtn("Receita", "income", Colors.green),
-          _buildTypeBtn("Transf.", "transfer", Colors.blue),
+          _buildTypeBtn(
+            "Despesa",
+            "expense",
+            AppColors.warning,
+          ), // Warning for Expense per spec
+          _buildTypeBtn(
+            "Receita",
+            "income",
+            AppColors.success,
+          ), // Success for Income
+          _buildTypeBtn(
+            "Transf.",
+            "transfer",
+            AppColors.info,
+          ), // Info for Transfer
         ],
       ),
     );
@@ -360,17 +367,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+            color: isSelected
+                ? color.withValues(alpha: 0.15)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: isSelected
-                ? Border.all(color: color.withOpacity(0.5))
+                ? Border.all(color: color.withValues(alpha: 0.5))
                 : null,
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? color : Colors.white70,
+              color: isSelected ? color : AppColors.textSecondary,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -383,9 +392,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   InputDecoration _darkInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey.shade400),
+      labelStyle: const TextStyle(color: AppColors.textTertiary),
       filled: true,
-      fillColor: AppColors.surface,
+      fillColor: AppColors.surface2, // Verified: SURFACE-2
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -416,17 +425,23 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor:
+          AppColors.surface3, // Verified: SURFACE-3 for Sheet/Modal feel
       appBar: AppBar(
-        title: const Text(
-          "Nova Transação",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          widget.initialTransaction != null
+              ? "Editar Transação"
+              : "Nova Transação",
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface3, // Match BG to look seamless
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: const Icon(Icons.close, color: AppColors.textPrimary),
           onPressed: _handleBack,
         ),
       ),
@@ -445,24 +460,24 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   Center(
                     child: Column(
                       children: [
-                        Text(
+                        const Text(
                           "Valor",
                           style: TextStyle(
-                            color: Colors.grey.shade400,
+                            color: AppColors.textTertiary,
                             fontSize: 14,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // MoneyInput wrapping for color override if needed,
-                        // but usually it uses Theme text color which is white in AppTheme
+                        // MoneyInput wrapping
                         Theme(
                           data: Theme.of(context).copyWith(
                             inputDecorationTheme: Theme.of(context)
                                 .inputDecorationTheme
                                 .copyWith(
-                                  // ensure consistent font size or style for the big amount
+                                  // Override global input theme for clean money look if needed
+                                  // or just rely on default. MoneyInput typically removes borders.
                                   labelStyle: const TextStyle(
-                                    color: AppColors.muted,
+                                    color: AppColors.textTertiary,
                                   ),
                                 ),
                           ),
@@ -477,6 +492,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   const SizedBox(height: 32),
 
                   // Main Selectors
+                  // Check if AccountPicker uses default inputs. If so, they pick up inputDecorationTheme.
+                  // If they use custom widgets, we assume they adapt to Theme.of(context).cardColor or similar.
+                  // Given they are "Picker" widgets, they might be buttons.
                   if (_type == "expense") ...[
                     AccountPicker(
                       label: "Conta de Saída",
@@ -543,7 +561,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               horizontal: 16,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.surface2, // SURFACE-2
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -551,13 +569,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 const Icon(
                                   Icons.calendar_today,
                                   size: 18,
-                                  color: Colors.white70,
+                                  color: AppColors.textSecondary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   formatDate(_date),
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -574,18 +592,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: AppColors.surface2, // SURFACE-2
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _status,
                               isExpanded: true,
-                              dropdownColor: AppColors.surface,
-                              style: const TextStyle(color: Colors.white),
+                              dropdownColor:
+                                  AppColors.surface2, // Match container
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                              ),
                               icon: const Icon(
                                 Icons.arrow_drop_down,
-                                color: Colors.white70,
+                                color: AppColors.textSecondary,
                               ),
                               items: const [
                                 DropdownMenuItem(
@@ -612,33 +633,35 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   Theme(
                     data: Theme.of(context).copyWith(
                       dividerColor: Colors.transparent,
-                      iconTheme: const IconThemeData(color: Colors.white70),
+                      iconTheme: const IconThemeData(
+                        color: AppColors.textSecondary,
+                      ),
                       textTheme: const TextTheme(
-                        titleMedium: TextStyle(color: Colors.white),
+                        titleMedium: TextStyle(color: AppColors.textPrimary),
                       ),
                     ),
                     child: ExpansionTile(
                       title: const Text(
                         "Mais Opções",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       tilePadding: EdgeInsets.zero,
-                      collapsedIconColor: Colors.white70,
+                      collapsedIconColor: AppColors.textSecondary,
                       children: [
                         const SizedBox(height: 16),
                         TextField(
                           controller: _noteController,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: AppColors.textPrimary),
                           decoration: _darkInputDecoration("Observação"),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _tagsController,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: AppColors.textPrimary),
                           decoration: _darkInputDecoration(
                             "Tags (separadas por vírgula)",
                           ),
@@ -647,7 +670,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         SwitchListTile(
                           title: const Text(
                             "Recorrência",
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: AppColors.textPrimary),
                           ),
                           activeColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
@@ -661,10 +684,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               right: 16,
                               bottom: 16,
                             ),
-                            child: Text(
+                            child: const Text(
                               "A transação se repetirá mensalmente (padrão).",
                               style: TextStyle(
-                                color: Colors.grey.shade400,
+                                color: AppColors.textTertiary,
                                 fontSize: 13,
                               ),
                             ),
@@ -672,7 +695,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         SwitchListTile(
                           title: const Text(
                             "Salvar como Modelo",
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: AppColors.textPrimary),
                           ),
                           activeColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
@@ -682,7 +705,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         if (_saveAsTemplate)
                           TextField(
                             controller: _templateNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                            ),
                             decoration: _darkInputDecoration("Nome do Modelo"),
                           ),
                       ],
@@ -696,7 +721,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: PrimaryButton(
-                label: _isSaving ? "Salvando..." : "Salvar Transação",
+                label: _isSaving
+                    ? "Salvando..."
+                    : (widget.initialTransaction != null
+                          ? "Salvar Alterações"
+                          : "Salvar Transação"),
                 onPressed: _isSaving ? null : _save,
                 // PrimaryButton should adapt to theme or use primary color by default
               ),

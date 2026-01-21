@@ -59,9 +59,13 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
 
   Widget _buildStateA(BuildContext context, int count, int pendingCount) {
     return Card(
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: AppColors.warningSoft,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide
+            .none, // PO spec: no hard border if soft bg? Or usage BORDER-soft? Soft backgrounds usually imply no border or soft border. Spec says "background: WARNING-soft".
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -69,15 +73,19 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.orange.shade700,
+                  color: AppColors.warning,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     "Faltam $count lançamentos para gerar",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors
+                          .textPrimary, // Or Warning? Spec: "texto: TEXT-primary"
+                    ),
                   ),
                 ),
               ],
@@ -89,15 +97,16 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
                   child: ElevatedButton(
                     onPressed: () => context.push('/recurring/plan'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.warning,
+                      foregroundColor: AppColors.bg0, // Contrast text
+                      elevation: 0,
                     ),
                     child: const Text("Planejar mês"),
                   ),
                 ),
                 if (pendingCount > 0) ...[
                   const SizedBox(width: 8),
-                  OutlinedButton(
+                  TextButton(
                     onPressed: () => context.push('/transactions/pending'),
                     child: const Text("Ver pendentes"),
                   ),
@@ -111,48 +120,50 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
   }
 
   Widget _buildStateB(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 20),
-          const SizedBox(width: 8),
-          const Text(
-            "Recorrências: Tudo pronto ✅",
-            style: TextStyle(fontWeight: FontWeight.w500, color: Colors.green),
-          ),
-          const Spacer(),
-          InkWell(
-            onTap: () => context.push('/recurring'),
-            child: Text(
-              "Ver regras",
+    // Compact Row style as per "Desquadra Dark Calm" spec
+    // Background SURFACE-1 (Card default)
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+            const SizedBox(width: 8),
+            const Text(
+              "Tudo pronto ✅",
               style: TextStyle(
-                color: Colors.white,
-                decoration: TextDecoration.underline,
-                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.success,
               ),
             ),
-          ),
-        ],
+            const Spacer(),
+            TextButton(
+              onPressed: () => context.push('/recurring'), // Link "Ver regras"
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text("Ver regras"),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildStateC(BuildContext context) {
     return Card(
-      elevation: 0,
-      color: Colors.grey.shade50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade300),
-      ),
+      // Defaults to SURFACE-1
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text(
+            Text(
               "Você ainda não tem recorrências",
-              style: TextStyle(color: Colors.grey),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             TextButton.icon(

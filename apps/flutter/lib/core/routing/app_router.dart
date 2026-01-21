@@ -21,6 +21,7 @@ import "package:ownfinances/features/recurring/presentation/screens/recurring_hu
 import "package:ownfinances/features/templates/presentation/screens/template_list_screen.dart";
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
 import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
 
 import "package:ownfinances/features/debts/presentation/screens/debts_screen.dart";
@@ -99,6 +100,12 @@ GoRouter createRouter({
         builder: (context, state) => TransactionFormScreen(
           initialType: state.uri.queryParameters["type"],
           initialTemplate: state.extra as TransactionTemplate?,
+        ),
+      ),
+      GoRoute(
+        path: "/transactions/edit",
+        builder: (context, state) => TransactionFormScreen(
+          initialTransaction: state.extra as Transaction?,
         ),
       ),
       GoRoute(

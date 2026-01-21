@@ -34,18 +34,25 @@ class DashboardScreen extends StatelessWidget {
           ? "Estourou $count categorias"
           : "Estourou $firstName";
       alerts.add(
-        _AlertCard(text: text, icon: Icons.error_outline, color: Colors.red),
+        _AlertCard(
+          text: text,
+          icon: Icons.warning_amber_rounded,
+          // PO Request: Alerts inside dashboard should be Danger Soft
+          color: AppColors.danger,
+          bgColor: AppColors.dangerSoft,
+        ),
       );
     }
 
-    // Alert 2: Deficit (Example logic, can be refined)
+    // Alert 2: Deficit
     if ((summary?.totals.actualNet ?? 0) < 0 &&
         (summary?.totals.remainingExpense ?? 0) <= 0) {
       alerts.add(
         const _AlertCard(
           text: "Você fechou o mês no vermelho",
           icon: Icons.trending_down,
-          color: Colors.orange,
+          color: AppColors.danger,
+          bgColor: AppColors.dangerSoft,
         ),
       );
     }
@@ -62,9 +69,7 @@ class DashboardScreen extends StatelessWidget {
         DashboardMonthSummaryCard(
           summary: summary,
           periodLabel: periodLabel,
-          onTap: () => context.go(
-            "/reports",
-          ), // Or /budget, keeping consistent with old which was /budget? Old was /budget. Let's send to Reports or Budget? Budget seems more detailed.
+          onTap: () => context.go("/transactions"),
         ),
 
         // 2. Alerts (if any)
@@ -94,7 +99,7 @@ class DashboardScreen extends StatelessWidget {
               child: _QuickActionButton(
                 icon: Icons.arrow_downward,
                 label: "Gasto",
-                color: Colors.red,
+                color: AppColors.warning, // Expense = Caution/Warning normally
                 onTap: () => context.push("/transactions/new?type=expense"),
               ),
             ),
@@ -103,7 +108,7 @@ class DashboardScreen extends StatelessWidget {
               child: _QuickActionButton(
                 icon: Icons.arrow_upward,
                 label: "Receita",
-                color: Colors.green,
+                color: AppColors.success,
                 onTap: () => context.push("/transactions/new?type=income"),
               ),
             ),
@@ -112,7 +117,7 @@ class DashboardScreen extends StatelessWidget {
               child: _QuickActionButton(
                 icon: Icons.compare_arrows,
                 label: "Transferir",
-                color: Colors.blue,
+                color: AppColors.info,
                 onTap: () => context.push("/transactions/new?type=transfer"),
               ),
             ),
@@ -129,11 +134,13 @@ class _AlertCard extends StatelessWidget {
   final String text;
   final IconData icon;
   final Color color;
+  final Color bgColor;
 
   const _AlertCard({
     required this.text,
     required this.icon,
     required this.color,
+    required this.bgColor,
   });
 
   @override
@@ -141,9 +148,8 @@ class _AlertCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        // border: Border.all(color: color.withOpacity(0.3)), // Removed border per PO
       ),
       child: Row(
         children: [
@@ -152,10 +158,7 @@ class _AlertCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                color: color.withOpacity(0.8),
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -185,18 +188,27 @@ class _QuickActionButton extends StatelessWidget {
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: Theme.of(context).cardColor, // Should be SURFACE-1
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: AppColors.borderSoft),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontSize: 12),
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:google_fonts/google_fonts.dart";
 
 class AppSpacing {
   static const double xs = 4;
@@ -9,81 +10,200 @@ class AppSpacing {
 }
 
 class AppColors {
-  static const Color background = Color(0xFF0F172A); // Dark Blue
-  static const Color surface = Color(0xFF1E293B); // Slightly lighter for cards
-  static const Color primary = Color(0xFF1D4ED8); // Medium Blue
-  static const Color secondary = Color(0xFFF97316); // Orange
-  static const Color highlight = Color(0xFFFDBA74); // Light Orange
-  static const Color text = Color(0xFFFFFFFF); // White
-  static const Color muted = Color(0xFF94A3B8); // Slate 400
+  // --- Neutral (Backgrounds & Surfaces) ---
+  static const Color bg0 = Color(0xFF0B1220); // App Background
+  static const Color bg1 = Color(0xFF0D172A); // Gradient Top / AppBar
+  static const Color surface1 = Color(0xFF111C2F); // Card Base
+  static const Color surface2 = Color(0xFF14213A); // Elevated / Inputs
+  static const Color surface3 = Color(0xFF182744); // Modals / BottomSheets
 
-  // Compatibilidad con código anterior
-  static const Color ink = text;
-  static const Color accent = secondary;
+  // --- Borders ---
+  static const Color borderSoft = Color.fromRGBO(255, 255, 255, 0.08);
+  static const Color borderFocus = Color.fromRGBO(59, 130, 246, 0.55);
+  static const Color divider = Color.fromRGBO(255, 255, 255, 0.06);
+
+  // --- Text (Strict Typography Refresh v1) ---
+  static const Color textPrimary = Color(0xFFE6EDF7);
+  static const Color textSecondary = Color(0xB8E6EDF7); // 72% opacity
+  static const Color textTertiary = Color(0x85E6EDF7); // 52% opacity
+  static const Color textDisabled = Color(0x52E6EDF7); // 32% opacity (approx)
+
+  // --- Accents ---
+  static const Color primary = Color(0xFF3B82F6);
+  static const Color primaryPressed = Color(0xFF2563EB);
+  static const Color primarySoft = Color.fromRGBO(59, 130, 246, 0.18);
+
+  // --- Semantics ---
+  static const Color success = Color(0xFF22C55E);
+  static const Color successSoft = Color.fromRGBO(34, 197, 94, 0.18);
+
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color warningSoft = Color.fromRGBO(245, 158, 11, 0.18);
+
+  static const Color danger = Color(0xFFEF4444);
+  static const Color dangerSoft = Color.fromRGBO(239, 68, 68, 0.16);
+
+  static const Color info = Color(0xFF38BDF8);
+  static const Color infoSoft = Color.fromRGBO(56, 189, 248, 0.16);
+
+  // --- Legacy Mappings ---
+  static const Color background = bg0;
+  static const Color surface = surface1;
+  static const Color text = textPrimary;
+  static const Color muted = textTertiary;
+  static const Color secondary = warning;
 }
 
 class AppTheme {
-  static ThemeData light() {
+  /// The new "Desquadra Dark Calm" theme.
+  static ThemeData darkCalm() {
+    final baseTextTheme = GoogleFonts.manropeTextTheme(
+      ThemeData.dark().textTheme,
+    );
+
     return ThemeData(
       brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.bg0,
+
+      // Color Scheme
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.surface,
-        background: AppColors.background,
+        secondary: AppColors.primary,
+        surface: AppColors.surface1,
+        background: AppColors.bg0,
         onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: AppColors.text,
-        onBackground: AppColors.text,
+        onSurface: AppColors.textPrimary,
+        error: AppColors.danger,
+        onError: Colors.white,
       ),
-      scaffoldBackgroundColor: AppColors.background,
-      cardColor: AppColors.surface,
-      canvasColor: AppColors.background, // For BottomNav
-      textTheme: const TextTheme(
-        headlineMedium: TextStyle(
+
+      // Text Theme (Strict Hierarchy)
+      // Display/Headline are used for MoneyText mostly
+      textTheme: baseTextTheme.copyWith(
+        // MoneyXL (24sp)
+        headlineMedium: baseTextTheme.headlineMedium?.copyWith(
           fontSize: 24,
-          fontWeight: FontWeight.w700,
-          color: AppColors.text,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
         ),
-        titleMedium: TextStyle(
+        // MoneyL (22sp)
+        headlineSmall: baseTextTheme.headlineSmall?.copyWith(
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+        // Title (18sp) / MoneyM (18sp)
+        titleMedium: baseTextTheme.titleMedium?.copyWith(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: AppColors.text,
+          color: AppColors.textPrimary,
         ),
-        titleSmall: TextStyle(
+        // Subtitle (14sp)
+        titleSmall: baseTextTheme.titleSmall?.copyWith(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.text,
+          fontWeight: FontWeight.w400, // Regular per requirements
+          color: AppColors.textPrimary,
         ),
-        bodyMedium: TextStyle(fontSize: 14, height: 1.4, color: AppColors.text),
-        bodySmall: TextStyle(fontSize: 12, color: AppColors.muted),
+        // Body (14-15sp)
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+          fontSize: 14,
+          height: 1.4,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+        ),
+        // Label (12sp)
+        labelMedium: baseTextTheme.labelMedium?.copyWith(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary, // Strict rule
+        ),
+        bodySmall: baseTextTheme.bodySmall?.copyWith(
+          fontSize: 12,
+          color: AppColors.textTertiary, // Hints
+        ),
       ),
+
+      // Component Themes
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.text,
+        backgroundColor: AppColors.bg1,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
-      iconTheme: const IconThemeData(color: AppColors.text),
-      dividerColor: AppColors.muted,
+
+      cardTheme: CardThemeData(
+        color: AppColors.surface1,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.borderSoft),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.surface3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface3,
+        modalBackgroundColor: AppColors.surface3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: AppColors.divider,
+        thickness: 1,
+        space: 1,
+      ),
+
+      iconTheme: const IconThemeData(color: AppColors.textPrimary),
+
+      // Inputs
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: AppColors.surface2,
+        labelStyle: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 14,
+          fontFamily: GoogleFonts.manrope().fontFamily,
+          fontWeight: FontWeight.w500,
+        ),
+        hintStyle: TextStyle(
+          color: AppColors.textTertiary,
+          fontSize: 14,
+          fontFamily: GoogleFonts.manrope().fontFamily,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.borderSoft),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.borderSoft),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(
+            color: AppColors.borderFocus,
+            width: 1.5,
+          ),
         ),
-        labelStyle: const TextStyle(color: AppColors.muted),
-        hintStyle: const TextStyle(color: AppColors.muted),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1),
+        ),
       ),
+
+      // Buttons
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -93,19 +213,46 @@ class AppTheme {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           elevation: 0,
+          textStyle: GoogleFonts.manrope(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.text,
-          side: const BorderSide(color: AppColors.muted),
+          foregroundColor: AppColors.textPrimary,
+          backgroundColor: AppColors.surface1,
+          side: const BorderSide(color: AppColors.borderSoft),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: GoogleFonts.manrope(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
         ),
       ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: GoogleFonts.manrope(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+
       useMaterial3: true,
     );
+  }
+
+  // --- LEGACY ---
+  @Deprecated("Use darkCalm() instead")
+  static ThemeData light() {
+    return darkCalm(); // Redirect for safety
   }
 }

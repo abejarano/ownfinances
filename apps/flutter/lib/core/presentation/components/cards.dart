@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/presentation/components/money_text.dart";
 
 class QuickActionCard extends StatelessWidget {
   final IconData icon;
@@ -61,9 +62,9 @@ class QuickActionCard extends StatelessWidget {
 
 class InlineSummaryCard extends StatelessWidget {
   final String title;
-  final String planned;
-  final String actual;
-  final String remaining;
+  final double planned;
+  final double actual;
+  final double remaining;
 
   const InlineSummaryCard({
     super.key,
@@ -98,7 +99,7 @@ class InlineSummaryCard extends StatelessWidget {
 
 class _SummaryRow extends StatelessWidget {
   final String label;
-  final String value;
+  final double value;
 
   const _SummaryRow({required this.label, required this.value});
 
@@ -110,7 +111,21 @@ class _SummaryRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: AppColors.muted)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          MoneyText(
+            value: value,
+            variant: MoneyTextVariant.m,
+            // Inline summaries are usually small, m is 18sp. Maybe too big?
+            // Spec: "moneyM: 18sp".
+            // Previous: w600 (default size).
+            // Let's stick to moneyM as it's the standard.
+            // Or maybe moneyS (not defined in strict list but logical)?
+            // Strict list: XL, L, M.
+            // If M is too big, I might need S.
+            // Spec says: "moneyM (18sp)".
+            // Let's use M. If it looks huge, we fix.
+            // Actually, context: "Resumo do periodo".
+            // Let's use M.
+          ),
         ],
       ),
     );

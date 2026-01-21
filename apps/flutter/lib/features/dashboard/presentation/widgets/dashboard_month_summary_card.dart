@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:ownfinances/core/utils/formatters.dart';
+import "package:flutter/material.dart";
+import "package:ownfinances/core/theme/app_theme.dart";
+import 'package:ownfinances/core/presentation/components/money_text.dart';
 import 'package:ownfinances/features/reports/domain/entities/report_summary.dart';
 
 class DashboardMonthSummaryCard extends StatelessWidget {
@@ -19,7 +20,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
     if (summary == null) {
       return const Card(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(AppSpacing.md),
           child: Center(child: CircularProgressIndicator()),
         ),
       );
@@ -29,76 +30,101 @@ class DashboardMonthSummaryCard extends StatelessWidget {
     final netActual = totals.actualNet;
     final isBlue = netActual >= 0;
 
-    // Status Text
-    final statusText = isBlue
-        ? "Você está no azul ✅"
-        : "Você está no vermelho ⚠️";
-    final statusColor = isBlue ? Colors.green.shade700 : Colors.red.shade700;
-    final cardColor = isBlue ? Colors.green.shade50 : Colors.red.shade50;
+    // Status Logic
+    final statusText = isBlue ? "No azul" : "No vermelho";
+    final statusIcon = isBlue
+        ? Icons.check_circle
+        : Icons.warning_amber_rounded;
+    final statusColor = isBlue ? AppColors.success : AppColors.danger;
+    final statusBg = isBlue ? AppColors.successSoft : AppColors.dangerSoft;
 
     return Card(
-      elevation: 2,
-      color: cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isBlue ? Colors.green.shade100 : Colors.red.shade100,
-        ),
-      ),
+      // Card defaults from AppTheme.darkCalm (Surface-1)
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header: Month & Status
+              // Header: Month & Chevron
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     periodLabel,
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: Colors.grey.shade600),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textTertiary,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
 
-              // Big Status Text
-              Text(
-                statusText,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: statusColor,
-                ),
+              // Status Chip
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 16, color: statusColor),
+                        const SizedBox(width: 6),
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               // Key Metrics Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _Metric(
-                    label: "Entradas",
-                    value: totals.actualIncome,
-                    color: Colors.green,
+                  Expanded(
+                    child: _Metric(
+                      label: "Entradas",
+                      value: totals.actualIncome,
+                      color: AppColors.success,
+                    ),
                   ),
-                  _Metric(
-                    label: "Saídas",
-                    value: totals.actualExpense,
-                    color: Colors.red,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _Metric(
+                      label: "Saídas",
+                      value: totals.actualExpense,
+                      color: AppColors.warning,
+                    ),
                   ),
-                  _Metric(
-                    label: "Saldo",
-                    value: totals.actualNet,
-                    color: isBlue ? Colors.green.shade800 : Colors.red.shade800,
-                    isBold: true,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _Metric(
+                      label: "Saldo",
+                      value: totals.actualNet,
+                      color: isBlue ? AppColors.success : AppColors.danger,
+                      isBold: true,
+                    ),
                   ),
                 ],
               ),
@@ -130,14 +156,18 @@ class _Metric extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(overflow: TextOverflow.ellipsis),
+          maxLines: 1,
         ),
         const SizedBox(height: 4),
-        Text(
-          formatMoney(value),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: MoneyText(
+            value: value,
+            variant: isBold ? MoneyTextVariant.xl : MoneyTextVariant.m,
             color: color,
           ),
         ),

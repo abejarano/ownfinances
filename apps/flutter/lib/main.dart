@@ -27,12 +27,12 @@ class _WebSocketInitializerState extends State<WebSocketInitializer> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final wsClient = context.read<WebSocketClient>();
-      wsClient.connect().catchError((error) {
-        print("Error connecting WebSocket: $error");
-      });
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   final wsClient = context.read<WebSocketClient>();
+    //   wsClient.connect().catchError((error) {
+    //     print("Error connecting WebSocket: $error");
+    //   });
+    // });
   }
 
   @override
@@ -53,7 +53,7 @@ class OwnFinancesApp extends StatelessWidget {
             final router = context.watch<GoRouter>();
             return MaterialApp.router(
               title: "OwnFinances",
-              theme: AppTheme.light(),
+              theme: AppTheme.darkCalm(),
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,

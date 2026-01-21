@@ -55,6 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ? "Auto-geração ativada! Recorrências serão geradas automaticamente."
                   : "Auto-geração desativada.",
             ),
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -68,7 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Erro ao atualizar configuração: $e"),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -80,34 +81,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text("Configuracoes", style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.md),
+        Text(
+          "Configurações",
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: AppSpacing.lg),
 
-        // Recorrências section
-        Text("Recorrências", style: Theme.of(context).textTheme.titleSmall),
+        // 1. Recorrências Section
+        _buildSectionTitle(context, "Automação"),
         const SizedBox(height: AppSpacing.sm),
         Card(
+          // Uses standard SURFACE-1 from theme
           child: Column(
             children: [
               SwitchListTile(
                 title: const Text("Gerar automaticamente"),
                 subtitle: const Text(
-                  "Gera todas as recorrências do mês automaticamente ao iniciar o app pela primeira vez no mês",
+                  "Gera recorrências do mês ao abrir o app pela primeira vez.",
+                  style: TextStyle(color: AppColors.textSecondary),
                 ),
                 value: _autoGenerateRecurring,
                 onChanged: _isLoading ? null : _updateAutoGenerate,
+                activeColor: Colors.white,
+                activeTrackColor: AppColors.success,
+                tileColor: Colors.transparent, // Uses card background
               ),
               if (_autoGenerateRecurring)
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                      Icon(Icons.info_outline, size: 16, color: AppColors.info),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          "As transações serão criadas como pendentes. Você ainda precisará confirmá-las.",
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          "As transações serão criadas como pendentes.",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textTertiary,
+                          ),
                         ),
                       ),
                     ],
@@ -116,44 +130,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
+
         const SizedBox(height: AppSpacing.lg),
 
-        const SizedBox(height: AppSpacing.md),
-        Text("Gestão", style: Theme.of(context).textTheme.titleSmall),
+        // 2. Gestão Section
+        _buildSectionTitle(context, "Gestão"),
         const SizedBox(height: AppSpacing.sm),
-        ListTile(
-          title: const Text("Categorias"),
-          onTap: () => context.push("/categories"),
-        ),
-        ListTile(
-          title: const Text("Contas"),
-          onTap: () => context.push("/accounts"),
-        ),
-        ListTile(
-          title: const Text("Dividas"),
-          onTap: () => context.push("/debts"),
-        ),
-        ListTile(
-          title: const Text("Metas"),
-          onTap: () => context.push("/goals"),
-        ),
-        ListTile(
-          title: const Text("Recorrências"),
-          onTap: () => context.push("/recurring"),
+        Card(
+          child: Column(
+            children: [
+              _buildNavTile(
+                context,
+                "Categorias",
+                Icons.category_outlined,
+                "/categories",
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              _buildNavTile(
+                context,
+                "Contas",
+                Icons.account_balance_wallet_outlined,
+                "/accounts",
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              _buildNavTile(
+                context,
+                "Dívidas",
+                Icons.money_off_csred_outlined,
+                "/debts",
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              _buildNavTile(context, "Metas", Icons.flag_outlined, "/goals"),
+              const Divider(indent: 16, endIndent: 16),
+              _buildNavTile(
+                context,
+                "Regras de Recorrência",
+                Icons.restore_outlined,
+                "/recurring",
+              ),
+            ],
+          ),
         ),
 
-        const SizedBox(height: AppSpacing.md),
-        ListTile(
-          title: const Text("Sair"),
-          onTap: () async {
-            await context.read<AuthController>().logout();
-            if (context.mounted) {
-              context.go("/login");
-            }
-          },
+        const SizedBox(height: AppSpacing.lg),
+
+        // 3. Conta Section
+        _buildSectionTitle(context, "Conta"),
+        const SizedBox(height: AppSpacing.sm),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.logout, color: AppColors.danger),
+                title: const Text(
+                  "Sair",
+                  style: TextStyle(color: AppColors.danger),
+                ),
+                onTap: () async {
+                  await context.read<AuthController>().logout();
+                  if (context.mounted) {
+                    context.go("/login");
+                  }
+                },
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              const ListTile(
+                leading: Icon(
+                  Icons.info_outline,
+                  color: AppColors.textTertiary,
+                ),
+                title: Text("Versão"),
+                trailing: Text(
+                  "0.0.1",
+                  style: TextStyle(color: AppColors.textTertiary),
+                ),
+              ),
+            ],
+          ),
         ),
-        const ListTile(title: Text("Versión"), subtitle: Text("0.0.1")),
       ],
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildNavTile(
+    BuildContext context,
+    String title,
+    IconData icon,
+    String route,
+  ) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.textTertiary),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+      onTap: () => context.push(route),
     );
   }
 }

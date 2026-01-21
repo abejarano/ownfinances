@@ -74,12 +74,12 @@ class AppProviders extends StatelessWidget {
             storage: context.read<TokenStorage>(),
           ),
         ),
-        Provider<WebSocketClient>(
-          create: (context) => WebSocketClient(
-            baseUrl: "http://localhost:3000",
-            tokenStorage: context.read<TokenStorage>(),
-          ),
-        ),
+        // Provider<WebSocketClient>(
+        //   create: (context) => WebSocketClient(
+        //     baseUrl: "http://localhost:3000",
+        //     tokenStorage: context.read<TokenStorage>(),
+        //   ),
+        // ),
         Provider<AuthRepository>(
           create: (context) => AuthRepositoryImpl(
             remote: AuthRemoteDataSource(context.read<ApiClient>()),
@@ -122,8 +122,9 @@ class AppProviders extends StatelessWidget {
                 ..load(),
         ),
         ChangeNotifierProvider<PendingTransactionsController>(
-          create: (context) =>
-              PendingTransactionsController(context.read<TransactionRepository>()),
+          create: (context) => PendingTransactionsController(
+            context.read<TransactionRepository>(),
+          ),
         ),
         Provider<ReportsRepository>(
           create: (context) => ReportsRepositoryImpl(

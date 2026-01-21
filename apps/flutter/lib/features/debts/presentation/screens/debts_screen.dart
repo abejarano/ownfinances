@@ -11,6 +11,7 @@ import "package:ownfinances/features/accounts/application/controllers/accounts_c
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
+import "package:ownfinances/core/presentation/components/money_text.dart";
 
 class DebtsScreen extends StatelessWidget {
   const DebtsScreen({super.key});
@@ -248,7 +249,7 @@ class DebtsScreen extends StatelessWidget {
                           const Text(
                             "Você não tem contas do tipo 'Cartão de Crédito'.",
                             style: TextStyle(
-                              color: Colors.orange,
+                              color: AppColors.warning,
                               fontSize: 13,
                             ),
                           ),
@@ -308,7 +309,10 @@ class DebtsScreen extends StatelessWidget {
                   if (payingAccounts.isEmpty)
                     const Text(
                       "Sem contas bancárias/dinheiro para pagar a fatura.",
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.textTertiary,
+                        fontSize: 12,
+                      ),
                     )
                   else
                     Column(
@@ -759,13 +763,10 @@ class _DebtCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          Text(
-            formatMoney(debt.amountDue),
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
+          MoneyText(
+            value: debt.amountDue,
+            variant: MoneyTextVariant.xl,
+            color: AppColors.danger,
           ),
         ],
       );
@@ -784,13 +785,10 @@ class _DebtCard extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              Text(
-                formatMoney(0),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey, // Neutral
-                ),
+              MoneyText(
+                value: 0,
+                variant: MoneyTextVariant.xl,
+                color: AppColors.textTertiary,
               ),
             ],
           ),

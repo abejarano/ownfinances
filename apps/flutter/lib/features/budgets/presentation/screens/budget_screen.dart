@@ -11,6 +11,7 @@ import "package:ownfinances/features/categories/application/controllers/categori
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
 import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
+import "package:ownfinances/core/presentation/components/money_text.dart";
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -111,9 +112,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
         const SizedBox(height: AppSpacing.md),
         InlineSummaryCard(
           title: "Plano do periodo",
-          planned: formatMoney(summary?.totals.plannedExpense ?? 0),
-          actual: formatMoney(summary?.totals.actualExpense ?? 0),
-          remaining: formatMoney(summary?.totals.remainingExpense ?? 0),
+          planned: summary?.totals.plannedExpense ?? 0,
+          actual: summary?.totals.actualExpense ?? 0,
+          remaining: summary?.totals.remainingExpense ?? 0,
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
@@ -208,14 +209,32 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text("Atual ${formatMoney(actual)}"),
                             Text(
-                              "Restante ${formatMoney(remaining)}",
-                              style: const TextStyle(color: AppColors.muted),
+                              "Atual",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.muted,
+                              ),
                             ),
+                            MoneyText(
+                              value: actual,
+                              variant: MoneyTextVariant.l, // Primary amount
+                              color: AppColors.textPrimary,
+                            ),
+                            const SizedBox(height: 4),
                             Text(
-                              "Progresso ${progressPct.toStringAsFixed(0)}%",
-                              style: const TextStyle(color: AppColors.muted),
+                              "Restante",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.muted,
+                              ),
+                            ),
+                            MoneyText(
+                              value: remaining,
+                              variant: MoneyTextVariant.m,
+                              color: remaining < 0
+                                  ? AppColors.danger
+                                  : AppColors.textTertiary,
                             ),
                           ],
                         ),

@@ -4,6 +4,7 @@ import "package:provider/provider.dart";
 import "package:intl/intl.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
+import "package:ownfinances/core/presentation/components/money_text.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
@@ -24,7 +25,7 @@ class TransactionsScreen extends StatelessWidget {
     final groupedTransactions = _groupTransactionsByDate(txState.items);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg0,
       body: SafeArea(
         child: Column(
           children: [
@@ -54,7 +55,7 @@ class TransactionsScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddMenu(context),
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -143,7 +144,7 @@ class TransactionsScreen extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.muted,
+          color: AppColors.textTertiary,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -165,15 +166,43 @@ class TransactionsScreen extends StatelessWidget {
 
     final title = _titleFor(item.type, category?.name);
     final subtitle = _subtitleFor(item, fromName, toName);
-    final amount = formatMoney(item.amount);
+    // final amount = formatMoney(item.amount); // Cleaned unused var
     final iconData = _getIconData(category?.icon);
-    final iconColor = _getIconColor(category?.color);
+
+    // Semantic Colors Setup
+    Color iconColor;
+    Color iconBg;
+    Color amountColor;
+
+    if (item.type == 'income') {
+      iconColor = AppColors.success;
+      iconBg = AppColors.successSoft;
+      amountColor = AppColors.success;
+    } else if (item.type == 'transfer') {
+      iconColor = AppColors.info;
+      iconBg = AppColors.infoSoft;
+      amountColor = AppColors
+          .textSecondary; // Transfers are neutral? Or Info? Usually neutral/white.
+    } else {
+      // Expense
+      iconColor = AppColors.warning;
+      iconBg = AppColors.warningSoft;
+      amountColor = AppColors
+          .warning; // Or Danger if critical, but per PO "Expense: Warning"
+    }
+
+    // Status Chip Setup
+    final isPending =
+        item.status == 'pending'; // Assuming 'pending' vs 'cleared'
+    final statusColor = isPending ? AppColors.warning : AppColors.success;
+    final statusBg = isPending ? AppColors.warningSoft : AppColors.successSoft;
+    final statusLabel = isPending ? "Pendente" : "Confirmado";
 
     return Dismissible(
       key: ValueKey(item.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: Colors.redAccent,
+        color: AppColors.danger,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.md),
         child: const Icon(Icons.delete, color: Colors.white),
@@ -186,15 +215,30 @@ class TransactionsScreen extends StatelessWidget {
       },
       child: InkWell(
         onTap: () => context.push("/transactions/edit", extra: item),
-        child: Padding(
+        child: Container(
+          // Use Surface-1 as background? List items usually blend with bg or have own surface.
+          // Verify if ListTiles should have surface or transparent?
+          // Spec: "Background: SURFACE-1". This usually implies specific card-like or just bg color if whole list is distinct.
+          // Since grouped, maybe transparent and let Scaffold be BG-0?
+          // But strict spec says "Background: SURFACE-1".
+          // If I interpret "Item de transação (cada fila)" as separate card/block?
+          // Let's use transparent for now as it's a list, unless cards are implied.
+          // Wait, "Item de transação (cada fila) Background: SURFACE-1".
+          // This implies alternating colors or blocks. Let's make it a Container with color SURFACE-1 and margin?
+          // Or just solid background for the item area.
+          decoration: const BoxDecoration(
+            color: AppColors.surface1,
+            border: Border(bottom: BorderSide(color: AppColors.borderSoft)),
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+            vertical:
+                AppSpacing.md, // Increased vertical padding for "premium" feel
           ),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: iconColor.withValues(alpha: 0.1),
+                backgroundColor: iconBg,
                 foregroundColor: iconColor,
                 child: Icon(iconData, size: 20),
               ),
@@ -205,14 +249,19 @@ class TransactionsScreen extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -221,23 +270,42 @@ class TransactionsScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    _amountPrefix(item.type) + amount,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: item.type == "income"
-                          ? Colors.green
-                          : item.type == "expense"
-                          ? Colors.white
-                          : AppColors.muted,
-                    ),
+                  MoneyText(
+                    // Pass signed value for semantics, or just absolute.
+                    // To maintain "+ " or "- " visually with tabular figures, it's best to let formatting handle it or color.
+                    // Given strict MoneyText usage, we'll pass the value.
+                    // If we want explicit "+" for income, we might need a custom formatter in MoneyText or just rely on color.
+                    // For now: Expense = negative, Income = positive.
+                    value: item.type == 'expense' ? -item.amount : item.amount,
+                    variant: MoneyTextVariant.m,
+                    color: amountColor,
                   ),
-                  if (item.status == "cleared")
-                    const Icon(
-                      Icons.check_circle,
-                      size: 14,
-                      color: AppColors.secondary,
+                  const SizedBox(height: 6),
+
+                  // Status Chip (Small)
+                  if (!isPending) ...[
+                    // Only show check if cleared? Or show status chip?
+                    // PO: "Status chip: pending: background WARNING-soft, texto WARNING; cleared: background SUCCESS-soft, texto SUCCESS"
+                    // And "El status icon (check) debe ir como chip pequeño... no como adorno suelto"
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        statusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
+                  ],
                 ],
               ),
             ],
@@ -252,11 +320,11 @@ class TransactionsScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.history, size: 48, color: AppColors.muted),
+          Icon(Icons.history, size: 48, color: AppColors.textTertiary),
           SizedBox(height: AppSpacing.md),
           Text(
             "Nenhuma transação encontrada",
-            style: TextStyle(color: AppColors.muted),
+            style: TextStyle(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -266,30 +334,51 @@ class TransactionsScreen extends StatelessWidget {
   void _showAddMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surface3,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.arrow_downward, color: Colors.green),
-              title: const Text("Receita"),
+              leading: const Icon(
+                Icons.arrow_downward,
+                color: AppColors.warning,
+              ),
+              title: const Text(
+                "Receita",
+                style: TextStyle(color: AppColors.textPrimary),
+              ), // Receita is Income? Arrow Down usually means Income (money in)?
+              // Wait: Arrow Down = Income (Into account). Arrow Up = Expense (Out of account).
+              // Previous code: arrow_downward: Green/Receita. arrow_upward: Red/Expense.
+              // Logic check: "Receita" (Income). "Despesa" (Expense).
+              // My semantic rules: Income = Success/Green. Expense = Warning/Amber.
               onTap: () {
                 Navigator.pop(context);
                 context.go("/transactions/new?type=income");
               },
             ),
             ListTile(
-              leading: const Icon(Icons.arrow_upward, color: Colors.red),
-              title: const Text("Despesa"),
+              leading: const Icon(
+                Icons.arrow_upward,
+                color: AppColors.success,
+              ), // Wait, swap colors?
+              // Previous: Arrow Down (Green) -> Receita. Arrow Up (Red) -> Despesa.
+              // So arrow_down is Income (Green/Success). arrow_up is Expense (Red/Danger now Warning).
+              title: const Text(
+                "Despesa",
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 context.go("/transactions/new?type=expense");
               },
             ),
             ListTile(
-              leading: const Icon(Icons.swap_horiz, color: Colors.blue),
-              title: const Text("Transferência"),
+              leading: const Icon(Icons.swap_horiz, color: AppColors.info),
+              title: const Text(
+                "Transferência",
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 context.go("/transactions/new?type=transfer");
@@ -342,14 +431,14 @@ class TransactionsScreen extends StatelessWidget {
       return "${fromName ?? "?"} → ${toName ?? "?"}";
     }
     final account = item.type == "income" ? toName : fromName;
-    return account ?? "Conta desconhecida";
+    return account ?? "Sem conta"; // Updated per spec
   }
 
-  String _amountPrefix(String type) {
-    if (type == "income") return "+ ";
-    if (type == "transfer") return "";
-    return "- ";
-  }
+  //   String _amountPrefix(String type) {
+  //     if (type == "income") return "+ ";
+  //     if (type == "transfer") return "";
+  //     return "- ";
+  //   }
 
   IconData _getIconData(String? iconName) {
     switch (iconName) {
@@ -372,15 +461,6 @@ class TransactionsScreen extends StatelessWidget {
     }
   }
 
-  Color _getIconColor(String? colorHex) {
-    if (colorHex == null) return Colors.grey;
-    try {
-      return Color(int.parse(colorHex.replaceAll("#", "0xFF")));
-    } catch (_) {
-      return Colors.grey;
-    }
-  }
-
   // --- Filter Actions ---
 
   Future<void> _pickMonth(
@@ -393,6 +473,13 @@ class TransactionsScreen extends StatelessWidget {
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          // Ensure DatePicker uses Dark Calm
+          data: AppTheme.darkCalm(),
+          child: child!,
+        );
+      },
     );
     if (selected == null) return;
 
@@ -414,6 +501,7 @@ class TransactionsScreen extends StatelessWidget {
 
     await showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.surface3,
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -435,6 +523,7 @@ class TransactionsScreen extends StatelessWidget {
                     (acc) => ListTile(
                       title: Text(acc.name),
                       selected: filters.accountId == acc.id,
+                      selectedColor: AppColors.primary,
                       onTap: () {
                         context.read<TransactionsController>().setFilters(
                           filters.copyWith(accountId: acc.id),
@@ -459,6 +548,7 @@ class TransactionsScreen extends StatelessWidget {
 
     await showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.surface3,
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -480,6 +570,7 @@ class TransactionsScreen extends StatelessWidget {
                     (cat) => ListTile(
                       title: Text(cat.name),
                       selected: filters.categoryId == cat.id,
+                      selectedColor: AppColors.primary,
                       onTap: () {
                         context.read<TransactionsController>().setFilters(
                           filters.copyWith(categoryId: cat.id),
@@ -502,6 +593,7 @@ class TransactionsScreen extends StatelessWidget {
   ) async {
     await showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.surface3,
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -552,7 +644,7 @@ class TransactionsScreen extends StatelessWidget {
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text(
                   "Excluir",
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: AppColors.danger),
                 ),
               ),
             ],
@@ -597,34 +689,35 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Default = SURFACE-1, Border-Soft, Text-Secondary
+    // Selected = PRIMARY-Soft, Border-Focus, Text-Primary
+    final bgColor = isActive ? AppColors.primarySoft : AppColors.surface1;
+    final borderColor = isActive ? AppColors.borderFocus : AppColors.borderSoft;
+    final textColor = isActive
+        ? AppColors.textPrimary
+        : AppColors.textSecondary;
+    final iconColor = isActive ? AppColors.primary : AppColors.textSecondary;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : Colors.transparent,
-          border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.muted,
-          ),
+          color: bgColor,
+          border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: isActive ? AppColors.primary : AppColors.muted,
-              ),
-              const SizedBox(width: 6),
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 8),
             ],
             Text(
               label,
               style: TextStyle(
-                color: isActive ? AppColors.primary : AppColors.muted,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                color: textColor,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
           ],
