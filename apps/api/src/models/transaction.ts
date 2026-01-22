@@ -19,6 +19,7 @@ export type TransactionPrimitives = {
   type: TransactionType
   date: Date
   amount: number
+  destinationAmount?: number | null
   currency: string
   categoryId?: string | null
   fromAccountId?: string | null
@@ -40,6 +41,7 @@ export type TransactionCreateProps = {
   type: TransactionType
   date: Date
   amount: number
+  destinationAmount?: number | null
   currency: string
   categoryId?: string | null
   fromAccountId?: string | null
@@ -73,6 +75,7 @@ export class Transaction extends AggregateRoot {
       type: props.type,
       date: props.date,
       amount: props.amount,
+      destinationAmount: props.destinationAmount ?? null,
       currency: props.currency,
       categoryId: props.categoryId ?? null,
       fromAccountId: props.fromAccountId ?? null,

@@ -22,121 +22,129 @@ class DashboardScreen extends StatelessWidget {
 
     final periodLabel = formatMonth(state.date);
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      children: [
-        // 1. Month Summary (BRL Only)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: DashboardMonthSummaryCard(
-            state: state,
-            periodLabel: periodLabel,
-            onTap: () {
-              // Filter transactions for BRL?
-              // Default behavior: go to transactions list.
-              context.go("/transactions");
+    return RefreshIndicator(
+      onRefresh: controller.load,
+      color: AppColors.primary,
+      backgroundColor: AppColors.surface1,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        children: [
+          // 1. Month Summary (BRL Only)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: DashboardMonthSummaryCard(
+              state: state,
+              periodLabel: periodLabel,
+              onTap: () {
+                // Filter transactions for BRL?
+                // Default behavior: go to transactions list.
+                context.go("/transactions");
+              },
+            ),
+          ),
+
+          // 2. Accounts Carousel (Per Account)
+          const SizedBox(height: AppSpacing.md),
+          DashboardAccountsCarousel(
+            summaries: state.accountSummaries,
+            onTap: (accountId) {
+              // Navigate to transactions filtered by account and month
+              final start = DateTime(state.date.year, state.date.month, 1);
+              final end = DateTime(state.date.year, state.date.month + 1, 0);
+
+              final dateFrom = start.toIso8601String();
+              final dateTo = end.toIso8601String();
+
+              context.push(
+                Uri(
+                  path: "/transactions",
+                  queryParameters: {
+                    "accountId": accountId,
+                    // We might need to handle date passing to TransactionsScreen if it supports query params init
+                    // Assuming TransactionsScreen might need update to read params or we rely on filter store?
+                    // Usually standard practice:
+                    "dateFrom": dateFrom,
+                    "dateTo": dateTo,
+                  },
+                ).toString(),
+              );
             },
           ),
-        ),
 
-        // 2. Accounts Carousel (Per Account)
-        const SizedBox(height: AppSpacing.md),
-        DashboardAccountsCarousel(
-          summaries: state.accountSummaries,
-          onTap: (accountId) {
-            // Navigate to transactions filtered by account and month
-            final start = DateTime(state.date.year, state.date.month, 1);
-            final end = DateTime(state.date.year, state.date.month + 1, 0);
+          // 3. Other Currencies (Compact)
+          if (state.otherCurrencies.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            DashboardOtherCurrenciesCard(
+              otherCurrencies: state.otherCurrencies,
+            ),
+          ],
 
-            final dateFrom = start.toIso8601String();
-            final dateTo = end.toIso8601String();
+          // 4. Debts (Keep as is)
+          const SizedBox(height: AppSpacing.lg),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [DashboardDebtsCard()],
+            ),
+          ),
 
-            context.push(
-              Uri(
-                path: "/transactions",
-                queryParameters: {
-                  "accountId": accountId,
-                  // We might need to handle date passing to TransactionsScreen if it supports query params init
-                  // Assuming TransactionsScreen might need update to read params or we rely on filter store?
-                  // Usually standard practice:
-                  "dateFrom": dateFrom,
-                  "dateTo": dateTo,
-                },
-              ).toString(),
-            );
-          },
-        ),
-
-        // 3. Other Currencies (Compact)
-        if (state.otherCurrencies.isNotEmpty) ...[
+          // 5. Recurrence Summary (Keep as is)
           const SizedBox(height: AppSpacing.md),
-          DashboardOtherCurrenciesCard(otherCurrencies: state.otherCurrencies),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: RecurrenceSummaryCard(),
+          ),
+
+          // 6. Quick Actions
+          const SizedBox(height: AppSpacing.lg),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Text(
+              "Ações rápidas",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _QuickActionButton(
+                    icon: Icons.arrow_downward,
+                    label: "Gasto",
+                    color: AppColors.warning,
+                    onTap: () => context.push("/transactions/new?type=expense"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _QuickActionButton(
+                    icon: Icons.arrow_upward,
+                    label: "Receita",
+                    color: AppColors.success,
+                    onTap: () => context.push("/transactions/new?type=income"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _QuickActionButton(
+                    icon: Icons.compare_arrows,
+                    label: "Transferir",
+                    color: AppColors.info,
+                    onTap: () =>
+                        context.push("/transactions/new?type=transfer"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 80),
         ],
-
-        // 4. Debts (Keep as is)
-        const SizedBox(height: AppSpacing.lg),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [DashboardDebtsCard()],
-          ),
-        ),
-
-        // 5. Recurrence Summary (Keep as is)
-        const SizedBox(height: AppSpacing.md),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: RecurrenceSummaryCard(),
-        ),
-
-        // 6. Quick Actions
-        const SizedBox(height: AppSpacing.lg),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(
-            "Ações rápidas",
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Row(
-            children: [
-              Expanded(
-                child: _QuickActionButton(
-                  icon: Icons.arrow_downward,
-                  label: "Gasto",
-                  color: AppColors.warning,
-                  onTap: () => context.push("/transactions/new?type=expense"),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _QuickActionButton(
-                  icon: Icons.arrow_upward,
-                  label: "Receita",
-                  color: AppColors.success,
-                  onTap: () => context.push("/transactions/new?type=income"),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _QuickActionButton(
-                  icon: Icons.compare_arrows,
-                  label: "Transferir",
-                  color: AppColors.info,
-                  onTap: () => context.push("/transactions/new?type=transfer"),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 80),
-      ],
+      ),
     );
   }
 }

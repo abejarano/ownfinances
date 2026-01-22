@@ -36,6 +36,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   // Form State
   String _type = "expense"; // expense, income, transfer
   double _amount = 0.0;
+  double? _destinationAmount; // For manual conversion
   String? _categoryId;
   String? _fromAccountId;
   String? _toAccountId;
@@ -52,6 +53,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   // Controllers
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _destinationAmountController =
+      TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
   final TextEditingController _templateNameController = TextEditingController();
@@ -71,6 +74,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _type = t.type;
       _amount = t.amount;
       _amountController.text = formatMoney(t.amount, withSymbol: false);
+      if (t.destinationAmount != null) {
+        _destinationAmount = t.destinationAmount;
+        _destinationAmountController.text = formatMoney(
+          t.destinationAmount!,
+          withSymbol: false,
+        );
+      }
       _date = t.date;
       _categoryId = t.categoryId;
       _fromAccountId = t.fromAccountId;
@@ -112,11 +122,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         _amount = val;
       }
     });
+
+    _destinationAmountController.addListener(() {
+      final val = parseMoney(_destinationAmountController.text);
+      if (val != _destinationAmount) {
+        _destinationAmount = val;
+      }
+    });
   }
 
   @override
   void dispose() {
     _amountController.dispose();
+    _destinationAmountController.dispose();
     _noteController.dispose();
     _tagsController.dispose();
     _templateNameController.dispose();
@@ -153,33 +171,44 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-  Future<void> _save() async {
-    if (_amount <= 0) {
-      showStandardSnackbar(context, "Por favor, insira um valor válido.");
-      return;
-    }
+  bool get _isConversionMode {
+    if (_type != 'transfer') return false;
+    if (_fromAccountId == null || _toAccountId == null) return false;
 
-    if (_type == "transfer") {
-      if (_fromAccountId == null || _toAccountId == null) {
-        showStandardSnackbar(
-          context,
-          "Selecione as contas de origem e destino.",
-        );
-        return;
-      }
-    } else {
-      if (_categoryId == null && _type != 'transfer') {
-        showStandardSnackbar(context, "Selecione uma categoria.");
-        return;
-      }
-      if (_type == "expense" && _fromAccountId == null) {
-        showStandardSnackbar(context, "Selecione a conta de saída.");
-        return;
-      }
-      if (_type == "income" && _toAccountId == null) {
-        showStandardSnackbar(context, "Selecione a conta de entrada.");
-        return;
-      }
+    final accounts = context.read<AccountsController>().state.items;
+    final from = accounts.firstWhere(
+      (a) => a.id == _fromAccountId,
+      orElse: () => accounts.first,
+    );
+    final to = accounts.firstWhere(
+      (a) => a.id == _toAccountId,
+      orElse: () => accounts.first,
+    );
+
+    return from.currency != to.currency;
+  }
+
+  bool get _isValid {
+    if (_type == 'transfer') {
+      if (_fromAccountId == null || _toAccountId == null) return false;
+      if (_fromAccountId == _toAccountId) return false;
+      if (_amount <= 0) return false;
+      if (_isConversionMode &&
+          (_destinationAmount == null || _destinationAmount! <= 0))
+        return false;
+      return true;
+    }
+    // Basic check for other types
+    if (_amount <= 0) return false;
+    return true;
+  }
+
+  Future<void> _save() async {
+    if (!_isValid) return; // Should be disabled, but safe check
+
+    if (_isConversionMode) {
+      final confirmed = await _showConversionConfirmation();
+      if (!confirmed) return;
     }
 
     setState(() => _isSaving = true);
@@ -189,6 +218,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         "type": _type,
         "date": _date.toIso8601String(),
         "amount": _amount,
+        if (_isConversionMode) "destinationAmount": _destinationAmount,
         "categoryId": _type == "transfer" ? null : _categoryId,
         "fromAccountId": _type == "income" ? null : _fromAccountId,
         "toAccountId": _type == "expense" ? null : _toAccountId,
@@ -261,6 +291,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           final template = <String, dynamic>{
             "type": _type,
             "amount": _amount,
+            if (_isConversionMode) "destinationAmount": _destinationAmount,
             "currency": created.transaction.currency,
             if (_type != "transfer") "categoryId": _categoryId,
             if (_type != "income") "fromAccountId": _fromAccountId,
@@ -299,7 +330,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           await context.read<TemplatesController>().create({
             "name": _templateNameController.text,
             ...payload,
-            "currency": "BRL",
+            "currency": "BRL", // TODO: Should infer from account?
           });
         }
 
@@ -310,6 +341,166 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Future<bool> _confirmAccountChange() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF111C2F), // Surface 1
+            title: const Text(
+              "Alterar contas?",
+              style: TextStyle(color: Colors.white),
+            ),
+            content: const Text(
+              "Isso pode mudar a moeda e limpar os valores informados.",
+              style: TextStyle(color: Color.fromRGBO(255, 255, 255, 0.65)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Alterar e limpar",
+                  style: TextStyle(color: AppColors.primary),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<bool> _showConversionConfirmation() async {
+    final accounts = context.read<AccountsController>().state.items;
+    final from = accounts.firstWhere((a) => a.id == _fromAccountId);
+    final to = accounts.firstWhere((a) => a.id == _toAccountId);
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF111C2F),
+            title: const Text(
+              "Confirmar conversão",
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildConfirmationRow(
+                  "Você envia:",
+                  "${from.currency} ${formatMoney(_amount, withSymbol: false)}",
+                  "${from.name} (${from.currency})",
+                  AppColors.warning,
+                ),
+                const SizedBox(height: 16),
+                _buildConfirmationRow(
+                  "Você recebe:",
+                  "${to.currency} ${formatMoney(_destinationAmount ?? 0, withSymbol: false)}",
+                  "${to.name} (${to.currency})",
+                  AppColors.success,
+                ),
+                if (_amount > 0 && (_destinationAmount ?? 0) > 0) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    "Taxa efetiva: 1 ${from.currency} ≈ ${to.currency} ${((_destinationAmount ?? 0) / _amount).toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  "Voltar",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Confirmar",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Widget _buildConfirmationRow(
+    String label,
+    String value,
+    String sub,
+    Color color,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          sub,
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  void _onAccountChanged(bool isFrom, String? newAccountId) async {
+    if (newAccountId == null) return;
+    // Anti-Friction Check
+    if (_amount > 0 || (_destinationAmount ?? 0) > 0) {
+      final confirmed = await _confirmAccountChange();
+      if (!confirmed) return; // Do nothing, keep old selection
+
+      // If confirmed, update and clear
+      setState(() {
+        if (isFrom)
+          _fromAccountId = newAccountId;
+        else
+          _toAccountId = newAccountId;
+        _amount = 0;
+        _destinationAmount = 0;
+        _amountController.clear();
+        _destinationAmountController.clear();
+      });
+      return;
+    }
+
+    // Normal change
+    setState(() {
+      if (isFrom)
+        _fromAccountId = newAccountId;
+      else
+        _toAccountId = newAccountId;
+    });
   }
 
   DateTime _nextRecurringStartDate(DateTime base, String frequency) {
@@ -330,26 +521,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surface2, // Inputs/Selectors use SURFACE-2
+        color: const Color(0xFF14213A), // Inputs
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          _buildTypeBtn(
-            "Despesa",
-            "expense",
-            AppColors.warning,
-          ), // Warning for Expense per spec
-          _buildTypeBtn(
-            "Receita",
-            "income",
-            AppColors.success,
-          ), // Success for Income
-          _buildTypeBtn(
-            "Transf.",
-            "transfer",
-            AppColors.info,
-          ), // Info for Transfer
+          _buildTypeBtn("Despesa", "expense", AppColors.warning),
+          _buildTypeBtn("Receita", "income", AppColors.success),
+          _buildTypeBtn("Transf.", "transfer", AppColors.info),
         ],
       ),
     );
@@ -361,7 +540,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       child: GestureDetector(
         onTap: () => setState(() {
           _type = value;
-          if (value == 'transfer') _categoryId = null;
+          if (value == 'transfer') {
+            _categoryId = null;
+            // Clear inputs when switching type? Usually safer
+            _amount = 0;
+            _destinationAmount = 0;
+            _amountController.clear();
+            _destinationAmountController.clear();
+          }
         }),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -379,7 +565,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? color : AppColors.textSecondary,
+              color: isSelected
+                  ? color
+                  : const Color.fromRGBO(255, 255, 255, 0.65), // Sec
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               fontSize: 14,
             ),
@@ -392,16 +580,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   InputDecoration _darkInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.textTertiary),
+      labelStyle: const TextStyle(
+        color: Color.fromRGBO(255, 255, 255, 0.45),
+      ), // Tertiary
       filled: true,
-      fillColor: AppColors.surface2, // Verified: SURFACE-2
+      fillColor: const Color(0xFF14213A), // Inputs
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(
+          color: Color.fromRGBO(255, 255, 255, 0.08),
+        ), // Soft Border
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(
+          color: Color.fromRGBO(255, 255, 255, 0.08),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -424,24 +618,93 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         .map((acc) => PickerItem(id: acc.id, label: acc.name))
         .toList();
 
+    // --- Display Logic ---
+    bool showValueSection = false;
+    bool showGuideBlock = false;
+
+    // Labels & Currencies
+    String labelValue1 = "Valor";
+    String helper1 = "Valor transferido";
+    String labelValue2 = "";
+    String helper2 = "";
+
+    // For Rate Calc
+    String fromCurr = "";
+    String toCurr = "";
+    String mainCurrencySymbol = "R\$"; // Default
+
+    if (_type == 'transfer') {
+      if (_fromAccountId == null || _toAccountId == null) {
+        // State 0
+        showValueSection = false;
+        showGuideBlock = true;
+      } else {
+        // Accounts Selected
+        try {
+          final from = accountsState.items.firstWhere(
+            (a) => a.id == _fromAccountId,
+          );
+          final to = accountsState.items.firstWhere(
+            (a) => a.id == _toAccountId,
+          );
+
+          showValueSection = true;
+          mainCurrencySymbol = from.currency;
+
+          if (from.currency == to.currency) {
+            // State 1
+            labelValue1 = "Valor";
+            helper1 = "Valor que sai da origem e entra no destino.";
+          } else {
+            // State 2
+            fromCurr = from.currency;
+            toCurr = to.currency;
+            labelValue1 = "Você envia ($fromCurr)";
+            helper1 = "Valor que sai da conta de origem.";
+
+            labelValue2 = "Você recebe ($toCurr)";
+            helper2 = "Valor que entra na conta de destino.";
+          }
+        } catch (_) {
+          // Should not happen if data integrity valid
+          showValueSection = true; // Fallback
+        }
+      }
+    } else {
+      // Income / Expense
+      showValueSection = true;
+      if (_type == 'expense' && _fromAccountId != null) {
+        try {
+          mainCurrencySymbol = accountsState.items
+              .firstWhere((a) => a.id == _fromAccountId)
+              .currency;
+        } catch (_) {}
+      } else if (_type == 'income' && _toAccountId != null) {
+        try {
+          mainCurrencySymbol = accountsState.items
+              .firstWhere((a) => a.id == _toAccountId)
+              .currency;
+        } catch (_) {}
+      }
+    }
+
     return Scaffold(
-      backgroundColor:
-          AppColors.surface3, // Verified: SURFACE-3 for Sheet/Modal feel
+      backgroundColor: const Color(0xFF0B1220), // App BG
       appBar: AppBar(
         title: Text(
           widget.initialTransaction != null
               ? "Editar Transação"
               : "Nova Transação",
           style: const TextStyle(
-            color: AppColors.textPrimary,
+            color: Color.fromRGBO(255, 255, 255, 0.92), // Primary
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AppColors.surface3, // Match BG to look seamless
+        backgroundColor: const Color(0xFF0D172A), // Top
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.textPrimary),
+          icon: const Icon(Icons.close, color: Colors.white),
           onPressed: _handleBack,
         ),
       ),
@@ -452,49 +715,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  // Type Selector
+                  // 1. Selector
                   _buildTypeSelector(),
                   const SizedBox(height: 32),
 
-                  // Amount
-                  Center(
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Valor",
-                          style: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // MoneyInput wrapping
-                        Theme(
-                          data: Theme.of(context).copyWith(
-                            inputDecorationTheme: Theme.of(context)
-                                .inputDecorationTheme
-                                .copyWith(
-                                  // Override global input theme for clean money look if needed
-                                  // or just rely on default. MoneyInput typically removes borders.
-                                  labelStyle: const TextStyle(
-                                    color: AppColors.textTertiary,
-                                  ),
-                                ),
-                          ),
-                          child: MoneyInput(
-                            controller: _amountController,
-                            label: "",
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Main Selectors
-                  // Check if AccountPicker uses default inputs. If so, they pick up inputDecorationTheme.
-                  // If they use custom widgets, we assume they adapt to Theme.of(context).cardColor or similar.
-                  // Given they are "Picker" widgets, they might be buttons.
+                  // 2. Account Selectors (Always Visible)
                   if (_type == "expense") ...[
                     AccountPicker(
                       label: "Conta de Saída",
@@ -534,21 +759,275 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       label: "De (Origem)",
                       items: accountItems,
                       value: _fromAccountId,
-                      onSelected: (item) =>
-                          setState(() => _fromAccountId = item.id),
+                      onSelected: (item) => _onAccountChanged(true, item.id),
                     ),
                     const SizedBox(height: 16),
                     AccountPicker(
                       label: "Para (Destino)",
                       items: accountItems,
                       value: _toAccountId,
-                      onSelected: (item) =>
-                          setState(() => _toAccountId = item.id),
+                      onSelected: (item) => _onAccountChanged(false, item.id),
                     ),
+
+                    if (_fromAccountId != null &&
+                        _fromAccountId == _toAccountId)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8, left: 4),
+                        child: Text(
+                          "Selecione contas diferentes.",
+                          style: TextStyle(
+                            color: AppColors.danger,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                   ],
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
+                  // 3. Guide Block (State 0)
+                  if (showGuideBlock)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF111C2F),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color.fromRGBO(255, 255, 255, 0.08),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.touch_app_outlined,
+                            color: Color.fromRGBO(255, 255, 255, 0.45),
+                            size: 24,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Escolha as contas para continuar.",
+                            style: TextStyle(
+                              color: Color.fromRGBO(255, 255, 255, 0.92),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Depois você informa o valor.",
+                            style: TextStyle(
+                              color: Color.fromRGBO(255, 255, 255, 0.45),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // 4. Value Section
+                  if (showValueSection) ...[
+                    // If Diff Currency (State 2) -> Info Block First
+                    if (_isConversionMode) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color.fromRGBO(59, 130, 246, 0.10),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color.fromRGBO(59, 130, 246, 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: Color(0xFF3B82F6),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    "A Desquadra não converte automaticamente.",
+                                    style: TextStyle(
+                                      color: Color.fromRGBO(
+                                        255,
+                                        255,
+                                        255,
+                                        0.92,
+                                      ),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    "Informe os valores como aconteceu na vida real.",
+                                    style: TextStyle(
+                                      color: Color.fromRGBO(
+                                        255,
+                                        255,
+                                        255,
+                                        0.65,
+                                      ),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Input 1
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        inputDecorationTheme: Theme.of(context)
+                            .inputDecorationTheme
+                            .copyWith(
+                              labelStyle: const TextStyle(
+                                color: Color.fromRGBO(255, 255, 255, 0.45),
+                              ),
+                            ),
+                      ),
+                      child: MoneyInput(
+                        controller: _amountController,
+                        label: _type == 'transfer' ? labelValue1 : "",
+                        currencySymbol: mainCurrencySymbol,
+                      ),
+                    ),
+                    if (_type == 'transfer')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 4),
+                        child: Text(
+                          helper1,
+                          style: const TextStyle(
+                            color: Color.fromRGBO(255, 255, 255, 0.45),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+
+                    // Input 2 (If Conversion)
+                    if (_isConversionMode) ...[
+                      const SizedBox(height: 24),
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          inputDecorationTheme: Theme.of(context)
+                              .inputDecorationTheme
+                              .copyWith(
+                                labelStyle: const TextStyle(
+                                  color: Color.fromRGBO(255, 255, 255, 0.45),
+                                ),
+                              ),
+                        ),
+                        child: MoneyInput(
+                          controller: _destinationAmountController,
+                          label: labelValue2,
+                          currencySymbol: toCurr,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 4),
+                        child: Text(
+                          helper2,
+                          style: const TextStyle(
+                            color: Color.fromRGBO(255, 255, 255, 0.45),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+
+                      if (_amount > 0 && (_destinationAmount ?? 0) > 0) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF111C2F),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color.fromRGBO(255, 255, 255, 0.08),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    "Você enviou:",
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    "$fromCurr ${formatMoney(_amount, withSymbol: false)}",
+                                    style: const TextStyle(
+                                      color: AppColors.warning,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    "Você recebeu:",
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    "$toCurr ${formatMoney(_destinationAmount!, withSymbol: false)}",
+                                    style: const TextStyle(
+                                      color: AppColors.success,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Divider(
+                                  height: 1,
+                                  color: Color.fromRGBO(255, 255, 255, 0.08),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Taxa efetiva: 1 $fromCurr = ${((_destinationAmount ?? 0) / _amount).toStringAsFixed(2)} $toCurr",
+                                    style: const TextStyle(
+                                      color: AppColors.textTertiary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ],
+
+                  const SizedBox(height: 32),
+
+                  // 5. Date & Status
+                  // Copied from previous logic but matching new colors
                   // Date & Status Row
                   Row(
                     children: [
@@ -561,21 +1040,29 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               horizontal: 16,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.surface2, // SURFACE-2
+                              color: const Color(0xFF14213A), // Inputs
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color.fromRGBO(
+                                  255,
+                                  255,
+                                  255,
+                                  0.08,
+                                ),
+                              ),
                             ),
                             child: Row(
                               children: [
                                 const Icon(
                                   Icons.calendar_today,
                                   size: 18,
-                                  color: AppColors.textSecondary,
+                                  color: Color.fromRGBO(255, 255, 255, 0.65),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   formatDate(_date),
                                   style: const TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color: Color.fromRGBO(255, 255, 255, 0.92),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -592,21 +1079,23 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.surface2, // SURFACE-2
+                            color: const Color(0xFF14213A), // Inputs
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color.fromRGBO(255, 255, 255, 0.08),
+                            ),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _status,
                               isExpanded: true,
-                              dropdownColor:
-                                  AppColors.surface2, // Match container
+                              dropdownColor: const Color(0xFF14213A),
                               style: const TextStyle(
-                                color: AppColors.textPrimary,
+                                color: Color.fromRGBO(255, 255, 255, 0.92),
                               ),
                               icon: const Icon(
                                 Icons.arrow_drop_down,
-                                color: AppColors.textSecondary,
+                                color: Color.fromRGBO(255, 255, 255, 0.65),
                               ),
                               items: const [
                                 DropdownMenuItem(
@@ -629,39 +1118,45 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                   const SizedBox(height: 24),
 
-                  // More Options (Simple Expandable or just Tiles)
+                  // More Options
                   Theme(
                     data: Theme.of(context).copyWith(
                       dividerColor: Colors.transparent,
                       iconTheme: const IconThemeData(
-                        color: AppColors.textSecondary,
+                        color: Color.fromRGBO(255, 255, 255, 0.65),
                       ),
                       textTheme: const TextTheme(
-                        titleMedium: TextStyle(color: AppColors.textPrimary),
+                        titleMedium: TextStyle(
+                          color: Color.fromRGBO(255, 255, 255, 0.92),
+                        ),
                       ),
                     ),
                     child: ExpansionTile(
                       title: const Text(
                         "Mais Opções",
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: Color.fromRGBO(255, 255, 255, 0.92),
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       tilePadding: EdgeInsets.zero,
-                      collapsedIconColor: AppColors.textSecondary,
+                      collapsedIconColor: Color.fromRGBO(255, 255, 255, 0.65),
                       children: [
                         const SizedBox(height: 16),
                         TextField(
                           controller: _noteController,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            color: Color.fromRGBO(255, 255, 255, 0.92),
+                          ),
                           decoration: _darkInputDecoration("Observação"),
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _tagsController,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            color: Color.fromRGBO(255, 255, 255, 0.92),
+                          ),
                           decoration: _darkInputDecoration(
                             "Tags (separadas por vírgula)",
                           ),
@@ -670,7 +1165,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         SwitchListTile(
                           title: const Text(
                             "Recorrência",
-                            style: TextStyle(color: AppColors.textPrimary),
+                            style: TextStyle(
+                              color: Color.fromRGBO(255, 255, 255, 0.92),
+                            ),
                           ),
                           activeColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
@@ -687,7 +1184,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             child: const Text(
                               "A transação se repetirá mensalmente (padrão).",
                               style: TextStyle(
-                                color: AppColors.textTertiary,
+                                color: Color.fromRGBO(255, 255, 255, 0.45),
                                 fontSize: 13,
                               ),
                             ),
@@ -695,7 +1192,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         SwitchListTile(
                           title: const Text(
                             "Salvar como Modelo",
-                            style: TextStyle(color: AppColors.textPrimary),
+                            style: TextStyle(
+                              color: Color.fromRGBO(255, 255, 255, 0.92),
+                            ),
                           ),
                           activeColor: AppColors.primary,
                           contentPadding: EdgeInsets.zero,
@@ -706,7 +1205,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           TextField(
                             controller: _templateNameController,
                             style: const TextStyle(
-                              color: AppColors.textPrimary,
+                              color: Color.fromRGBO(255, 255, 255, 0.92),
                             ),
                             decoration: _darkInputDecoration("Nome do Modelo"),
                           ),
@@ -721,13 +1220,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: PrimaryButton(
-                label: _isSaving
-                    ? "Salvando..."
-                    : (widget.initialTransaction != null
-                          ? "Salvar Alterações"
-                          : "Salvar Transação"),
-                onPressed: _isSaving ? null : _save,
-                // PrimaryButton should adapt to theme or use primary color by default
+                label: widget.initialTransaction != null
+                    ? "Salvar Alterações"
+                    : "Salvar Transação",
+                onPressed: (_isSaving || !_isValid) ? null : _save,
+                isLoading: _isSaving,
+                backgroundColor: AppColors.primary,
+                textColor: Colors.white,
               ),
             ),
           ],

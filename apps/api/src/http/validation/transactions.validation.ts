@@ -10,6 +10,7 @@ export type TransactionCreatePayload = {
   type: TransactionType
   date?: string | Date
   amount: number
+  destinationAmount?: number | null
   currency?: string
   categoryId?: string | null
   fromAccountId?: string | null
@@ -31,6 +32,7 @@ const TransactionBaseSchema = v.strictObject({
   type: TransactionTypeSchema,
   date: v.optional(DateLikeSchema),
   amount: v.number(),
+  destinationAmount: v.optional(v.nullable(v.number())),
   currency: v.optional(v.pipe(v.string(), v.minLength(1))),
   categoryId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
   fromAccountId: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),

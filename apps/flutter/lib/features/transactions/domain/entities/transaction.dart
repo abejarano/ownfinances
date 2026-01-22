@@ -12,6 +12,7 @@ class Transaction {
   final String status;
   final DateTime? clearedAt;
   final String? recurringRuleId;
+  final double? destinationAmount;
 
   const Transaction({
     required this.id,
@@ -27,6 +28,7 @@ class Transaction {
     required this.status,
     required this.clearedAt,
     this.recurringRuleId,
+    this.destinationAmount,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class Transaction {
           ? DateTime.tryParse(json["clearedAt"] as String)
           : null,
       recurringRuleId: json["recurringRuleId"] as String?,
+      destinationAmount: (json["destinationAmount"] as num?)?.toDouble(),
     );
   }
 }

@@ -5,7 +5,6 @@ import "package:provider/provider.dart";
 import "package:intl/intl.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
-import "package:ownfinances/core/presentation/components/money_text.dart";
 import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
@@ -13,6 +12,9 @@ import "package:ownfinances/features/reports/application/controllers/reports_con
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
+
+// Import the new widget
+import "package:ownfinances/features/transactions/presentation/widgets/transaction_list_item.dart";
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -168,186 +170,24 @@ class TransactionsScreen extends StatelessWidget {
     List<dynamic> accounts,
   ) {
     final categoryMap = {for (final c in categories) c.id: c};
-    final accountMap = {for (final a in accounts) a.id: a.name};
+    final accountMap = {for (final a in accounts) a.id: a};
 
     final category = categoryMap[item.categoryId];
-    final fromName = accountMap[item.fromAccountId];
-    final toName = accountMap[item.toAccountId];
+    final fromAccount = accountMap[item.fromAccountId];
+    final toAccount = accountMap[item.toAccountId];
 
-    // Priority: Note > Category Name > Type Label
-    String title = "";
-    if (item.note != null && item.note!.isNotEmpty) {
-      title = item.note!;
-    } else if (category != null) {
-      title = category.name;
-    } else {
-      title = item.type == "income" ? "Receita" : "Despesa";
-      if (item.type == "transfer") title = "Transferência";
-    }
+    final filters = context.read<TransactionsController>().state.filters;
+    final filterAccountId = filters.accountId;
 
-    // Subtitle Logic
-    String subtitle = "";
-    if (item.type == 'transfer') {
-      subtitle = "${fromName ?? '?'} → ${toName ?? '?'}";
-    } else {
-      final accountName =
-          (item.type == 'income' ? toName : fromName) ?? "Sem conta";
-
-      // If we used Note as title, and we have a category, show "Category • Account"
-      if (item.note != null && item.note!.isNotEmpty && category != null) {
-        subtitle = "${category.name} • $accountName";
-      } else {
-        // Normal case: just account
-        subtitle = accountName;
-      }
-    }
-
-    final iconData = _getIconData(category?.icon);
-
-    // Semantic Colors Setup
-    Color iconColor;
-    Color iconBg;
-    Color amountColor;
-
-    if (item.type == 'income') {
-      iconColor = AppColors.success;
-      iconBg = AppColors.successSoft;
-      amountColor = AppColors.success;
-    } else if (item.type == 'transfer') {
-      iconColor = AppColors.info;
-      iconBg = AppColors.infoSoft;
-      amountColor = AppColors
-          .textSecondary; // Transfers are neutral? Or Info? Usually neutral/white.
-    } else {
-      // Expense
-      iconColor = AppColors.warning;
-      iconBg = AppColors.warningSoft;
-      amountColor = AppColors
-          .warning; // Or Danger if critical, but per PO "Expense: Warning"
-    }
-
-    // Status Chip Setup
-    final isPending =
-        item.status == 'pending'; // Assuming 'pending' vs 'cleared'
-    final statusColor = isPending ? AppColors.warning : AppColors.success;
-    final statusBg = isPending ? AppColors.warningSoft : AppColors.successSoft;
-    final statusLabel = isPending ? "Pendente" : "Confirmado";
-
-    return Dismissible(
-      key: ValueKey(item.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        color: AppColors.danger,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: AppSpacing.md),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      confirmDismiss: (direction) async {
-        return await _confirmDelete(context);
-      },
-      onDismissed: (direction) {
-        _deleteTransaction(context, item);
-      },
-      child: InkWell(
-        onTap: () => context.push("/transactions/edit", extra: item),
-        child: Container(
-          // Use Surface-1 as background? List items usually blend with bg or have own surface.
-          // Verify if ListTiles should have surface or transparent?
-          // Spec: "Background: SURFACE-1". This usually implies specific card-like or just bg color if whole list is distinct.
-          // Since grouped, maybe transparent and let Scaffold be BG-0?
-          // But strict spec says "Background: SURFACE-1".
-          // If I interpret "Item de transação (cada fila)" as separate card/block?
-          // Let's use transparent for now as it's a list, unless cards are implied.
-          // Wait, "Item de transação (cada fila) Background: SURFACE-1".
-          // This implies alternating colors or blocks. Let's make it a Container with color SURFACE-1 and margin?
-          // Or just solid background for the item area.
-          decoration: const BoxDecoration(
-            color: AppColors.surface1,
-            border: Border(bottom: BorderSide(color: AppColors.borderSoft)),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical:
-                AppSpacing.md, // Increased vertical padding for "premium" feel
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: iconBg,
-                foregroundColor: iconColor,
-                child: Icon(iconData, size: 20),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textTertiary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  MoneyText(
-                    // Pass signed value for semantics, or just absolute.
-                    // To maintain "+ " or "- " visually with tabular figures, it's best to let formatting handle it or color.
-                    // Given strict MoneyText usage, we'll pass the value.
-                    // If we want explicit "+" for income, we might need a custom formatter in MoneyText or just rely on color.
-                    // For now: Expense = negative, Income = positive.
-                    value: item.type == 'expense' ? -item.amount : item.amount,
-                    variant: MoneyTextVariant.m,
-                    color: amountColor,
-                    symbol: item.currency, // Pass the transaction currency
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Status Chip (Small)
-                  if (!isPending) ...[
-                    // Only show check if cleared? Or show status chip?
-                    // PO: "Status chip: pending: background WARNING-soft, texto WARNING; cleared: background SUCCESS-soft, texto SUCCESS"
-                    // And "El status icon (check) debe ir como chip pequeño... no como adorno suelto"
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusBg,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    return TransactionListItem(
+      transaction: item,
+      fromAccount: fromAccount,
+      toAccount: toAccount,
+      category: category,
+      filterContextAccountId: filterAccountId,
+      onTap: () => context.push("/transactions/edit", extra: item),
+      onDelete: () => _deleteTransaction(context, item),
+      onConfirmDelete: () => _confirmDelete(context),
     );
   }
 
@@ -381,32 +221,23 @@ class TransactionsScreen extends StatelessWidget {
                 color: AppColors.warning,
               ),
               title: const Text(
-                "Receita",
-                style: TextStyle(color: AppColors.textPrimary),
-              ), // Receita is Income? Arrow Down usually means Income (money in)?
-              // Wait: Arrow Down = Income (Into account). Arrow Up = Expense (Out of account).
-              // Previous code: arrow_downward: Green/Receita. arrow_upward: Red/Expense.
-              // Logic check: "Receita" (Income). "Despesa" (Expense).
-              // My semantic rules: Income = Success/Green. Expense = Warning/Amber.
-              onTap: () {
-                Navigator.pop(context);
-                context.go("/transactions/new?type=income");
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.arrow_upward,
-                color: AppColors.success,
-              ), // Wait, swap colors?
-              // Previous: Arrow Down (Green) -> Receita. Arrow Up (Red) -> Despesa.
-              // So arrow_down is Income (Green/Success). arrow_up is Expense (Red/Danger now Warning).
-              title: const Text(
                 "Despesa",
                 style: TextStyle(color: AppColors.textPrimary),
               ),
               onTap: () {
                 Navigator.pop(context);
                 context.go("/transactions/new?type=expense");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.arrow_upward, color: AppColors.success),
+              title: const Text(
+                "Receita",
+                style: TextStyle(color: AppColors.textPrimary),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                context.go("/transactions/new?type=income");
               },
             ),
             ListTile(
@@ -455,51 +286,6 @@ class TransactionsScreen extends StatelessWidget {
     if (itemDate == yesterday) return "Ontem";
 
     return DateFormat("EEEE, d 'de' MMMM", "pt_BR").format(date);
-  }
-
-  //   String _amountPrefix(String type) {
-  //     if (type == "income") return "+ ";
-  //     if (type == "transfer") return "";
-  //     return "- ";
-  //   }
-
-  IconData _getIconData(String? iconName) {
-    switch (iconName) {
-      case "salary":
-        return Icons.attach_money;
-      case "restaurant":
-        return Icons.restaurant;
-      case "home":
-        return Icons.home;
-      case "transport":
-        return Icons.directions_car;
-      case "leisure":
-        return Icons.movie;
-      case "health":
-        return Icons.medical_services;
-      case "shopping":
-        return Icons.shopping_bag;
-      case "other":
-        return Icons.category;
-      case "bills":
-        return Icons.receipt_long;
-      case "entertainment":
-        return Icons.sports_esports;
-      case "education":
-        return Icons.school;
-      case "gym": // "Apoyo familiar" might be mapped to one of these or "other"
-        return Icons.fitness_center;
-      case "travel":
-        return Icons.flight;
-      case "gift":
-        return Icons.card_giftcard;
-      case "investment":
-        return Icons.trending_up;
-      case "family": // Possible match for "Apoyo familiar" if icon name matches
-        return Icons.family_restroom;
-      default:
-        return Icons.category;
-    }
   }
 
   // --- Filter Actions ---
@@ -725,35 +511,36 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Default = SURFACE-1, Border-Soft, Text-Secondary
-    // Selected = PRIMARY-Soft, Border-Focus, Text-Primary
-    final bgColor = isActive ? AppColors.primarySoft : AppColors.surface1;
-    final borderColor = isActive ? AppColors.borderFocus : AppColors.borderSoft;
-    final textColor = isActive
-        ? AppColors.textPrimary
-        : AppColors.textSecondary;
-    final iconColor = isActive ? AppColors.primary : AppColors.textSecondary;
-
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: bgColor,
-          border: Border.all(color: borderColor),
+          color: isActive
+              ? AppColors.primary.withOpacity(0.2)
+              : AppColors.surface1,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? AppColors.primary : AppColors.borderSoft,
+          ),
         ),
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: iconColor),
+              Icon(
+                icon,
+                size: 16,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
+              ),
               const SizedBox(width: 8),
             ],
             Text(
               label,
               style: TextStyle(
-                color: textColor,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                color: isActive ? AppColors.primary : AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

@@ -36,6 +36,7 @@ export class TransactionsService {
       type: payload.type!,
       date,
       amount: payload.amount!,
+      destinationAmount: payload.destinationAmount ?? null,
       currency,
       categoryId: payload.categoryId ?? null,
       fromAccountId: payload.fromAccountId ?? null,
@@ -68,6 +69,10 @@ export class TransactionsService {
       transactionId: existingPrimitives.transactionId,
       userId: existingPrimitives.userId,
       date: payload.date ? new Date(payload.date) : existingPrimitives.date,
+      destinationAmount:
+        payload.destinationAmount !== undefined
+          ? payload.destinationAmount
+          : existingPrimitives.destinationAmount,
       updatedAt: new Date(),
     }
 

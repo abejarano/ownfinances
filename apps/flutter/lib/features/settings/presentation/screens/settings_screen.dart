@@ -292,11 +292,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsController controller,
   ) async {
     final current = controller.primaryCurrency;
-    final options = [
-      ...CurrencyUtils.commonCurrencies,
-      "COP",
-      "VES",
-    ]; // Added extras for this screen if needed, or just use common from utils?
+
     // PO requested specific order: BRL, USD, EUR, GBP, USDT.
     // Plus "COP", "VES" from previous user request.
     // Let's stick to utils common + extra requested if they are not in common.

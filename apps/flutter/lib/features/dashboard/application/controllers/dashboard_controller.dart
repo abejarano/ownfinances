@@ -149,9 +149,10 @@ class DashboardController extends ChangeNotifier {
       // Transfer tx: fromAccountId AND toAccountId
 
       // Handle Main Currency Summary
-      // Rule 1: Never sum mixed currencies.
-      // If tx is Primary Currency:
-      if (tx.currency == primaryCurrency) {
+      // Rule 1: Include Transfers if they affect Main Currency.
+
+      // Case A: Standard Income/Expense in Main Currency
+      if (tx.currency == primaryCurrency && tx.type != 'transfer') {
         if (tx.type == 'income') {
           mainIncome += absAmount;
           hasMainMovements = true;
@@ -159,8 +160,43 @@ class DashboardController extends ChangeNotifier {
           mainExpense += absAmount;
           hasMainMovements = true;
         }
-        // Transfers within Primary are excluded from Income/Expense Summary unless defined otherwise?
-        // Usually "Resumo" excludes internal transfers.
+      }
+
+      // Case B: Transfers involving Main Currency
+      if (tx.type == 'transfer') {
+        // Outflow from Main Currency
+        // We need to check the Source Account Currency.
+        // Ideally we have account map.
+        // But here we can check if tx.currency (which is usually source currency) matches primary.
+        // OR better: Check if the Account ID belongs to a Primary Currency Account.
+
+        // Check Outflow Side
+        if (tx.fromAccountId != null) {
+          // Actually we have the full list `accounts`.
+          // Let's find it.
+          try {
+            final fromAcc = accounts.firstWhere(
+              (a) => a.id == tx.fromAccountId,
+            );
+            if (fromAcc.currency == primaryCurrency) {
+              mainExpense += absAmount;
+              hasMainMovements = true;
+            }
+          } catch (_) {}
+        }
+
+        // Check Inflow Side
+        if (tx.toAccountId != null) {
+          try {
+            final toAcc = accounts.firstWhere((a) => a.id == tx.toAccountId);
+            if (toAcc.currency == primaryCurrency) {
+              // Use destinationAmount if avail, else amount
+              final inflow = tx.destinationAmount ?? absAmount;
+              mainIncome += inflow;
+              hasMainMovements = true;
+            }
+          } catch (_) {}
+        }
       }
 
       // Handle Account Summaries
@@ -186,11 +222,19 @@ class DashboardController extends ChangeNotifier {
         final accId = tx.toAccountId!;
         if (accountSummariesMap.containsKey(accId)) {
           final current = accountSummariesMap[accId]!;
+
+          // For transfers, use destinationAmount if available (for multi-currency).
+          // Otherwise fall back to amount.
+          final inflowAmount =
+              (tx.type == 'transfer' && tx.destinationAmount != null)
+              ? tx.destinationAmount!
+              : absAmount;
+
           accountSummariesMap[accId] = DashboardAccountSummary(
             account: current.account,
-            income: current.income + absAmount,
+            income: current.income + inflowAmount,
             expense: current.expense,
-            balance: current.balance + absAmount,
+            balance: current.balance + inflowAmount,
             hasMovements: true,
           );
         }
