@@ -21,6 +21,9 @@ class TransactionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final txController = context.read<TransactionsController>();
     final txState = context.watch<TransactionsController>().state;
+    // Watch Categories and Accounts to ensure lookups work
+    final categoriesState = context.watch<CategoriesController>().state;
+    final accountsState = context.watch<AccountsController>().state;
     final filters = txState.filters;
 
     // Process transactions for grouping
@@ -45,7 +48,12 @@ class TransactionsScreen extends StatelessWidget {
                         if (item is String) {
                           return _buildDateHeader(context, item);
                         } else if (item is Transaction) {
-                          return _buildTransactionItem(context, item);
+                          return _buildTransactionItem(
+                            context,
+                            item,
+                            categoriesState.items,
+                            accountsState.items,
+                          );
                         }
                         return const SizedBox.shrink();
                       },
@@ -153,22 +161,47 @@ class TransactionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTransactionItem(BuildContext context, Transaction item) {
-    final categoryMap = {
-      for (final c in context.read<CategoriesController>().state.items) c.id: c,
-    };
-    final accountMap = {
-      for (final a in context.read<AccountsController>().state.items)
-        a.id: a.name,
-    };
+  Widget _buildTransactionItem(
+    BuildContext context,
+    Transaction item,
+    List<dynamic> categories,
+    List<dynamic> accounts,
+  ) {
+    final categoryMap = {for (final c in categories) c.id: c};
+    final accountMap = {for (final a in accounts) a.id: a.name};
 
     final category = categoryMap[item.categoryId];
     final fromName = accountMap[item.fromAccountId];
     final toName = accountMap[item.toAccountId];
 
-    final title = _titleFor(item.type, category?.name);
-    final subtitle = _subtitleFor(item, fromName, toName);
-    // final amount = formatMoney(item.amount); // Cleaned unused var
+    // Priority: Note > Category Name > Type Label
+    String title = "";
+    if (item.note != null && item.note!.isNotEmpty) {
+      title = item.note!;
+    } else if (category != null) {
+      title = category.name;
+    } else {
+      title = item.type == "income" ? "Receita" : "Despesa";
+      if (item.type == "transfer") title = "Transferência";
+    }
+
+    // Subtitle Logic
+    String subtitle = "";
+    if (item.type == 'transfer') {
+      subtitle = "${fromName ?? '?'} → ${toName ?? '?'}";
+    } else {
+      final accountName =
+          (item.type == 'income' ? toName : fromName) ?? "Sem conta";
+
+      // If we used Note as title, and we have a category, show "Category • Account"
+      if (item.note != null && item.note!.isNotEmpty && category != null) {
+        subtitle = "${category.name} • $accountName";
+      } else {
+        // Normal case: just account
+        subtitle = accountName;
+      }
+    }
+
     final iconData = _getIconData(category?.icon);
 
     // Semantic Colors Setup
@@ -422,19 +455,6 @@ class TransactionsScreen extends StatelessWidget {
     if (itemDate == yesterday) return "Ontem";
 
     return DateFormat("EEEE, d 'de' MMMM", "pt_BR").format(date);
-  }
-
-  String _titleFor(String type, String? categoryName) {
-    if (type == "transfer") return "Transferência";
-    return categoryName ?? (type == "income" ? "Receita" : "Despesa");
-  }
-
-  String _subtitleFor(Transaction item, String? fromName, String? toName) {
-    if (item.type == "transfer") {
-      return "${fromName ?? "?"} → ${toName ?? "?"}";
-    }
-    final account = item.type == "income" ? toName : fromName;
-    return account ?? "Sem conta"; // Updated per spec
   }
 
   //   String _amountPrefix(String type) {
