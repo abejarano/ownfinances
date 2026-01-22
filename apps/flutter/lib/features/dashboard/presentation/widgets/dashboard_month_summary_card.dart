@@ -1,23 +1,23 @@
-import "package:flutter/material.dart";
-import "package:ownfinances/core/theme/app_theme.dart";
+import 'package:flutter/material.dart';
+import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/presentation/components/money_text.dart';
-import 'package:ownfinances/features/reports/domain/entities/report_summary.dart';
+import 'package:ownfinances/features/dashboard/application/state/dashboard_state.dart';
 
 class DashboardMonthSummaryCard extends StatelessWidget {
-  final ReportSummary? summary;
+  final DashboardState state;
   final String periodLabel;
   final VoidCallback onTap;
 
   const DashboardMonthSummaryCard({
     super.key,
-    required this.summary,
+    required this.state,
     required this.periodLabel,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (summary == null) {
+    if (state.isLoading) {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(AppSpacing.md),
@@ -26,9 +26,49 @@ class DashboardMonthSummaryCard extends StatelessWidget {
       );
     }
 
-    final totals = summary!.totals;
-    final netActual = totals.actualNet;
-    final isBlue = netActual >= 0;
+    // Logic: If no movements in BRL
+    if (!state.hasMainCurrencyMovements) {
+      return Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Header(periodLabel: periodLabel),
+                const SizedBox(height: 24),
+                const Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: AppColors.textSecondary,
+                        size: 32,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        "Sem movimentos em BRL neste mês.\nVeja suas contas abaixo.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final net = state.mainCurrencyNet;
+    final isBlue = net >= 0;
 
     // Status Logic
     final statusText = isBlue ? "No azul" : "No vermelho";
@@ -39,7 +79,6 @@ class DashboardMonthSummaryCard extends StatelessWidget {
     final statusBg = isBlue ? AppColors.successSoft : AppColors.dangerSoft;
 
     return Card(
-      // Card defaults from AppTheme.darkCalm (Surface-1)
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -48,22 +87,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header: Month & Chevron
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    periodLabel,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textTertiary,
-                  ),
-                ],
-              ),
+              _Header(periodLabel: periodLabel),
               const SizedBox(height: 12),
 
               // Status Chip
@@ -105,7 +129,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: "Entradas",
-                      value: totals.actualIncome,
+                      value: state.mainCurrencyIncome,
                       color: AppColors.success,
                     ),
                   ),
@@ -113,7 +137,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: "Saídas",
-                      value: totals.actualExpense,
+                      value: state.mainCurrencyExpense,
                       color: AppColors.warning,
                     ),
                   ),
@@ -121,7 +145,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       label: "Saldo",
-                      value: totals.actualNet,
+                      value: state.mainCurrencyNet,
                       color: isBlue ? AppColors.success : AppColors.danger,
                       isBold: true,
                     ),
@@ -132,6 +156,36 @@ class DashboardMonthSummaryCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final String periodLabel;
+  const _Header({required this.periodLabel});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Resumo do mês (BRL)",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              periodLabel,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+      ],
     );
   }
 }
@@ -169,6 +223,7 @@ class _Metric extends StatelessWidget {
             value: value,
             variant: isBold ? MoneyTextVariant.xl : MoneyTextVariant.m,
             color: color,
+            // Assuming BRL main summary
           ),
         ),
       ],

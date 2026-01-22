@@ -29,6 +29,7 @@ import "package:ownfinances/features/reports/data/datasources/reports_remote_dat
 import "package:ownfinances/features/reports/data/repositories/reports_repository_impl.dart";
 import "package:ownfinances/features/reports/domain/repositories/reports_repository.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+import "package:ownfinances/features/dashboard/application/controllers/dashboard_controller.dart";
 import "package:ownfinances/features/budgets/data/datasources/budget_remote_data_source.dart";
 import "package:ownfinances/features/budgets/data/repositories/budget_repository_impl.dart";
 import "package:ownfinances/features/budgets/domain/repositories/budget_repository.dart";
@@ -137,6 +138,12 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider<ReportsController>(
           create: (context) =>
               ReportsController(context.read<ReportsRepository>())..load(),
+        ),
+        ChangeNotifierProvider<DashboardController>(
+          create: (context) => DashboardController(
+            context.read<TransactionRepository>(),
+            context.read<AccountRepository>(),
+          )..load(),
         ),
         Provider<BudgetRepository>(
           create: (context) => BudgetRepositoryImpl(

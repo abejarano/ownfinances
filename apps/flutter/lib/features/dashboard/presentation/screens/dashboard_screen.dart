@@ -4,165 +4,139 @@ import "package:provider/provider.dart";
 
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
-import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
-import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
-import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
+import "package:ownfinances/features/dashboard/application/controllers/dashboard_controller.dart";
 import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_month_summary_card.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_accounts_carousel.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_other_currencies_card.dart";
 import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_debts_card.dart";
+import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final reportsState = context.watch<ReportsController>().state;
-    final categories = context.watch<CategoriesController>().state.items;
-    final summary = reportsState.summary;
-    final periodLabel = formatMonth(reportsState.date);
+    // We now watch DashboardController instead of ReportsController for the main logic
+    final controller = context.watch<DashboardController>();
+    final state = controller.state;
 
-    // Alerts Logic
-    final overspent = summary?.overspentCategories ?? [];
-    final categoryMap = {for (final cat in categories) cat.id: cat.name};
-    final List<Widget> alerts = [];
-
-    // Alert 1: Overspent
-    if (overspent.isNotEmpty) {
-      final firstName =
-          categoryMap[overspent.first] ?? "Categoria desconhecida";
-      final count = overspent.length;
-      final text = count > 1
-          ? "Estourou $count categorias"
-          : "Estourou $firstName";
-      alerts.add(
-        _AlertCard(
-          text: text,
-          icon: Icons.warning_amber_rounded,
-          // PO Request: Alerts inside dashboard should be Danger Soft
-          color: AppColors.danger,
-          bgColor: AppColors.dangerSoft,
-        ),
-      );
-    }
-
-    // Alert 2: Deficit
-    if ((summary?.totals.actualNet ?? 0) < 0 &&
-        (summary?.totals.remainingExpense ?? 0) <= 0) {
-      alerts.add(
-        const _AlertCard(
-          text: "Você fechou o mês no vermelho",
-          icon: Icons.trending_down,
-          color: AppColors.danger,
-          bgColor: AppColors.dangerSoft,
-        ),
-      );
-    }
-
-    // Limit to 2 alerts
-    final displayAlerts = alerts.take(2).toList();
+    final periodLabel = formatMonth(state.date);
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       children: [
-        // 1. Month Summary
-        Text("Resumo do mês", style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
-        DashboardMonthSummaryCard(
-          summary: summary,
-          periodLabel: periodLabel,
-          onTap: () => context.go("/transactions"),
+        // 1. Month Summary (BRL Only)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: DashboardMonthSummaryCard(
+            state: state,
+            periodLabel: periodLabel,
+            onTap: () {
+              // Filter transactions for BRL?
+              // Default behavior: go to transactions list.
+              context.go("/transactions");
+            },
+          ),
         ),
 
-        // 2. Alerts (if any)
-        if (displayAlerts.isNotEmpty) ...[
+        // 2. Accounts Carousel (Per Account)
+        const SizedBox(height: AppSpacing.md),
+        DashboardAccountsCarousel(
+          summaries: state.accountSummaries,
+          onTap: (accountId) {
+            // Navigate to transactions filtered by account and month
+            final start = DateTime(state.date.year, state.date.month, 1);
+            final end = DateTime(state.date.year, state.date.month + 1, 0);
+
+            final dateFrom = start.toIso8601String();
+            final dateTo = end.toIso8601String();
+
+            context.push(
+              Uri(
+                path: "/transactions",
+                queryParameters: {
+                  "accountId": accountId,
+                  // We might need to handle date passing to TransactionsScreen if it supports query params init
+                  // Assuming TransactionsScreen might need update to read params or we rely on filter store?
+                  // Usually standard practice:
+                  "dateFrom": dateFrom,
+                  "dateTo": dateTo,
+                },
+              ).toString(),
+            );
+          },
+        ),
+
+        // 3. Other Currencies (Compact)
+        if (state.otherCurrencies.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.md),
-          ...displayAlerts.map(
-            (a) => Padding(padding: const EdgeInsets.only(bottom: 8), child: a),
-          ),
+          DashboardOtherCurrenciesCard(otherCurrencies: state.otherCurrencies),
         ],
 
-        // 3. Debts
-        const SizedBox(height: AppSpacing.md),
-        const DashboardDebtsCard(),
-
-        // 4. Recurrence Summary
-        const SizedBox(height: AppSpacing.md),
-        const RecurrenceSummaryCard(),
-
-        // 5. Quick Actions
+        // 4. Debts (Keep as is)
         const SizedBox(height: AppSpacing.lg),
-        Text("Ações rápidas", style: Theme.of(context).textTheme.titleMedium),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [DashboardDebtsCard()],
+          ),
+        ),
+
+        // 5. Recurrence Summary (Keep as is)
+        const SizedBox(height: AppSpacing.md),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: RecurrenceSummaryCard(),
+        ),
+
+        // 6. Quick Actions
+        const SizedBox(height: AppSpacing.lg),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Text(
+            "Ações rápidas",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
         const SizedBox(height: AppSpacing.sm),
 
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionButton(
-                icon: Icons.arrow_downward,
-                label: "Gasto",
-                color: AppColors.warning, // Expense = Caution/Warning normally
-                onTap: () => context.push("/transactions/new?type=expense"),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Row(
+            children: [
+              Expanded(
+                child: _QuickActionButton(
+                  icon: Icons.arrow_downward,
+                  label: "Gasto",
+                  color: AppColors.warning,
+                  onTap: () => context.push("/transactions/new?type=expense"),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _QuickActionButton(
-                icon: Icons.arrow_upward,
-                label: "Receita",
-                color: AppColors.success,
-                onTap: () => context.push("/transactions/new?type=income"),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _QuickActionButton(
+                  icon: Icons.arrow_upward,
+                  label: "Receita",
+                  color: AppColors.success,
+                  onTap: () => context.push("/transactions/new?type=income"),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _QuickActionButton(
-                icon: Icons.compare_arrows,
-                label: "Transferir",
-                color: AppColors.info,
-                onTap: () => context.push("/transactions/new?type=transfer"),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _QuickActionButton(
+                  icon: Icons.compare_arrows,
+                  label: "Transferir",
+                  color: AppColors.info,
+                  onTap: () => context.push("/transactions/new?type=transfer"),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
 
         const SizedBox(height: 80),
       ],
-    );
-  }
-}
-
-class _AlertCard extends StatelessWidget {
-  final String text;
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-
-  const _AlertCard({
-    required this.text,
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(color: color, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -188,7 +162,7 @@ class _QuickActionButton extends StatelessWidget {
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor, // Should be SURFACE-1
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.borderSoft),
         ),

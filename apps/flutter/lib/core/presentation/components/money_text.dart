@@ -13,7 +13,8 @@ class MoneyText extends StatelessWidget {
   final double value;
   final MoneyTextVariant variant;
   final Color? color;
-  final bool? obscure; // For privacy mode if needed later
+  final bool? obscure;
+  final String symbol;
 
   const MoneyText({
     super.key,
@@ -21,6 +22,7 @@ class MoneyText extends StatelessWidget {
     this.variant = MoneyTextVariant.m,
     this.color,
     this.obscure,
+    this.symbol = "R\$",
   });
 
   @override
@@ -65,6 +67,6 @@ class MoneyText extends StatelessWidget {
       fontFeatures: [const FontFeature.tabularFigures()],
     );
 
-    return Text(formatMoney(value), style: style);
+    return Text(formatMoney(value, symbol: symbol), style: style);
   }
 }

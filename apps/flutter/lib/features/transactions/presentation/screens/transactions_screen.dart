@@ -5,6 +5,7 @@ import "package:intl/intl.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/core/presentation/components/money_text.dart";
+import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
@@ -279,6 +280,7 @@ class TransactionsScreen extends StatelessWidget {
                     value: item.type == 'expense' ? -item.amount : item.amount,
                     variant: MoneyTextVariant.m,
                     color: amountColor,
+                    symbol: item.currency, // Pass the transaction currency
                   ),
                   const SizedBox(height: 6),
 
@@ -456,6 +458,24 @@ class TransactionsScreen extends StatelessWidget {
         return Icons.medical_services;
       case "shopping":
         return Icons.shopping_bag;
+      case "other":
+        return Icons.category;
+      case "bills":
+        return Icons.receipt_long;
+      case "entertainment":
+        return Icons.sports_esports;
+      case "education":
+        return Icons.school;
+      case "gym": // "Apoyo familiar" might be mapped to one of these or "other"
+        return Icons.fitness_center;
+      case "travel":
+        return Icons.flight;
+      case "gift":
+        return Icons.card_giftcard;
+      case "investment":
+        return Icons.trending_up;
+      case "family": // Possible match for "Apoyo familiar" if icon name matches
+        return Icons.family_restroom;
       default:
         return Icons.category;
     }
@@ -468,18 +488,13 @@ class TransactionsScreen extends StatelessWidget {
     TransactionFilters filters,
   ) async {
     final initial = filters.dateFrom ?? DateTime.now();
-    final selected = await showDatePicker(
+    final selected = await showDialog<DateTime>(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          // Ensure DatePicker uses Dark Calm
-          data: AppTheme.darkCalm(),
-          child: child!,
-        );
-      },
+      builder: (context) => MonthPickerDialog(
+        initialDate: initial,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2100),
+      ),
     );
     if (selected == null) return;
 
