@@ -1,3 +1,4 @@
+import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:provider/provider.dart";
@@ -10,7 +11,7 @@ import "package:ownfinances/features/accounts/application/controllers/accounts_c
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
-import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
+import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 
 class TransactionsScreen extends StatelessWidget {

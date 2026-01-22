@@ -2,7 +2,7 @@ import "package:flutter/material.dart";
 import "package:google_sign_in/google_sign_in.dart";
 import "package:sign_in_with_apple/sign_in_with_apple.dart";
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
-import "package:ownfinances/features/auth/domain/repositories/auth_repository.dart";
+import "package:ownfinances/features/auth/data/repositories/auth_repository.dart";
 import "package:flutter/foundation.dart";
 
 class AuthController extends ChangeNotifier {

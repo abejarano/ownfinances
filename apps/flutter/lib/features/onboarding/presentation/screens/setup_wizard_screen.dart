@@ -5,10 +5,10 @@ import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
-import "package:ownfinances/features/accounts/domain/repositories/account_repository.dart";
-import "package:ownfinances/features/categories/domain/repositories/category_repository.dart";
+import "package:ownfinances/features/accounts/data/repositories/account_repository.dart";
+import "package:ownfinances/features/categories/data/repositories/category_repository.dart";
 import "package:ownfinances/features/budgets/domain/entities/budget.dart";
-import "package:ownfinances/features/budgets/domain/repositories/budget_repository.dart";
+import "package:ownfinances/features/budgets/data/repositories/budget_repository.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 

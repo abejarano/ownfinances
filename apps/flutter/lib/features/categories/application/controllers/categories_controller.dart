@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/categories/application/state/categories_state.dart";
-import "package:ownfinances/features/categories/domain/repositories/category_repository.dart";
+import "package:ownfinances/features/categories/data/repositories/category_repository.dart";
 
 class CategoriesController extends ChangeNotifier {
   final CategoryRepository repository;

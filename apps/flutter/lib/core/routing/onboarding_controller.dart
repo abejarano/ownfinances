@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/storage/onboarding_storage.dart";
-import "package:ownfinances/features/accounts/domain/repositories/account_repository.dart";
+import "package:ownfinances/features/accounts/data/repositories/account_repository.dart";
 
 class OnboardingController extends ChangeNotifier {
   final OnboardingStorage storage;

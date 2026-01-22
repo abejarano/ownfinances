@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import 'package:ownfinances/core/infrastructure/api/api_exception.dart';
 import 'package:ownfinances/features/accounts/domain/entities/account.dart';
-import 'package:ownfinances/features/accounts/domain/repositories/account_repository.dart';
+import 'package:ownfinances/features/accounts/data/repositories/account_repository.dart';
 import 'package:ownfinances/features/dashboard/application/state/dashboard_state.dart';
 import 'package:ownfinances/features/transactions/domain/entities/transaction.dart';
-import 'package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:ownfinances/features/transactions/data/repositories/transaction_repository.dart';
 
 import 'package:ownfinances/features/settings/application/controllers/settings_controller.dart';
 

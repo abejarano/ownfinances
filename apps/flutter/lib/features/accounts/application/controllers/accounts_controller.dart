@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/accounts/application/state/accounts_state.dart";
-import "package:ownfinances/features/accounts/domain/repositories/account_repository.dart";
+import "package:ownfinances/features/accounts/data/repositories/account_repository.dart";
 
 class AccountsController extends ChangeNotifier {
   final AccountRepository repository;

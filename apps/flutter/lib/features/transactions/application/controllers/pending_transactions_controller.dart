@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ownfinances/core/infrastructure/api/api_exception.dart';
 import 'package:ownfinances/features/transactions/application/state/pending_transactions_state.dart';
 import 'package:ownfinances/features/transactions/domain/entities/transaction.dart';
-import 'package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart';
+import 'package:ownfinances/features/transactions/data/repositories/transaction_repository.dart';
 
 class PendingTransactionsController extends ChangeNotifier {
   final TransactionRepository repository;

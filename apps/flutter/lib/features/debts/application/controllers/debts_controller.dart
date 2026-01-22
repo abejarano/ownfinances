@@ -3,8 +3,8 @@ import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/debts/application/state/debts_state.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_summary.dart";
 import "package:ownfinances/features/debts/domain/entities/debt_transaction.dart";
-import "package:ownfinances/features/debts/domain/repositories/debt_repository.dart";
-import "package:ownfinances/features/debts/domain/repositories/debt_transaction_repository.dart";
+import "package:ownfinances/features/debts/data/repositories/debt_repository.dart";
+import "package:ownfinances/features/debts/data/repositories/debt_transaction_repository.dart";
 
 class DebtsController extends ChangeNotifier {
   final DebtRepository debtRepository;

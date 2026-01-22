@@ -2,7 +2,7 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/goals/application/state/goals_state.dart";
 import "package:ownfinances/features/goals/domain/entities/goal_projection.dart";
-import "package:ownfinances/features/goals/domain/repositories/goal_repository.dart";
+import "package:ownfinances/features/goals/data/repositories/goal_repository.dart";
 
 class GoalsController extends ChangeNotifier {
   final GoalRepository repository;

@@ -1,5 +1,6 @@
+import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
-import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
+import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 
 class TransactionsState {
   final bool isLoading;

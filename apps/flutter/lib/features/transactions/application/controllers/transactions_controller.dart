@@ -1,10 +1,11 @@
+import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/transactions/application/state/transactions_state.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction_delete_response.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction_write_response.dart";
-import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
+import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 
 class TransactionsController extends ChangeNotifier {
   final TransactionRepository repository;

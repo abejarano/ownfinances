@@ -4,8 +4,8 @@ import "package:provider/provider.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
-import "package:ownfinances/features/accounts/domain/repositories/account_repository.dart";
-import "package:ownfinances/features/categories/domain/repositories/category_repository.dart";
+import "package:ownfinances/features/accounts/data/repositories/account_repository.dart";
+import "package:ownfinances/features/categories/data/repositories/category_repository.dart";
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

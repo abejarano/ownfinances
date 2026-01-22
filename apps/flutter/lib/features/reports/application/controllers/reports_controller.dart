@@ -3,7 +3,7 @@ import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/reports/application/state/reports_state.dart";
 import "package:ownfinances/features/reports/domain/entities/report_balances.dart";
 import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
-import "package:ownfinances/features/reports/domain/repositories/reports_repository.dart";
+import "package:ownfinances/features/reports/data/repositories/reports_repository.dart";
 
 class ReportsController extends ChangeNotifier {
   final ReportsRepository repository;

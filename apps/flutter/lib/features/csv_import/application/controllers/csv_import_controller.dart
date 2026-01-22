@@ -2,7 +2,7 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/csv_import/application/state/csv_import_state.dart";
-import "package:ownfinances/features/csv_import/domain/repositories/csv_import_repository.dart";
+import "package:ownfinances/features/csv_import/data/repositories/csv_import_repository.dart";
 import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
 
 class CsvImportController extends ChangeNotifier {

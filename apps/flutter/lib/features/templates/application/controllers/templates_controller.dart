@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ownfinances/features/templates/domain/entities/transaction_template.dart';
-import 'package:ownfinances/features/templates/domain/repositories/template_repository.dart';
+import 'package:ownfinances/features/templates/data/repositories/template_repository.dart';
 
 class TemplatesState {
   final bool isLoading;

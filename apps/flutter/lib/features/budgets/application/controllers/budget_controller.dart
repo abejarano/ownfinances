@@ -2,7 +2,7 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/budgets/application/state/budget_state.dart";
 import "package:ownfinances/features/budgets/domain/entities/budget.dart";
-import "package:ownfinances/features/budgets/domain/repositories/budget_repository.dart";
+import "package:ownfinances/features/budgets/data/repositories/budget_repository.dart";
 
 class BudgetController extends ChangeNotifier {
   final BudgetRepository repository;

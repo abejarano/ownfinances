@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ownfinances/core/infrastructure/api/api_exception.dart';
 import 'package:ownfinances/features/recurring/application/state/recurring_state.dart';
 import 'package:ownfinances/features/recurring/domain/entities/recurring_rule.dart';
-import 'package:ownfinances/features/recurring/domain/repositories/recurring_repository.dart';
+import 'package:ownfinances/features/recurring/data/repositories/recurring_repository.dart';
 
 class RecurringController extends ChangeNotifier {
   final RecurringRepository repository;

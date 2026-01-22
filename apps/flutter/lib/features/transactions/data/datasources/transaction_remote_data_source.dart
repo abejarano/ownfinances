@@ -1,5 +1,6 @@
+import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
-import "package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart";
+import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 
 class TransactionRemoteDataSource {
   final ApiClient apiClient;
@@ -23,7 +24,9 @@ class TransactionRemoteDataSource {
         if (safe != null && safe.status != null) "status": safe.status!,
         if (safe != null && safe.query != null && safe.query!.isNotEmpty)
           "q": safe.query!,
-        "limit": "50",
+        "limit": (safe != null && safe.limit != null)
+            ? safe.limit.toString()
+            : "50",
         "page": "1",
         "sort": "-date",
       },
