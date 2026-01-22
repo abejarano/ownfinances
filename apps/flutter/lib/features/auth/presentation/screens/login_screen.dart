@@ -50,14 +50,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     // 1. Header
                     Image.asset(
                       "images/isotipo.png",
-                      height: 64,
+                      height: 104,
                       errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.account_balance_wallet,
-                        size: 64,
+                        size: 104,
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 36),
                     const Text(
                       "Entrar",
                       style: TextStyle(
@@ -69,14 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      "Sem senha. Sem complicação.",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        color: textSecondary,
-                      ),
-                    ),
                     const SizedBox(
                       height: 32,
                     ), // Subtitle -> Google CTA: 24px (used 32 for better breath)
@@ -87,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: Colors.white,
                       textColor: const Color(0xFF111827),
                       // TODO: Replace with official asset when available
-                      icon: Icons.g_mobiledata,
+                      icon: Icons.g_mobiledata_rounded,
                       isLoading: _isLoading,
                     ),
 
@@ -319,7 +311,7 @@ class _SocialButton extends StatelessWidget {
                 children: [
                   Icon(
                     icon,
-                    size: 20,
+                    size: 40,
                     color: textColor,
                   ), // TODO: Use image asset here
                   const SizedBox(width: 12),
