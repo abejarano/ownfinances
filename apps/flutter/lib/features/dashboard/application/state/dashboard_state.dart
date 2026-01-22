@@ -54,6 +54,10 @@ class DashboardState {
   final double mainCurrencyNet;
   final bool hasMainCurrencyMovements;
 
+  // Primary Currency Configuration
+  final String primaryCurrency;
+  final bool hasPrimaryCurrencyAccounts;
+
   const DashboardState({
     required this.isLoading,
     this.error,
@@ -66,6 +70,8 @@ class DashboardState {
     required this.mainCurrencyExpense,
     required this.mainCurrencyNet,
     required this.hasMainCurrencyMovements,
+    required this.primaryCurrency,
+    required this.hasPrimaryCurrencyAccounts,
   });
 
   factory DashboardState.initial() {
@@ -80,6 +86,8 @@ class DashboardState {
       mainCurrencyExpense: 0,
       mainCurrencyNet: 0,
       hasMainCurrencyMovements: false,
+      primaryCurrency: "BRL", // Default
+      hasPrimaryCurrencyAccounts: false,
     );
   }
 
@@ -95,6 +103,8 @@ class DashboardState {
     double? mainCurrencyExpense,
     double? mainCurrencyNet,
     bool? hasMainCurrencyMovements,
+    String? primaryCurrency,
+    bool? hasPrimaryCurrencyAccounts,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -109,6 +119,9 @@ class DashboardState {
       mainCurrencyNet: mainCurrencyNet ?? this.mainCurrencyNet,
       hasMainCurrencyMovements:
           hasMainCurrencyMovements ?? this.hasMainCurrencyMovements,
+      primaryCurrency: primaryCurrency ?? this.primaryCurrency,
+      hasPrimaryCurrencyAccounts:
+          hasPrimaryCurrencyAccounts ?? this.hasPrimaryCurrencyAccounts,
     );
   }
 }

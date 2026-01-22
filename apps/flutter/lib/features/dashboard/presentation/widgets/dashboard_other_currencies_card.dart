@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
+import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/dashboard/application/state/dashboard_state.dart';
 
 class DashboardOtherCurrenciesCard extends StatelessWidget {
@@ -23,8 +24,12 @@ class DashboardOtherCurrenciesCard extends StatelessWidget {
 
     final content = otherCurrencies
         .map((c) {
-          final sign = c.balance >= 0 ? "+" : "";
-          return "${c.currency} $sign${c.balance.toStringAsFixed(2)}";
+          final formattedValue = formatMoney(
+            c.balance.abs(),
+            withSymbol: false,
+          );
+          final sign = c.balance >= 0 ? "+" : "-";
+          return "${c.currency} $sign$formattedValue";
         })
         .join(" • ");
 

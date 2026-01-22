@@ -58,6 +58,8 @@ import "package:ownfinances/features/csv_import/data/repositories/csv_import_rep
 import "package:ownfinances/features/csv_import/domain/repositories/csv_import_repository.dart";
 import "package:ownfinances/features/csv_import/application/controllers/csv_import_controller.dart";
 import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
+import "package:ownfinances/core/storage/settings_storage.dart";
+import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -70,6 +72,13 @@ class AppProviders extends StatelessWidget {
       providers: [
         Provider<TokenStorage>(create: (_) => TokenStorage(onChanged: (_) {})),
         Provider<OnboardingStorage>(create: (_) => OnboardingStorage()),
+
+        // Settings (Must be early)
+        Provider<SettingsStorage>(create: (_) => SettingsStorage()),
+        ChangeNotifierProvider<SettingsController>(
+          create: (context) =>
+              SettingsController(context.read<SettingsStorage>())..load(),
+        ),
         Provider<ApiClient>(
           create: (context) => ApiClient(
             baseUrl: kReleaseMode
@@ -143,6 +152,7 @@ class AppProviders extends StatelessWidget {
           create: (context) => DashboardController(
             context.read<TransactionRepository>(),
             context.read<AccountRepository>(),
+            context.read<SettingsController>(),
           )..load(),
         ),
         Provider<BudgetRepository>(

@@ -26,32 +26,43 @@ class DashboardMonthSummaryCard extends StatelessWidget {
       );
     }
 
-    // Logic: If no movements in BRL
-    if (!state.hasMainCurrencyMovements) {
+    // State C: No Account in Primary Currency
+    if (!state.hasPrimaryCurrencyAccounts) {
       return Card(
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            // Redirect to Accounts or Settings?
+            // Logic says: "Defina sua moeda principal (Settings) ou crie uma conta (Accounts/Add)".
+            // Default onTap navigates to Transaction List usually.
+            // Maybe we should allow tap to go to settings?
+            // Since onTap is passed from parent, we can't easily change route here without context/callback change.
+            // For now, keep onTap.
+            onTap();
+          },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _Header(periodLabel: periodLabel),
+                _Header(
+                  periodLabel: periodLabel,
+                  primaryCurrency: state.primaryCurrency,
+                ),
                 const SizedBox(height: 24),
-                const Center(
+                Center(
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.info_outline,
+                      const Icon(
+                        Icons.account_balance_wallet_outlined,
                         color: AppColors.textSecondary,
                         size: 32,
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Text(
-                        "Sem movimentos em BRL neste mês.\nVeja suas contas abaixo.",
+                        "Você ainda não tem contas em ${state.primaryCurrency}.\nDefina sua moeda principal ou crie uma conta.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
                           height: 1.5,
                         ),
@@ -67,10 +78,54 @@ class DashboardMonthSummaryCard extends StatelessWidget {
       );
     }
 
+    // State B: No movements in Primary Currency
+    if (!state.hasMainCurrencyMovements) {
+      return Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Header(
+                  periodLabel: periodLabel,
+                  primaryCurrency: state.primaryCurrency,
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        color: AppColors.textSecondary,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Sem movimentos em ${state.primaryCurrency} neste mês.\nVeja suas contas abaixo.",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // State A: Normal
     final net = state.mainCurrencyNet;
     final isBlue = net >= 0;
 
-    // Status Logic
     final statusText = isBlue ? "No azul" : "No vermelho";
     final statusIcon = isBlue
         ? Icons.check_circle
@@ -87,7 +142,10 @@ class DashboardMonthSummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Header(periodLabel: periodLabel),
+              _Header(
+                periodLabel: periodLabel,
+                primaryCurrency: state.primaryCurrency,
+              ),
               const SizedBox(height: 12),
 
               // Status Chip
@@ -131,6 +189,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
                       label: "Entradas",
                       value: state.mainCurrencyIncome,
                       color: AppColors.success,
+                      currency: state.primaryCurrency,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -139,6 +198,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
                       label: "Saídas",
                       value: state.mainCurrencyExpense,
                       color: AppColors.warning,
+                      currency: state.primaryCurrency,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -148,6 +208,7 @@ class DashboardMonthSummaryCard extends StatelessWidget {
                       value: state.mainCurrencyNet,
                       color: isBlue ? AppColors.success : AppColors.danger,
                       isBold: true,
+                      currency: state.primaryCurrency,
                     ),
                   ),
                 ],
@@ -162,7 +223,8 @@ class DashboardMonthSummaryCard extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   final String periodLabel;
-  const _Header({required this.periodLabel});
+  final String primaryCurrency;
+  const _Header({required this.periodLabel, required this.primaryCurrency});
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +235,7 @@ class _Header extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Resumo do mês (BRL)",
+              "Resumo do mês ($primaryCurrency)",
               style: Theme.of(context).textTheme.titleMedium,
             ),
             Text(
@@ -195,11 +257,13 @@ class _Metric extends StatelessWidget {
   final double value;
   final Color color;
   final bool isBold;
+  final String currency;
 
   const _Metric({
     required this.label,
     required this.value,
     required this.color,
+    required this.currency,
     this.isBold = false,
   });
 
@@ -223,7 +287,7 @@ class _Metric extends StatelessWidget {
             value: value,
             variant: isBold ? MoneyTextVariant.xl : MoneyTextVariant.m,
             color: color,
-            // Assuming BRL main summary
+            symbol: currency,
           ),
         ),
       ],

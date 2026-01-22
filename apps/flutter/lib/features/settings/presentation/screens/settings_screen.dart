@@ -4,6 +4,7 @@ import "package:go_router/go_router.dart";
 import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
+import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -86,6 +87,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: Theme.of(
             context,
           ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // 0. Preferências Section
+        _buildSectionTitle(context, "Preferências"),
+        const SizedBox(height: AppSpacing.sm),
+        Card(
+          child: Column(
+            children: [
+              Consumer<SettingsController>(
+                builder: (context, settings, child) {
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.monetization_on_outlined,
+                      color: AppColors.textTertiary,
+                    ),
+                    title: const Text("Moeda principal"),
+                    subtitle: const Text(
+                      "O Resumo do mês usa apenas esta moeda. Outras moedas aparecem nas contas (sem conversão).",
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          settings.primaryCurrency,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textTertiary,
+                        ),
+                      ],
+                    ),
+                    onTap: () => _showCurrencyPicker(context, settings),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
 
@@ -233,6 +281,104 @@ class _SettingsScreenState extends State<SettingsScreen> {
       title: Text(title),
       trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
       onTap: () => context.push(route),
+    );
+  }
+
+  Future<void> _showCurrencyPicker(
+    BuildContext context,
+    SettingsController controller,
+  ) async {
+    final current = controller.primaryCurrency;
+    final options = ["BRL", "COP", "VES", "USD", "EUR", "USDT"];
+
+    // Check if current is custom (not in options)
+    final isCustom = !options.contains(current);
+    final customController = TextEditingController(
+      text: isCustom ? current : "",
+    );
+    String? selected = isCustom ? "OTHER" : current;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Moeda principal"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...options.map(
+                      (opt) => RadioListTile<String>(
+                        title: Text(opt),
+                        value: opt,
+                        groupValue: selected,
+                        onChanged: (val) {
+                          setState(() => selected = val);
+                        },
+                        activeColor: AppColors.primary,
+                      ),
+                    ),
+                    RadioListTile<String>(
+                      title: const Text("Outra"),
+                      value: "OTHER",
+                      groupValue: selected,
+                      onChanged: (val) {
+                        setState(() => selected = val);
+                      },
+                      activeColor: AppColors.primary,
+                    ),
+                    if (selected == "OTHER")
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: TextField(
+                          controller: customController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: const InputDecoration(
+                            labelText: "Código (ex: COP)",
+                            hintText: "3-5 letras maiúsculas",
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (_) => setState(() {}), // Refresh for val
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancelar"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    String finalVal = selected!;
+                    if (selected == "OTHER") {
+                      finalVal = customController.text.trim().toUpperCase();
+                      // Validation: 3-5 chars, A-Z only
+                      if (!RegExp(r'^[A-Z]{3,5}$').hasMatch(finalVal)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Código inválido. Use 3 a 5 letras (A-Z).",
+                            ),
+                            backgroundColor: AppColors.danger,
+                          ),
+                        );
+                        return;
+                      }
+                    }
+                    controller.setPrimaryCurrency(finalVal);
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Salvar"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

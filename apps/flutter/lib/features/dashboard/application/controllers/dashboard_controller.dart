@@ -6,13 +6,40 @@ import 'package:ownfinances/features/dashboard/application/state/dashboard_state
 import 'package:ownfinances/features/transactions/domain/entities/transaction.dart';
 import 'package:ownfinances/features/transactions/domain/repositories/transaction_repository.dart';
 
+import 'package:ownfinances/features/settings/application/controllers/settings_controller.dart';
+
 class DashboardController extends ChangeNotifier {
   final TransactionRepository transactionRepository;
   final AccountRepository accountRepository;
+  final SettingsController settingsController;
 
   DashboardState _state = DashboardState.initial();
 
-  DashboardController(this.transactionRepository, this.accountRepository);
+  DashboardController(
+    this.transactionRepository,
+    this.accountRepository,
+    this.settingsController,
+  ) {
+    settingsController.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    settingsController.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    // Reload if primary currency changes
+    // Or just re-calculate if data is already there?
+    // We need to re-fetch? Aggregation depends on currency value.
+    // If we just re-calc, we save network.
+    // But load() fetches limits/filters?
+    // Aggregation is purely local.
+    // So let's just trigger load() to be safe or re-aggregate logic?
+    // Given load() fetches logic, let's just call load() for simplicity.
+    load();
+  }
 
   DashboardState get state => _state;
 
@@ -72,14 +99,17 @@ class DashboardController extends ChangeNotifier {
     List<Account> accounts,
     List<Transaction> transactions,
   ) {
-    // --- Rule 2: Month Summary (BRL Only) ---
-    // Primary currency is hardcoded to BRL based on requirement, or should be user preference?
-    // PO said: "Resumo do mês (BRL)". Assuming BRL is primary.
-    const primaryCurrency = "BRL";
+    // --- Rule 2: Month Summary (Dynamic Primary Currency) ---
+    final primaryCurrency = settingsController.primaryCurrency;
 
     double mainIncome = 0;
     double mainExpense = 0;
     bool hasMainMovements = false;
+
+    // Check if user has accounts in primary currency (for State C)
+    final hasPrimaryCurrencyAccounts = accounts.any(
+      (a) => a.currency == primaryCurrency && a.isActive,
+    );
 
     // --- Rule 3: Account Carousel ---
     final accountSummariesMap = <String, DashboardAccountSummary>{};
@@ -117,10 +147,9 @@ class DashboardController extends ChangeNotifier {
       // Expense tx: fromAccountId
       // Transfer tx: fromAccountId AND toAccountId
 
-      // Handle Main Currency (BRL) Summary
-      // Only include pure Income/Expense, or Transfers too?
+      // Handle Main Currency Summary
       // Rule 1: Never sum mixed currencies.
-      // If tx is BRL:
+      // If tx is Primary Currency:
       if (tx.currency == primaryCurrency) {
         if (tx.type == 'income') {
           mainIncome += absAmount;
@@ -129,7 +158,8 @@ class DashboardController extends ChangeNotifier {
           mainExpense += absAmount;
           hasMainMovements = true;
         }
-        // Transfers within BRL? Excluded from "Income/Expense" usually, but affect individual account balances.
+        // Transfers within Primary are excluded from Income/Expense Summary unless defined otherwise?
+        // Usually "Resumo" excludes internal transfers.
       }
 
       // Handle Account Summaries
@@ -177,7 +207,7 @@ class DashboardController extends ChangeNotifier {
       });
 
     // --- Rule 4: Other Currencies ---
-    // Group totals by currency (excluding BRL)
+    // Group totals by currency (excluding Primary)
     // We can aggregate from the account summaries to be safe.
     final otherCurrencyMap = <String, double>{};
     for (final summary in sortedAccountSummaries) {
@@ -202,6 +232,8 @@ class DashboardController extends ChangeNotifier {
       mainCurrencyExpense: mainExpense,
       mainCurrencyNet: mainNet,
       hasMainCurrencyMovements: hasMainMovements,
+      primaryCurrency: primaryCurrency,
+      hasPrimaryCurrencyAccounts: hasPrimaryCurrencyAccounts,
     );
   }
 }
