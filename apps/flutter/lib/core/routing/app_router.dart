@@ -52,7 +52,6 @@ GoRouter createRouter({
 
       if (location == "/splash" && authStatus != AuthStatus.initial) {
         if (!isAuthed) return "/login";
-        return null;
       }
 
       if (isUnauthenticated) {
@@ -77,6 +76,9 @@ GoRouter createRouter({
         return "/dashboard";
       }
       if (isAuthed && completed && isAuthRoute) {
+        return "/dashboard";
+      }
+      if (isAuthed && completed && location == "/splash") {
         return "/dashboard";
       }
       return null;
