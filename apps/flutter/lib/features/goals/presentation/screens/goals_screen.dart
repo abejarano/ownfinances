@@ -133,13 +133,13 @@ class GoalsScreen extends StatelessWidget {
                     goal == null ? "Nova meta" : "Editar meta",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   if (step == 0) ...[
                     Text(
                       "Criar meta",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     TextField(
                       controller: nameController,
                       decoration: const InputDecoration(
@@ -159,7 +159,7 @@ class GoalsScreen extends StatelessWidget {
                       "Detalhes (opcional)",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text("Data alvo (opcional)"),
@@ -181,13 +181,13 @@ class GoalsScreen extends StatelessWidget {
                         }
                       },
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     if (suggested != null)
                       Text(
                         "Sugerido: ${formatMoney(suggested)} por mes",
                         style: const TextStyle(color: AppColors.muted),
                       ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     MoneyInput(
                       label: "Aporte mensal (opcional)",
                       controller: monthlyController,
@@ -362,9 +362,9 @@ class GoalsScreen extends StatelessWidget {
                     "Registrar aporte",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   MoneyInput(label: "Valor", controller: amountController),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   if (accountItems.isEmpty)
                     const Text("Voce nao tem contas ativas.")
                   else
@@ -374,7 +374,7 @@ class GoalsScreen extends StatelessWidget {
                       value: accountId,
                       onSelected: (item) => setState(() => accountId = item.id),
                     ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Fecha"),

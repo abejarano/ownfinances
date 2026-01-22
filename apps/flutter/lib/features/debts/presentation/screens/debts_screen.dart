@@ -216,7 +216,7 @@ class DebtsScreen extends StatelessWidget {
                       item == null ? "Nova divida" : "Editar divida",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: "Nome"),
@@ -227,7 +227,7 @@ class DebtsScreen extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
                       value: type,
                       decoration: const InputDecoration(labelText: "Tipo"),
@@ -251,7 +251,7 @@ class DebtsScreen extends StatelessWidget {
 
                     // --- ACCOUNT SELECTION LOGIC ---
                     if (type == "credit_card") ...[
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.md),
                       if (creditCardAccounts.isEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,7 +285,7 @@ class DebtsScreen extends StatelessWidget {
                     ],
 
                     // --- MOVED UP: Initial Balance ---
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     if (item == null)
                       MoneyInput(
                         label: "Saldo atual (opcional)",
@@ -315,7 +315,7 @@ class DebtsScreen extends StatelessWidget {
                       ),
 
                     // Paying Account (Optional)
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     if (payingAccounts.isEmpty)
                       const Text(
                         "Sem contas bancárias/dinheiro para pagar a fatura.",
@@ -347,7 +347,7 @@ class DebtsScreen extends StatelessWidget {
                         ],
                       ),
                     // ------------------------------
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
 
                     // --- Moeda & Vencimento (Moved out of Advanced) ---
                     Row(
@@ -390,7 +390,7 @@ class DebtsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
 
                     // --- ADVANCED SECTION ---
                     ExpansionTile(
@@ -398,12 +398,12 @@ class DebtsScreen extends StatelessWidget {
                       tilePadding: EdgeInsets.zero,
                       initiallyExpanded: false,
                       children: [
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.md),
                         MoneyInput(
                           label: "Minimo a pagar",
                           controller: minimumPaymentController,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.md),
                         TextField(
                           controller: interestController,
                           keyboardType: TextInputType.number,
@@ -411,10 +411,10 @@ class DebtsScreen extends StatelessWidget {
                             labelText: "Taxa anual (%)",
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.md),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text("Ativa"),
@@ -581,9 +581,9 @@ class DebtsScreen extends StatelessWidget {
                         : "Registrar pagamento",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   MoneyInput(label: "Valor", controller: amountController),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   if (type == "charge" ||
                       (type == "payment" && debt.type != "credit_card")) ...[
                     if (categoryItems.isEmpty)
@@ -596,7 +596,7 @@ class DebtsScreen extends StatelessWidget {
                         onSelected: (item) =>
                             setState(() => categoryId = item.id),
                       ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.md),
                   ],
                   if (type == "charge" && debt.type == "credit_card")
                     Padding(
@@ -618,7 +618,7 @@ class DebtsScreen extends StatelessWidget {
                       value: accountId,
                       onSelected: (item) => setState(() => accountId = item.id),
                     ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Fecha"),

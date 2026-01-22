@@ -194,7 +194,7 @@ class CategoriesScreen extends StatelessWidget {
                     item == null ? "Nova categoria" : "Editar categoria",
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       CircleAvatar(
@@ -229,13 +229,13 @@ class CategoriesScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   TextField(
                     controller: nameController,
                     decoration: const InputDecoration(labelText: "Nome"),
                     onChanged: (_) => setModalState(() {}),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   CategoryPicker(
                     label: "Categoria pai",
                     items: parentItems,
@@ -246,7 +246,7 @@ class CategoriesScreen extends StatelessWidget {
                       });
                     },
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   DropdownButtonFormField<String>(
                     value: kind,
                     decoration: const InputDecoration(labelText: "Tipo"),
@@ -260,7 +260,7 @@ class CategoriesScreen extends StatelessWidget {
                       }
                     },
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   ColorPicker(
                     label: "Cor",
                     value: color,
@@ -268,7 +268,7 @@ class CategoriesScreen extends StatelessWidget {
                       setModalState(() => color = value);
                     },
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   IconPicker(
                     label: "Icone",
                     value: icon,
@@ -277,7 +277,7 @@ class CategoriesScreen extends StatelessWidget {
                       setModalState(() => icon = value);
                     },
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.md),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Ativa"),

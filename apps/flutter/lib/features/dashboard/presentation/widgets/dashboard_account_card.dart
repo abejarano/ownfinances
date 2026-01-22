@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ownfinances/core/presentation/components/money_text.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
+import 'package:ownfinances/core/utils/currency_utils.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/dashboard/application/state/dashboard_state.dart';
 
@@ -62,7 +63,7 @@ class DashboardAccountCard extends StatelessWidget {
                     border: Border.all(color: AppColors.borderSoft),
                   ),
                   child: Text(
-                    summary.account.currency,
+                    CurrencyUtils.formatCurrencyLabel(summary.account.currency),
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,

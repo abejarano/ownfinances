@@ -5,6 +5,7 @@ import "package:ownfinances/features/auth/application/controllers/auth_controlle
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
+import "package:ownfinances/core/utils/currency_utils.dart";
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -115,7 +116,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          settings.primaryCurrency,
+                          CurrencyUtils.formatCurrencyLabel(
+                            settings.primaryCurrency,
+                          ),
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
@@ -289,10 +292,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsController controller,
   ) async {
     final current = controller.primaryCurrency;
-    final options = ["BRL", "COP", "VES", "USD", "EUR", "USDT"];
+    final options = [
+      ...CurrencyUtils.commonCurrencies,
+      "COP",
+      "VES",
+    ]; // Added extras for this screen if needed, or just use common from utils?
+    // PO requested specific order: BRL, USD, EUR, GBP, USDT.
+    // Plus "COP", "VES" from previous user request.
+    // Let's stick to utils common + extra requested if they are not in common.
+    // CurrencyUtils has [BRL, USD, EUR, GBP, USDT].
+    // User asked for [BRL, COP, VES, USD, EUR, USDT] previously.
+    // The previous edit had: ["BRL", "COP", "VES", "USD", "EUR", "USDT"].
+    // Let's reuse that specific list to not regress on user preference, but use formatter for Labels.
+
+    final pickerOptions = ["BRL", "COP", "VES", "USD", "EUR", "GBP", "USDT"];
 
     // Check if current is custom (not in options)
-    final isCustom = !options.contains(current);
+    final isCustom = !pickerOptions.contains(current);
     final customController = TextEditingController(
       text: isCustom ? current : "",
     );
@@ -309,9 +325,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ...options.map(
+                    ...pickerOptions.map(
                       (opt) => RadioListTile<String>(
-                        title: Text(opt),
+                        title: Text(CurrencyUtils.formatCurrencyLabel(opt)),
                         value: opt,
                         groupValue: selected,
                         onChanged: (val) {
