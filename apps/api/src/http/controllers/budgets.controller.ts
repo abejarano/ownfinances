@@ -88,15 +88,13 @@ export class BudgetsController {
     const budget = await this.repo.one({
       userId: req.userId ?? "",
       periodType: period,
-      startDate: range.start,
-      endDate: range.end,
+      startDate: { $lte: date } as any,
+      endDate: { $gte: date } as any,
     })
 
     if (!budget) {
       return HttpResponse(res, { value: { budget: null, range }, status: 200 })
     }
-
-    delete (budget as any)._id
 
     return HttpResponse(res, {
       value: { budget: budget.toPrimitives(), range },
