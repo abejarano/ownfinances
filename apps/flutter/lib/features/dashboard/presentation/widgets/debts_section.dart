@@ -65,6 +65,7 @@ class DebtsSection extends StatelessWidget {
     // Calculate total due and find nearest due date
     double totalDue = 0;
     Debt? nearestDebt;
+    DateTime? nearestDueDate;
     int minDays = 999;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -83,6 +84,7 @@ class DebtsSection extends StatelessWidget {
         if (diff >= 0 && diff < minDays) {
           minDays = diff;
           nearestDebt = debt;
+          nearestDueDate = nextDue;
         }
       }
     }
@@ -178,7 +180,7 @@ class DebtsSection extends StatelessWidget {
                   ),
                 ),
 
-                if (nearestDebt != null) ...[
+                if (nearestDebt != null && nearestDueDate != null) ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -199,7 +201,7 @@ class DebtsSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Próximo: ${nearestDebt!.dueDay}/${DateTime.now().month} — ${nearestDebt!.name}",
+                          "Próximo: ${nearestDueDate!.day.toString().padLeft(2, '0')}/${nearestDueDate!.month.toString().padLeft(2, '0')} — ${nearestDebt!.name}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,

@@ -86,70 +86,92 @@ class AccountCardStandard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Saldo do mês", // Strict Copy
+                    "Resultado do mês", // Strict Copy: "Resultado do mês"
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.65),
                       fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    formatMoney(
-                      summary.balance,
-                      withSymbol: false,
-                    ), // Native currency
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        currency,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        formatMoney(summary.balance, withSymbol: false),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
+                  // Income
                   Row(
                     children: [
-                      // Income
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
                           Icons.arrow_downward,
                           color: AppColors.success,
-                          size: 12,
+                          size: 10,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        formatMoney(summary.income, withSymbol: false),
+                        "Entradas ",
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 10,
+                        ),
+                      ),
+                      Text(
+                        formatMoney(summary.income, withSymbol: true),
                         style: const TextStyle(
                           color: AppColors.success,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      // Expense
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.danger.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  // Expense
+                  Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: Icon(
                           Icons.arrow_upward,
                           color: AppColors.danger,
-                          size: 12,
+                          size: 10,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        formatMoney(summary.expense, withSymbol: false),
+                        "Saídas ",
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 10,
+                        ),
+                      ),
+                      Text(
+                        formatMoney(summary.expense, withSymbol: true),
                         style: const TextStyle(
                           color: AppColors.danger,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
