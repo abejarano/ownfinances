@@ -198,7 +198,8 @@ GoRouter createRouter({
           ),
           GoRoute(
             path: "/budget",
-            builder: (context, state) => const BudgetScreen(),
+            builder: (context, state) =>
+                BudgetScreen(queryParams: state.uri.queryParameters),
           ),
           GoRoute(
             path: "/settings",

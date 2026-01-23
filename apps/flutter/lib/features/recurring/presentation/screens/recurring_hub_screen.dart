@@ -16,6 +16,34 @@ class RecurringHubScreen extends StatefulWidget {
 
 class _RecurringHubScreenState extends State<RecurringHubScreen> {
   @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Recorrências"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              context.read<RecurringController>().load();
+              context.read<PendingTransactionsController>().loadPending();
+            },
+          ),
+        ],
+      ),
+      body: const RecurringHubView(),
+    );
+  }
+}
+
+class RecurringHubView extends StatefulWidget {
+  const RecurringHubView({super.key});
+
+  @override
+  State<RecurringHubView> createState() => _RecurringHubViewState();
+}
+
+class _RecurringHubViewState extends State<RecurringHubView> {
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -33,12 +61,7 @@ class _RecurringHubScreenState extends State<RecurringHubScreen> {
   }
 
   void _openPlanner() {
-    // Pass month as query param if possible, or just open default and let it load.
-    // The current RecurringPlanScreen implementation defaults to now().
-    // We might want to pass parameters, but basic routing is simply:
     context.push('/recurring/plan');
-    // Note: To support passing date, we'd need to update AppRouter to accept query params for date
-    // and RecurringPlanScreen to read them. For now, simplest is direct nav.
   }
 
   @override
@@ -57,88 +80,87 @@ class _RecurringHubScreenState extends State<RecurringHubScreen> {
     final activeRules = rules.where((r) => r.active).toList();
     final inactiveRules = rules.where((r) => !r.active).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Recorrências"),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => _loadData(),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // 1. Header & CTA
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Gerenciar",
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                PrimaryButton(
-                  label: "Nova recorrência",
-                  fullWidth: false,
-                  onPressed: () => context.push('/recurring/new'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // 2. Plan Month Card
-            _buildPlanMonthCard(toGenerateCount, isLoading),
-            const SizedBox(height: 16),
-
-            // 3. Pending Confirm Card (Conditional)
-            if (pendingCount > 0) ...[
-              _buildPendingCard(pendingCount),
-              const SizedBox(height: 16),
-            ],
-
-            const Divider(height: 32),
-
-            // 4. My Rules List
-            Text(
-              "Minhas regras",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-
-            if (isLoading && rules.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (rules.isEmpty)
-              _buildEmptyState()
-            else ...[
-              if (activeRules.isNotEmpty) ...[
-                // Text("Ativas", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ...activeRules.map((r) => _RecurrenceRuleTile(rule: r)),
-              ],
-
-              if (inactiveRules.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                const Padding(
-                  padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
-                  child: Text(
-                    "Inativas",
-                    style: TextStyle(
-                      color: Colors.grey,
+    return RefreshIndicator(
+      onRefresh: () async => _loadData(),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // 1. Header & CTA
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Contas fixas",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                ...inactiveRules.map((r) => _RecurrenceRuleTile(rule: r)),
-              ],
+                  const Text(
+                    "O app só registra. Não cobra.",
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
+              PrimaryButton(
+                label: "Nova",
+                fullWidth: false,
+                onPressed: () => context.push('/recurring/new'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // 2. Plan Month Card
+          _buildPlanMonthCard(toGenerateCount, isLoading),
+          const SizedBox(height: 16),
+
+          // 3. Pending Confirm Card (Conditional)
+          if (pendingCount > 0) ...[
+            _buildPendingCard(pendingCount),
+            const SizedBox(height: 16),
+          ],
+
+          const Divider(height: 32),
+
+          // 4. My Rules List
+          Text("Minhas regras", style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+
+          if (isLoading && rules.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (rules.isEmpty)
+            _buildEmptyState()
+          else ...[
+            if (activeRules.isNotEmpty) ...[
+              ...activeRules.map((r) => _RecurrenceRuleTile(rule: r)),
             ],
 
-            const SizedBox(height: 80), // Fab space/Safe area
+            if (inactiveRules.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
+                child: Text(
+                  "Inativas",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ...inactiveRules.map((r) => _RecurrenceRuleTile(rule: r)),
+            ],
           ],
-        ),
+
+          const SizedBox(height: 80), // Fab space/Safe area
+        ],
       ),
     );
   }

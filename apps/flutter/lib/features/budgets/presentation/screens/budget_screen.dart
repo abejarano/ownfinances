@@ -13,15 +13,59 @@ import "package:ownfinances/features/reports/domain/entities/report_summary.dart
 import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
 import "package:ownfinances/core/presentation/components/money_text.dart";
 import "package:go_router/go_router.dart";
+import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
+import "package:ownfinances/features/recurring/presentation/screens/recurring_hub_screen.dart";
 
-class BudgetScreen extends StatefulWidget {
-  const BudgetScreen({super.key});
+class BudgetScreen extends StatelessWidget {
+  final Map<String, String> queryParams;
+
+  const BudgetScreen({super.key, this.queryParams = const {}});
 
   @override
-  State<BudgetScreen> createState() => _BudgetScreenState();
+  Widget build(BuildContext context) {
+    // Map existing query params
+    // /budgets?tab=goals|fixed
+    final tab = queryParams['tab'];
+    int initialIndex = 0;
+    if (tab == 'goals') initialIndex = 1;
+    if (tab == 'fixed') initialIndex = 2;
+
+    return DefaultTabController(
+      length: 3,
+      initialIndex: initialIndex,
+      child: Column(
+        children: [
+          Container(
+            color: Theme.of(context).scaffoldBackgroundColor, // Match bg
+            child: const TabBar(
+              dividerColor: Colors.transparent,
+              indicatorSize: TabBarIndicatorSize.tab,
+              tabs: [
+                Tab(text: "Orçamentos"),
+                Tab(text: "Metas"),
+                Tab(text: "Contas fixas"),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: TabBarView(
+              children: [BudgetView(), GoalsView(), RecurringHubView()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _BudgetScreenState extends State<BudgetScreen> {
+class BudgetView extends StatefulWidget {
+  const BudgetView({super.key});
+
+  @override
+  State<BudgetView> createState() => _BudgetViewState();
+}
+
+class _BudgetViewState extends State<BudgetView> {
   final Map<String, TextEditingController> _controllers = {};
   ReportsController? _reports;
 

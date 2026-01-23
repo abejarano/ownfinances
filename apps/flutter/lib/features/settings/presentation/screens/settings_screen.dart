@@ -212,13 +212,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(indent: 16, endIndent: 16),
               _buildNavTile(context, "Metas", Icons.flag_outlined, "/goals"),
-              const Divider(indent: 16, endIndent: 16),
-              _buildNavTile(
-                context,
-                "Regras de Recorrência",
-                Icons.restore_outlined,
-                "/recurring",
-              ),
             ],
           ),
         ),

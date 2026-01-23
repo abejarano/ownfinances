@@ -48,6 +48,15 @@ class DashboardQuickActions extends StatelessWidget {
                   onTap: () => context.push("/transactions/new?type=transfer"),
                 ),
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _QuickActionButton(
+                  icon: Icons.repeat,
+                  label: "Contas fixas",
+                  color: const Color(0xFFC084FC), // Violet
+                  onTap: () => context.go("/budget?tab=fixed"),
+                ),
+              ),
             ],
           ),
         ),

@@ -17,69 +17,98 @@ class GoalsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<GoalsController>();
-    final state = context.watch<GoalsController>().state;
-
     return Scaffold(
       appBar: AppBar(title: const Text("Metas")),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Suas metas",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: controller.load,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (state.isLoading)
-              const Center(child: CircularProgressIndicator()),
-            if (!state.isLoading)
-              Expanded(
-                child: ListView.separated(
-                  itemCount: state.items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final goal = state.items[index];
-                    final projection = state.projections[goal.id];
-                    return _GoalCard(
-                      goal: goal,
-                      projection: projection,
-                      onAdd: () => _openContributionForm(context, goal),
-                      onQuickAdd: () =>
-                          _quickContribution(context, goal, projection),
-                      onEdit: () =>
-                          _openGoalWizard(context, controller, goal: goal),
-                      onDelete: () async {
-                        final error = await controller.remove(goal.id);
-                        if (error != null && context.mounted) {
-                          showStandardSnackbar(context, error);
-                        }
-                      },
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-      ),
+      body: const GoalsView(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openGoalWizard(context, controller),
+        onPressed: () => GoalsView.openWizard(context),
         child: const Icon(Icons.add),
       ),
     );
   }
+}
 
-  Future<void> _openGoalWizard(
+class GoalsView extends StatelessWidget {
+  const GoalsView({super.key});
+
+  static Future<void> openWizard(BuildContext context) async {
+    // Find the instance to call the method?
+    // Actually _openGoalWizard needs the controller.
+    // We can make a static helper or just instantiate a temporary GoalsView to access private methods?
+    // Better: make _openGoalWizard static or move it out.
+    // Or just duplicate the FAB logic in the wrapper.
+    // But we want to move FAB to inline button.
+
+    // So let's just use the View's logic.
+    final controller = context.read<GoalsController>();
+    // We need to move _openGoalWizard to be a static method or mixin or just accessible.
+    // Since I am editing the file, I will change _openGoalWizard to be static or public.
+    await _openGoalWizard(context, controller);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.read<GoalsController>();
+    final state = context.watch<GoalsController>().state;
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Suas metas",
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: controller.load,
+              ),
+              const SizedBox(width: 8),
+              PrimaryButton(
+                label: "Nova meta",
+                fullWidth: false,
+                onPressed: () => _openGoalWizard(context, controller),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (state.isLoading) const Center(child: CircularProgressIndicator()),
+          if (!state.isLoading)
+            Expanded(
+              child: ListView.separated(
+                itemCount: state.items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final goal = state.items[index];
+                  final projection = state.projections[goal.id];
+                  return _GoalCard(
+                    goal: goal,
+                    projection: projection,
+                    onAdd: () => _openContributionForm(context, goal),
+                    onQuickAdd: () =>
+                        _quickContribution(context, goal, projection),
+                    onEdit: () =>
+                        _openGoalWizard(context, controller, goal: goal),
+                    onDelete: () async {
+                      final error = await controller.remove(goal.id);
+                      if (error != null && context.mounted) {
+                        showStandardSnackbar(context, error);
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static Future<void> _openGoalWizard(
     BuildContext context,
     GoalsController controller, {
     Goal? goal,
@@ -311,7 +340,7 @@ class GoalsScreen extends StatelessWidget {
     if (result != true) return;
   }
 
-  double? _suggestedMonthly(
+  static double? _suggestedMonthly(
     String targetRaw,
     DateTime? targetDate,
     DateTime startDate,
@@ -325,7 +354,10 @@ class GoalsScreen extends StatelessWidget {
     return targetAmount / months;
   }
 
-  Future<void> _openContributionForm(BuildContext context, Goal goal) async {
+  static Future<void> _openContributionForm(
+    BuildContext context,
+    Goal goal,
+  ) async {
     final controller = context.read<GoalsController>();
     final accountsState = context.read<AccountsController>().state;
     final accountItems = accountsState.items
@@ -438,7 +470,7 @@ class GoalsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _quickContribution(
+  static Future<void> _quickContribution(
     BuildContext context,
     Goal goal,
     GoalProjection? projection,

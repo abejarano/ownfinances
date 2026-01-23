@@ -247,6 +247,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _save() async {
     if (!_isValid) return;
 
+    if (_isRecurring && !_isSaving) {
+      final confirmed = await _showRecurringConfirmation();
+      if (!confirmed) return;
+    }
+
     // Handle Debt Logic First
     final debtsController = context.read<DebtsController>();
 
@@ -484,6 +489,82 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 child: const Text(
                   "Alterar e limpar",
                   style: TextStyle(color: AppColors.primary),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<bool> _showRecurringConfirmation() async {
+    final amountStr = formatMoney(_amount);
+    final day = _date.day;
+
+    // Attempt to get label
+    String label = _noteController.text.isNotEmpty
+        ? _noteController.text
+        : "Transação";
+    if (_categoryId != null) {
+      try {
+        final cats = context.read<CategoriesController>().state.items;
+        final cat = cats.firstWhere((c) => c.id == _categoryId);
+        if (_noteController.text.isEmpty) {
+          label = cat.name;
+        } else {
+          label = "${cat.name} • $label";
+        }
+      } catch (_) {}
+    }
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF111C2F),
+            title: const Text(
+              "Confirmar conta fixa",
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Você está criando uma conta fixa:",
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "$label\n$amountStr\nTodo dia $day", // Using newline for clarity or bullets
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "A app só registra. Não é cobrança automática.",
+                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  "Voltar",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Confirmar",
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -1201,13 +1282,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                           const SizedBox(height: 16),
 
-                          // Recurrence
                           if (!isExpenseCard && !isTransferCardPayment) ...[
                             SwitchListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text(
-                                "Repetir (Recorrência)",
+                                "Repetir automaticamente",
                                 style: TextStyle(color: Colors.white),
+                              ),
+                              subtitle: const Text(
+                                "Cria uma conta fixa para você não esquecer.",
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
                               ),
                               value: _isRecurring,
                               activeColor: AppColors.primary,
@@ -1226,9 +1313,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 _buildFreqChip("Mensal", "monthly"),
                                 const SizedBox(width: 8),
                                 _buildFreqChip("Semanal", "weekly"),
-                                const SizedBox(width: 8),
-                                _buildFreqChip("Anual", "yearly"),
                               ],
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () =>
+                                    context.push('/budget?tab=fixed'),
+                                child: const Text("Gerenciar contas fixas"),
+                              ),
                             ),
                             const SizedBox(height: 16),
                           ],
