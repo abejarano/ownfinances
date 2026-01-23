@@ -126,7 +126,7 @@ export class BudgetsController {
 
   @Put("/:id")
   @Patch("/:id")
-  @Use([AuthMiddleware, validateBudgetPayload(false)])
+  @Use([AuthMiddleware, validateBudgetPayload(true)])
   async update(
     @Param("id") id: string,
     @Body() body: BudgetCreatePayload,
