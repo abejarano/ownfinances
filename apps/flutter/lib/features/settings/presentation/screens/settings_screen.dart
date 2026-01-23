@@ -51,12 +51,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              value
-                  ? "Auto-geração ativada! Recorrências serão geradas automaticamente."
-                  : "Auto-geração desativada.",
-            ),
+          const SnackBar(
+            content: Text("Configuração salva com sucesso!"),
             backgroundColor: AppColors.success,
           ),
         );
@@ -83,15 +79,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text(
-          "Configurações",
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+        // 0. Gerenciar Shortcut (Moved Management here)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.grid_view,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Gerenciar",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Categorias, contas, dívidas e metas ficam no menu.",
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: Builder(
+                    builder: (context) {
+                      return OutlinedButton(
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                        child: const Text("Abrir menu"),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // 0. Preferências Section
+        // 1. Preferências Section
         _buildSectionTitle(context, "Preferências"),
         const SizedBox(height: AppSpacing.sm),
         Card(
@@ -140,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        // 1. Recorrências Section
+        // 2. Automação Section (Updated Copy)
         _buildSectionTitle(context, "Automação"),
         const SizedBox(height: AppSpacing.sm),
         Card(
@@ -150,7 +199,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SwitchListTile(
                 title: const Text("Gerar automaticamente"),
                 subtitle: const Text(
-                  "Gera recorrências do mês ao abrir o app pela primeira vez.",
+                  "Cria lançamentos de contas fixas ao iniciar o mês (não movimenta dinheiro).",
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
                 value: _autoGenerateRecurring,
@@ -168,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          "As transações serão criadas como pendentes.",
+                          "As transações serão criadas como pendentes na data prevista.",
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textTertiary,
@@ -178,40 +227,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: AppSpacing.lg),
-
-        // 2. Gestão Section
-        _buildSectionTitle(context, "Gestão"),
-        const SizedBox(height: AppSpacing.sm),
-        Card(
-          child: Column(
-            children: [
-              _buildNavTile(
-                context,
-                "Categorias",
-                Icons.category_outlined,
-                "/categories",
-              ),
-              const Divider(indent: 16, endIndent: 16),
-              _buildNavTile(
-                context,
-                "Contas",
-                Icons.account_balance_wallet_outlined,
-                "/accounts",
-              ),
-              const Divider(indent: 16, endIndent: 16),
-              _buildNavTile(
-                context,
-                "Dívidas",
-                Icons.money_off_csred_outlined,
-                "/debts",
-              ),
-              const Divider(indent: 16, endIndent: 16),
-              _buildNavTile(context, "Metas", Icons.flag_outlined, "/goals"),
             ],
           ),
         ),
@@ -245,7 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 title: Text("Versão"),
                 trailing: Text(
-                  "0.0.1",
+                  "1.0.0",
                   style: TextStyle(color: AppColors.textTertiary),
                 ),
               ),
@@ -266,34 +281,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildNavTile(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String route,
-  ) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.textTertiary),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary),
-      onTap: () => context.push(route),
-    );
-  }
-
   Future<void> _showCurrencyPicker(
     BuildContext context,
     SettingsController controller,
   ) async {
     final current = controller.primaryCurrency;
-
-    // PO requested specific order: BRL, USD, EUR, GBP, USDT.
-    // Plus "COP", "VES" from previous user request.
-    // Let's stick to utils common + extra requested if they are not in common.
-    // CurrencyUtils has [BRL, USD, EUR, GBP, USDT].
-    // User asked for [BRL, COP, VES, USD, EUR, USDT] previously.
-    // The previous edit had: ["BRL", "COP", "VES", "USD", "EUR", "USDT"].
-    // Let's reuse that specific list to not regress on user preference, but use formatter for Labels.
-
     final pickerOptions = ["BRL", "COP", "VES", "USD", "EUR", "GBP", "USDT"];
 
     // Check if current is custom (not in options)

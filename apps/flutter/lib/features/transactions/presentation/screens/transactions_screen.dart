@@ -10,7 +10,7 @@ import "package:ownfinances/features/accounts/application/controllers/accounts_c
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
-import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
+
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 
 // Import the new widget
@@ -96,26 +96,16 @@ class TransactionsScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(
-            "Transações",
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+          IconButton(
+            icon: const Icon(Icons.upload_file_outlined),
+            onPressed: () => context.push("/csv-import"),
+            tooltip: "Importar CSV",
           ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.upload_file_outlined),
-                onPressed: () => context.push("/csv-import"),
-                tooltip: "Importar CSV",
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: controller.load,
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: controller.load,
           ),
         ],
       ),

@@ -20,6 +20,7 @@ import "package:ownfinances/features/recurring/presentation/screens/recurring_pl
 import "package:ownfinances/features/recurring/presentation/screens/recurring_hub_screen.dart";
 import "package:ownfinances/features/templates/presentation/screens/template_list_screen.dart";
 import "package:ownfinances/core/presentation/components/app_scaffold.dart";
+import "package:ownfinances/core/presentation/components/app_drawer.dart";
 import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
@@ -166,6 +167,7 @@ GoRouter createRouter({
             title: _titleFromLocation(location),
             currentIndex: currentIndex,
             onTap: (index) => _goToIndex(context, index),
+            drawer: const AppDrawer(),
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.grid_view),
@@ -181,7 +183,7 @@ GoRouter createRouter({
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.settings),
-                label: "Config",
+                label: "Ajustes",
               ),
             ],
             body: child,
@@ -231,7 +233,7 @@ int _indexFromLocation(String location) {
 String _titleFromLocation(String location) {
   if (location.startsWith("/transactions")) return "Transações";
   if (location.startsWith("/budget")) return "Orçamentos";
-  if (location.startsWith("/settings")) return "Config";
+  if (location.startsWith("/settings")) return "Ajustes";
   return "Dashboard";
 }
 
