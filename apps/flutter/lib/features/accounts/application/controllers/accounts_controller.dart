@@ -6,21 +6,31 @@ import "package:ownfinances/features/accounts/data/repositories/account_reposito
 class AccountsController extends ChangeNotifier {
   final AccountRepository repository;
   AccountsState _state = AccountsState.initial;
+  bool _isDisposed = false;
 
   AccountsController(this.repository);
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   AccountsState get state => _state;
 
   Future<void> load() async {
+    if (_isDisposed) return;
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
       final result = await repository.list(isActive: true);
       _state = _state.copyWith(isLoading: false, items: result.results);
     } catch (error) {
-      _state = _state.copyWith(isLoading: false, error: _message(error));
+      if (!_isDisposed) {
+        _state = _state.copyWith(isLoading: false, error: _message(error));
+      }
     }
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
   }
 
   Future<String?> create({
@@ -42,7 +52,7 @@ class AccountsController extends ChangeNotifier {
       final next = [..._state.items, created]
         ..sort((a, b) => a.name.compareTo(b.name));
       _state = _state.copyWith(items: next);
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
       return null;
     } catch (error) {
       return _message(error);
@@ -70,7 +80,7 @@ class AccountsController extends ChangeNotifier {
           _state.items.map((item) => item.id == id ? updated : item).toList()
             ..sort((a, b) => a.name.compareTo(b.name));
       _state = _state.copyWith(items: next);
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
       return null;
     } catch (error) {
       return _message(error);
@@ -83,7 +93,7 @@ class AccountsController extends ChangeNotifier {
       _state = _state.copyWith(
         items: _state.items.where((item) => item.id != id).toList(),
       );
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
       return null;
     } catch (error) {
       return _message(error);

@@ -71,7 +71,8 @@ export class DebtsController {
     return HttpResponse(res, result)
   }
 
-  @Get("/summary/:id")
+  @Get("/:id/summary")
+  @Use([AuthMiddleware])
   async summary(
     @Param("id") id: string,
     @Req() req: AuthenticatedRequest,

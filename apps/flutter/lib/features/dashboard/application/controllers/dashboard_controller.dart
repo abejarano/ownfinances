@@ -7,18 +7,28 @@ import 'package:ownfinances/features/dashboard/application/state/dashboard_state
 import 'package:ownfinances/features/transactions/domain/entities/transaction.dart';
 import 'package:ownfinances/features/transactions/data/repositories/transaction_repository.dart';
 
+import 'package:ownfinances/features/reports/data/repositories/reports_repository.dart';
+
 import 'package:ownfinances/features/settings/application/controllers/settings_controller.dart';
+
+import 'package:ownfinances/features/debts/domain/entities/debt.dart';
+import 'package:ownfinances/features/debts/data/repositories/debt_repository.dart';
 
 class DashboardController extends ChangeNotifier {
   final TransactionRepository transactionRepository;
   final AccountRepository accountRepository;
+  final ReportsRepository reportsRepository;
+  final DebtRepository debtRepository;
   final SettingsController settingsController;
 
   DashboardState _state = DashboardState.initial();
+  bool _isDisposed = false;
 
   DashboardController(
     this.transactionRepository,
     this.accountRepository,
+    this.reportsRepository,
+    this.debtRepository,
     this.settingsController,
   ) {
     settingsController.addListener(_onSettingsChanged);
@@ -26,6 +36,7 @@ class DashboardController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     settingsController.removeListener(_onSettingsChanged);
     super.dispose();
   }
@@ -45,6 +56,7 @@ class DashboardController extends ChangeNotifier {
   DashboardState get state => _state;
 
   Future<void> load() async {
+    if (_isDisposed) return;
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
 
@@ -77,20 +89,53 @@ class DashboardController extends ChangeNotifier {
       );
       final transactions = txResult.results;
 
-      // 3. Aggregate Data
-      _calculateAggregates(accounts, transactions);
+      // 3. Fetch Balances (Total History up to now)
+      // Usually "Current Balance" implies "Up to Today" or "End of Selected Month"?
+      // For Dashboard, usually correct to show State at End of Month or Now?
+      // If month is past, End of Month. If current/future, Now?
+      // Let's use End of Selected Month to be consistent with navigation.
+      final balancesReport = await reportsRepository.balances(
+        period: "custom", // Assuming custom accepts range or date? Or "month"?
+        // ReportRepository usually takes single date for "Balance Sheet".
+        // Let's check signature. It takes 'period' and 'date'.
+        // If period='all', maybe date is ignored?
+        // Let's assume period='month' and date=endOfMonth gives balance AT THAT DATE?
+        // Wait, ReportsRepository.balances signature:
+        // Future<ReportBalances> balances({required String period, required DateTime date})
+        // Usually balances are a snapshot at a point in time.
+        // Let's try period='month'.
+        date: endOfMonth,
+      );
+
+      final balancesMap = {
+        for (final b in balancesReport.balances) b.accountId: b.balance,
+      };
+
+      // 4. Fetch Active Debts to link with Accounts
+      final debtsList = await debtRepository.list();
+      final debtsMap = <String, Debt>{};
+      for (final debt in debtsList) {
+        if (debt.linkedAccountId != null) {
+          debtsMap[debt.linkedAccountId!] = debt;
+        }
+      }
+
+      // 5. Aggregate Data
+      _calculateAggregates(accounts, transactions, balancesMap, debtsMap);
     } catch (e) {
+      if (_isDisposed) return;
       _state = _state.copyWith(
         isLoading: false,
         error: e is ApiException ? e.message : "Erro ao carregar dashboard",
       );
     }
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
   }
 
   Future<void> setMonth(DateTime date) async {
     if (date.year == _state.date.year && date.month == _state.date.month)
       return;
+    if (_isDisposed) return;
     _state = _state.copyWith(date: date);
     notifyListeners();
     await load();
@@ -99,6 +144,8 @@ class DashboardController extends ChangeNotifier {
   void _calculateAggregates(
     List<Account> accounts,
     List<Transaction> transactions,
+    Map<String, double> balancesMap,
+    Map<String, Debt> debtsMap,
   ) {
     // --- Rule 2: Month Summary (Dynamic Primary Currency) ---
     final primaryCurrency = settingsController.primaryCurrency;
@@ -122,9 +169,9 @@ class DashboardController extends ChangeNotifier {
           account: account,
           income: 0,
           expense: 0,
-          balance:
-              0, // This balances is "Net Flow" for the month, NOT total account balance.
-          // PO said: "Entradas / Saídas / Saldo (do mês)" implicitly.
+          balance: 0, // Month Net Flow
+          totalBalance: balancesMap[account.id], // Real Total Balance
+          linkedDebt: debtsMap[account.id], // Metadata from Debt Module
           hasMovements: false,
         );
       }
@@ -190,10 +237,15 @@ class DashboardController extends ChangeNotifier {
           try {
             final toAcc = accounts.firstWhere((a) => a.id == tx.toAccountId);
             if (toAcc.currency == primaryCurrency) {
-              // Use destinationAmount if avail, else amount
-              final inflow = tx.destinationAmount ?? absAmount;
-              mainIncome += inflow;
-              hasMainMovements = true;
+              // EXCEPTION: Paying off a Credit Card (transfer to credit_card) is NOT Income.
+              // It effectively reduces debt (Asset -> Liability repayment).
+              // We want the Outflow (Expense) to count, but NOT the Inflow (Income).
+              if (toAcc.type != 'credit_card') {
+                // Use destinationAmount if avail, else amount
+                final inflow = tx.destinationAmount ?? absAmount;
+                mainIncome += inflow;
+                hasMainMovements = true;
+              }
             }
           } catch (_) {}
         }
@@ -212,6 +264,8 @@ class DashboardController extends ChangeNotifier {
             income: current.income,
             expense: current.expense + absAmount,
             balance: current.balance - absAmount,
+            totalBalance: current.totalBalance,
+            linkedDebt: current.linkedDebt,
             hasMovements: true,
           );
         }
@@ -235,6 +289,8 @@ class DashboardController extends ChangeNotifier {
             income: current.income + inflowAmount,
             expense: current.expense,
             balance: current.balance + inflowAmount,
+            totalBalance: current.totalBalance,
+            linkedDebt: current.linkedDebt,
             hasMovements: true,
           );
         }

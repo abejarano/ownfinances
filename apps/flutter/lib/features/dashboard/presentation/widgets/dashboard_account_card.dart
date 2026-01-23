@@ -36,7 +36,7 @@ class DashboardAccountCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.borderSoft),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -52,6 +52,30 @@ class DashboardAccountCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
+                if (summary.account.type == 'credit_card')
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3),
+                      ),
+                    ),
+                    child: const Text(
+                      "CARTÃO",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ),
+
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -74,10 +98,98 @@ class DashboardAccountCard extends StatelessWidget {
               ],
             ),
 
-            const Spacer(),
+            const SizedBox(height: 12),
 
-            if (summary.hasMovements) ...[
-              // Metrics
+            if (summary.account.type == 'credit_card' ||
+                summary.linkedDebt != null) ...[
+              // --- DEBT LAYOUT (Compact) ---
+              // Line 1: Header Row (Label + Due Date)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Saldo a pagar",
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (summary.linkedDebt?.dueDay != null)
+                    Text(
+                      "Vence dia ${summary.linkedDebt!.dueDay}",
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 2),
+
+              // Line 2: Big Money
+              MoneyText(
+                value:
+                    (summary.linkedDebt?.amountDue ?? summary.totalBalance ?? 0)
+                        .abs(),
+                variant: MoneyTextVariant.l,
+                color: AppColors.danger,
+                symbol: summary.account.currency,
+              ),
+
+              const SizedBox(height: 8),
+
+              // Line 3: Month Activity Grid (No Divider)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Col 1: Pagamentos (Green)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Pagamentos",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                          ),
+                        ),
+                        MoneyText(
+                          value: summary.income,
+                          variant: MoneyTextVariant.s,
+                          color: AppColors.success,
+                          symbol: summary.account.currency,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Col 2: Compras (Warning)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          "Compras",
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                          ),
+                        ),
+                        MoneyText(
+                          value: summary.expense,
+                          variant: MoneyTextVariant.s,
+                          color: AppColors.warning,
+                          symbol: summary.account.currency,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (summary.hasMovements) ...[
+              // --- ASSET LAYOUT (Standard) ---
               _RowMetric(
                 label: "Entradas",
                 value: summary.income,
@@ -95,6 +207,7 @@ class DashboardAccountCard extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Divider(height: 1, color: AppColors.borderSoft),
               ),
+              // Balance Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -116,6 +229,7 @@ class DashboardAccountCard extends StatelessWidget {
                 ],
               ),
             ] else ...[
+              // No Movements (Asset Only)
               const Expanded(
                 child: Center(
                   child: Text(

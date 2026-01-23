@@ -11,12 +11,20 @@ class DebtsController extends ChangeNotifier {
   final DebtTransactionRepository transactionRepository;
 
   DebtsState _state = DebtsState.initial();
+  bool _isDisposed = false;
 
   DebtsController(this.debtRepository, this.transactionRepository);
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   DebtsState get state => _state;
 
   Future<void> loadOverview() async {
+    if (_isDisposed) return;
     _state = _state.copyWith(isLoadingOverview: true);
     notifyListeners();
     try {
@@ -24,13 +32,16 @@ class DebtsController extends ChangeNotifier {
       _state = _state.copyWith(overview: overview, isLoadingOverview: false);
     } catch (_) {
       // Allow silent failure or handle error specific to overview?
-      _state = _state.copyWith(isLoadingOverview: false);
+      if (!_isDisposed) {
+        _state = _state.copyWith(isLoadingOverview: false);
+      }
     }
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
   }
 
   Future<void> load() async {
     loadOverview(); // Fire and forget or await? Let's fire and allow parallel loading.
+    if (_isDisposed) return;
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();
     try {
@@ -41,9 +52,11 @@ class DebtsController extends ChangeNotifier {
         // summaries: summaries, // No longer needed
       );
     } catch (error) {
-      _state = _state.copyWith(isLoading: false, error: _message(error));
+      if (!_isDisposed) {
+        _state = _state.copyWith(isLoading: false, error: _message(error));
+      }
     }
-    notifyListeners();
+    if (!_isDisposed) notifyListeners();
   }
 
   Future<String?> create({
@@ -110,7 +123,7 @@ class DebtsController extends ChangeNotifier {
             .map((item) => item.id == id ? updated : item)
             .toList(),
       );
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
       await _refreshSummary(id);
       return null;
     } catch (error) {
@@ -156,7 +169,7 @@ class DebtsController extends ChangeNotifier {
       _state = _state.copyWith(
         lastAccountId: accountId ?? _state.lastAccountId,
       );
-      notifyListeners();
+      if (!_isDisposed) notifyListeners();
       await _refreshSummary(debtId);
       return null;
     } catch (error) {
@@ -167,6 +180,7 @@ class DebtsController extends ChangeNotifier {
   Future<void> _refreshSummary(String debtId) async {
     try {
       final summary = await debtRepository.summary(debtId);
+      if (_isDisposed) return;
       final next = Map<String, DebtSummary>.from(_state.summaries);
       next[debtId] = summary;
       _state = _state.copyWith(summaries: next);

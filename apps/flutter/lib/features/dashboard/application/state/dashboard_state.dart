@@ -1,11 +1,14 @@
 import 'package:ownfinances/features/transactions/domain/entities/transaction.dart';
 import 'package:ownfinances/features/accounts/domain/entities/account.dart';
+import 'package:ownfinances/features/debts/domain/entities/debt.dart';
 
 class DashboardAccountSummary {
   final Account account;
   final double income;
   final double expense;
   final double balance; // Calculated from movements this month
+  final double? totalBalance; // Fetched from Reports (Total history)
+  final Debt? linkedDebt; // Fetched from Debt Module
   final bool hasMovements;
 
   const DashboardAccountSummary({
@@ -13,6 +16,8 @@ class DashboardAccountSummary {
     required this.income,
     required this.expense,
     required this.balance,
+    this.totalBalance,
+    this.linkedDebt,
     required this.hasMovements,
   });
 }

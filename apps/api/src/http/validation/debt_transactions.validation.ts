@@ -51,13 +51,16 @@ export function validateDebtTransactionPayload(isUpdate: boolean) {
       : DebtTransactionCreateSchema
     const result = v.safeParse(schema, payload)
 
-    if (!result.issues) return res.status(422).send("Payload invalido")
+    if (!result.success) {
+      const flattened = v.flatten(result.issues)
 
-    const flattened = v.flatten(result.issues)
-
-    if (flattened.nested?.debtId) return res.status(422).send("Falta la deuda")
-    if (flattened.nested?.type) return res.status(422).send("Tipo invalido")
-    if (flattened.nested?.amount) return res.status(422).send("Falta el monto")
+      if (flattened.nested?.debtId) return res.status(422).json({ error: "Falta la deuda" })
+      if (flattened.nested?.type) return res.status(422).json({ error: "Tipo invalido" })
+      if (flattened.nested?.amount) return res.status(422).json({ error: "Falta el monto" })
+      
+      const paramError = flattened.nested ? Object.values(flattened.nested)[0]?.[0] : "Payload invalido"
+      return res.status(422).json({ error: paramError })
+    }
 
     const data = payload as {
       amount?: number
@@ -66,15 +69,15 @@ export function validateDebtTransactionPayload(isUpdate: boolean) {
     }
 
     if (!isUpdate && !data.type) {
-      return res.status(422).send("Falta el tipo")
+      return res.status(422).json({ error: "Falta el tipo" })
     }
 
     if (data.amount !== undefined && data.amount <= 0) {
-      return res.status(422).send("El monto debe ser mayor que 0")
+      return res.status(422).json({ error: "El monto debe ser mayor que 0" })
     }
 
     if (!isUpdate && data.amount === undefined) {
-      return res.status(422).send("Falta el monto")
+      return res.status(422).json({ error: "Falta el monto" })
     }
 
     if (
@@ -83,13 +86,13 @@ export function validateDebtTransactionPayload(isUpdate: boolean) {
         data.type as DebtTransactionType
       )
     ) {
-      return res.status(422).send("Tipo invalido")
+      return res.status(422).json({ error: "Tipo invalido" })
     }
 
     if (data.date) {
       const date = new Date(data.date)
       if (Number.isNaN(date.getTime())) {
-        return res.status(422).send("Fecha invalida")
+        return res.status(422).json({ error: "Fecha invalida" })
       }
     }
 
@@ -97,7 +100,7 @@ export function validateDebtTransactionPayload(isUpdate: boolean) {
     if (!isUpdate && data.type === DebtTransactionType.Charge) {
       const payloadWithCategory = payload as { categoryId?: string | null }
       if (!payloadWithCategory.categoryId) {
-        return res.status(422).send("Falta la categoria para la compra")
+        return res.status(422).json({ error: "Falta la categoria para la compra" })
       }
     }
 

@@ -127,6 +127,15 @@ class AppProviders extends StatelessWidget {
             context.read<TransactionRepository>(),
           ),
         ),
+        Provider<DebtRepository>(
+          create: (context) =>
+              DebtRepository(DebtRemoteDataSource(context.read<ApiClient>())),
+        ),
+        Provider<DebtTransactionRepository>(
+          create: (context) => DebtTransactionRepository(
+            DebtTransactionRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
         Provider<ReportsRepository>(
           create: (context) => ReportsRepository(
             ReportsRemoteDataSource(context.read<ApiClient>()),
@@ -140,6 +149,8 @@ class AppProviders extends StatelessWidget {
           create: (context) => DashboardController(
             context.read<TransactionRepository>(),
             context.read<AccountRepository>(),
+            context.read<ReportsRepository>(),
+            context.read<DebtRepository>(),
             context.read<SettingsController>(),
           )..load(),
         ),
@@ -170,15 +181,7 @@ class AppProviders extends StatelessWidget {
           create: (context) =>
               TemplatesController(context.read<TemplateRepository>())..load(),
         ),
-        Provider<DebtRepository>(
-          create: (context) =>
-              DebtRepository(DebtRemoteDataSource(context.read<ApiClient>())),
-        ),
-        Provider<DebtTransactionRepository>(
-          create: (context) => DebtTransactionRepository(
-            DebtTransactionRemoteDataSource(context.read<ApiClient>()),
-          ),
-        ),
+
         ChangeNotifierProvider<DebtsController>(
           create: (context) => DebtsController(
             context.read<DebtRepository>(),

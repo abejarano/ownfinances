@@ -24,6 +24,9 @@ class DebtTransactionRepository {
       "categoryId": categoryId,
       "note": note,
     });
-    return DebtTransaction.fromJson(payload);
+    final data = payload.containsKey("debtTransaction")
+        ? payload["debtTransaction"] as Map<String, dynamic>
+        : payload;
+    return DebtTransaction.fromJson(data);
   }
 }
