@@ -4,11 +4,13 @@ import "package:go_router/go_router.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
-import "package:ownfinances/core/utils/formatters.dart";
+
 import "package:ownfinances/core/utils/currency_utils.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+
+import 'package:ownfinances/features/accounts/presentation/widgets/account_management_card.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -155,53 +157,13 @@ class AccountsScreen extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   itemCount: state.items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  padding: const EdgeInsets.only(bottom: 80), // Fab space
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = state.items[index];
-                    final balance = balanceMap[item.id];
-                    final balanceLabel = balance == null
-                        ? "Saldo: —"
-                        : "Saldo: ${formatMoney(balance)}";
+                    final balance = balanceMap[item.id] ?? 0.0;
 
-                    final isCurrencyValid = CurrencyUtils.isValidCurrency(
-                      item.currency,
-                    );
-
-                    return ListTile(
-                      title: Row(
-                        children: [
-                          Expanded(child: Text(item.name)),
-                          if (!isCurrencyValid)
-                            Container(
-                              margin: const EdgeInsets.only(left: 8),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.warningSoft,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                "Moeda inválida",
-                                style: TextStyle(
-                                  color: AppColors.warning,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      subtitle: Text(
-                        "${item.type} • ${CurrencyUtils.formatCurrencyLabel(item.currency)}\n$balanceLabel",
-                      ),
-                      isThreeLine: true,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () =>
-                            _openForm(context, controller, item: item),
-                      ),
+                    return GestureDetector(
                       onLongPress: () async {
                         final confirmed = await _confirmDelete(
                           context,
@@ -222,6 +184,12 @@ class AccountsScreen extends StatelessWidget {
                           showStandardSnackbar(context, "Conta excluida");
                         }
                       },
+                      child: AccountManagementCard(
+                        account: item,
+                        balance: balance,
+                        onEdit: () =>
+                            _openForm(context, controller, item: item),
+                      ),
                     );
                   },
                 ),

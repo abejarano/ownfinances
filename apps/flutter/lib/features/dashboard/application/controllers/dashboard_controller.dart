@@ -42,14 +42,6 @@ class DashboardController extends ChangeNotifier {
   }
 
   void _onSettingsChanged() {
-    // Reload if primary currency changes
-    // Or just re-calculate if data is already there?
-    // We need to re-fetch? Aggregation depends on currency value.
-    // If we just re-calc, we save network.
-    // But load() fetches limits/filters?
-    // Aggregation is purely local.
-    // So let's just trigger load() to be safe or re-aggregate logic?
-    // Given load() fetches logic, let's just call load() for simplicity.
     load();
   }
 
@@ -68,8 +60,6 @@ class DashboardController extends ChangeNotifier {
       final accounts = accountsResult.results;
 
       // 2. Fetch Transactions for the month (pagination loop or large limit)
-      // For MVP/Performance, let's try fetching up to 1000. If more, we might need a different strategy.
-      // But for personal finance, >1000 tx/month is rare.
       final startOfMonth = DateTime(_state.date.year, _state.date.month, 1);
       final endOfMonth = DateTime(
         _state.date.year,
@@ -90,20 +80,8 @@ class DashboardController extends ChangeNotifier {
       final transactions = txResult.results;
 
       // 3. Fetch Balances (Total History up to now)
-      // Usually "Current Balance" implies "Up to Today" or "End of Selected Month"?
-      // For Dashboard, usually correct to show State at End of Month or Now?
-      // If month is past, End of Month. If current/future, Now?
-      // Let's use End of Selected Month to be consistent with navigation.
       final balancesReport = await reportsRepository.balances(
-        period: "custom", // Assuming custom accepts range or date? Or "month"?
-        // ReportRepository usually takes single date for "Balance Sheet".
-        // Let's check signature. It takes 'period' and 'date'.
-        // If period='all', maybe date is ignored?
-        // Let's assume period='month' and date=endOfMonth gives balance AT THAT DATE?
-        // Wait, ReportsRepository.balances signature:
-        // Future<ReportBalances> balances({required String period, required DateTime date})
-        // Usually balances are a snapshot at a point in time.
-        // Let's try period='month'.
+        period: "custom",
         date: endOfMonth,
       );
 
@@ -121,7 +99,7 @@ class DashboardController extends ChangeNotifier {
       }
 
       // 5. Aggregate Data
-      _calculateAggregates(accounts, transactions, balancesMap, debtsMap);
+      _calculateAggregates(accounts, transactions, balancesMap, debtsList);
     } catch (e) {
       if (_isDisposed) return;
       _state = _state.copyWith(
@@ -145,38 +123,52 @@ class DashboardController extends ChangeNotifier {
     List<Account> accounts,
     List<Transaction> transactions,
     Map<String, double> balancesMap,
-    Map<String, Debt> debtsMap,
+    List<Debt> allDebts,
   ) {
     // --- Rule 2: Month Summary (Dynamic Primary Currency) ---
     final primaryCurrency = settingsController.primaryCurrency;
 
-    // Logic for Month Summary (BRL/Primary) REMOVED.
-    // We only need primaryCurrency to filter "Other Currencies".
-
-    // --- Rule 3: Account Carousel ---
-    final accountSummariesMap = <String, DashboardAccountSummary>{};
-
-    // Initialize summaries for all active accounts (even if no movements)
-    for (final account in accounts) {
-      if (account.isActive) {
-        accountSummariesMap[account.id] = DashboardAccountSummary(
-          account: account,
-          income: 0,
-          expense: 0,
-          balance: 0, // Month Net Flow
-          totalBalance: balancesMap[account.id], // Real Total Balance
-          linkedDebt: debtsMap[account.id], // Metadata from Debt Module
-          hasMovements: false,
-        );
+    // Separate Linkable Debts Map for Accounts
+    final debtsMap = <String, Debt>{};
+    for (final debt in allDebts) {
+      if (debt.linkedAccountId != null) {
+        debtsMap[debt.linkedAccountId!] = debt;
       }
     }
+
+    // --- Prepare Account Summaries ---
+    final accountSummariesMap = <String, DashboardAccountSummary>{};
+
+    for (final account in accounts) {
+      accountSummariesMap[account.id] = DashboardAccountSummary(
+        account: account,
+        income: 0,
+        expense: 0,
+        balance: 0, // Month Net Flow
+        totalBalance: balancesMap[account.id], // Real Total Balance
+        linkedDebt: debtsMap[account.id], // Metadata from Debt Module
+        hasMovements: false,
+      );
+    }
+
+    // Initialize totalPaidDebts
+    double totalPaidDebts = 0.0;
 
     // Process Transactions
     for (final tx in transactions) {
       final absAmount = tx.amount.abs();
 
-      // Handle Account Summaries
-      // A transaction can affect up to 2 accounts (transfer).
+      // Check for Debt Payment
+      if (tx.type == 'transfer' && tx.toAccountId != null) {
+        try {
+          final toAccount = accounts.firstWhere((a) => a.id == tx.toAccountId);
+          if (toAccount.type == 'credit_card' || toAccount.type == 'loan') {
+            // Payment to debt
+            final paidAmount = tx.destinationAmount ?? absAmount;
+            totalPaidDebts += paidAmount;
+          }
+        } catch (_) {}
+      }
 
       if (tx.type == 'expense' ||
           (tx.type == 'transfer' && tx.fromAccountId != null)) {
@@ -200,9 +192,6 @@ class DashboardController extends ChangeNotifier {
         final accId = tx.toAccountId!;
         if (accountSummariesMap.containsKey(accId)) {
           final current = accountSummariesMap[accId]!;
-
-          // For transfers, use destinationAmount if available (for multi-currency).
-          // Otherwise fall back to amount.
           final inflowAmount =
               (tx.type == 'transfer' && tx.destinationAmount != null)
               ? tx.destinationAmount!
@@ -221,49 +210,108 @@ class DashboardController extends ChangeNotifier {
       }
     }
 
-    // Sorting Account Summaries:
-    // 1. Assets (Bank/Cash) first, Liabilities (Credit Card) last
-    // 2. Active (Has Movements) first
-    // 3. Alphabetical by Name
-    final sortedAccountSummaries = accountSummariesMap.values.toList()
-      ..sort((a, b) {
-        final isLiabilityA = a.account.type == 'credit_card';
-        final isLiabilityB = b.account.type == 'credit_card';
+    // --- Filter & Sort Main Accounts ---
+    // Rules:
+    // 1. Exclude Debts/Credit Cards (They go to Debt Section)
+    // 2. Exclude Deactivated
+    // 3. Priority: Has Movements > Everyday Type > Volume > Name
+    // Everyday Type Priority: Bank > Cash > Wallet > Broker, Investment
 
-        // 1. Asset vs Liability
-        if (!isLiabilityA && isLiabilityB) return -1;
-        if (isLiabilityA && !isLiabilityB) return 1;
+    final allSummaries = accountSummariesMap.values.toList();
+    final nonDebtSummaries = allSummaries.where((s) {
+      final isDebt =
+          s.account.type == 'credit_card' || s.account.type == 'loan';
+      return !isDebt;
+    }).toList();
 
-        // 2. Activity (Has Movements)
-        if (a.hasMovements && !b.hasMovements) return -1;
-        if (!a.hasMovements && b.hasMovements) return 1;
+    // Split Active vs Inactive
+    final activeSummaries = nonDebtSummaries
+        .where((s) => s.account.isActive)
+        .toList();
+    final inactiveSummaries = nonDebtSummaries
+        .where((s) => !s.account.isActive)
+        .toList();
 
-        // 3. Alphabetical
-        return a.account.name.compareTo(b.account.name);
-      });
-
-    // --- Rule 4: Other Currencies ---
-    // Group totals by currency (excluding Primary)
-    // We can aggregate from the account summaries to be safe.
-    final otherCurrencyMap = <String, double>{};
-    for (final summary in sortedAccountSummaries) {
-      if (summary.account.currency == primaryCurrency) continue;
-
-      final currency = summary.account.currency;
-      final net = summary.balance;
-      otherCurrencyMap[currency] = (otherCurrencyMap[currency] ?? 0) + net;
+    // Priority Helper
+    int getTypePriority(String type) {
+      final t = type.toLowerCase();
+      if (t == 'bank' || t == 'checking') return 1;
+      if (t == 'cash') return 2;
+      if (t == 'wallet' || t == 'pix') return 3;
+      if (t == 'broker' || t == 'investment') return 4;
+      return 99;
     }
 
-    final otherCurrencies = otherCurrencyMap.entries
-        .map((e) => DashboardCurrencySummary(currency: e.key, balance: e.value))
-        .toList();
+    // Sort Active for Main Candidates
+    activeSummaries.sort((a, b) {
+      // 1. Has Movements (Desc)
+      if (a.hasMovements && !b.hasMovements) return -1;
+      if (!a.hasMovements && b.hasMovements) return 1;
+
+      // 2. Everyday Type (Asc Priority)
+      final pA = getTypePriority(a.account.type);
+      final pB = getTypePriority(b.account.type);
+      if (pA != pB) return pA.compareTo(pB);
+
+      // 3. Volume (Income + Expense) (Desc)
+      final valA = a.income + a.expense;
+      final valB = b.income + b.expense;
+      if (valA != valB) return valB.compareTo(valA);
+
+      // 4. Name (A-Z) (Asc)
+      return a.account.name.compareTo(b.account.name);
+    });
+
+    List<DashboardAccountSummary> mainAccounts;
+    List<DashboardAccountSummary> otherAccounts;
+
+    // Exception Rule: If <= 2 active accounts, show all in Main.
+    if (activeSummaries.length <= 2) {
+      mainAccounts = activeSummaries;
+      otherAccounts = inactiveSummaries;
+    } else {
+      // Normal Rule
+      mainAccounts = activeSummaries.take(5).toList();
+      otherAccounts = [...activeSummaries.skip(5), ...inactiveSummaries]
+        ..sort((a, b) => a.account.name.compareTo(b.account.name));
+    }
+
+    // --- Debts Logic ---
+    final activeDebts = allDebts.where((d) => d.isActive).toList();
+
+    // Check Priority (Due within 7 days)
+    bool hasPriorityDebt = false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    for (final debt in activeDebts) {
+      if (debt.dueDay != null) {
+        // Calculate next due date
+        // If dueDay >= today.day, it's this month. Else next month.
+        DateTime nextDueDate;
+        if (debt.dueDay! >= today.day) {
+          nextDueDate = DateTime(today.year, today.month, debt.dueDay!);
+        } else {
+          nextDueDate = DateTime(today.year, today.month + 1, debt.dueDay!);
+        }
+
+        final diff = nextDueDate.difference(today).inDays;
+        if (diff >= 0 && diff <= 7) {
+          hasPriorityDebt = true;
+          break;
+        }
+      }
+    }
 
     _state = _state.copyWith(
       isLoading: false,
       transactions: transactions,
       accounts: accounts,
-      accountSummaries: sortedAccountSummaries,
-      otherCurrencies: otherCurrencies,
+      mainAccounts: mainAccounts,
+      otherAccounts: otherAccounts,
+      activeDebts: activeDebts,
+      hasPriorityDebt: hasPriorityDebt,
+      totalPaidDebts: totalPaidDebts,
       primaryCurrency: primaryCurrency,
     );
   }

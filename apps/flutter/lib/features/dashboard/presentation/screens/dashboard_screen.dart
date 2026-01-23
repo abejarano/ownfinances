@@ -4,11 +4,12 @@ import "package:provider/provider.dart";
 
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/features/dashboard/application/controllers/dashboard_controller.dart";
-import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_accounts_carousel.dart";
-import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_other_currencies_card.dart";
-import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_debts_card.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_shortcut_card.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/account_card_standard.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/other_accounts_list.dart";
+
+import "package:ownfinances/features/dashboard/presentation/widgets/debts_section.dart";
 import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_quick_actions.dart";
-import "package:ownfinances/features/recurring/presentation/widgets/recurrence_summary_card.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 
@@ -17,7 +18,6 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We now watch DashboardController instead of ReportsController for the main logic
     final controller = context.watch<DashboardController>();
     final state = controller.state;
 
@@ -28,75 +28,113 @@ class DashboardScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         children: [
-          // 1. Month Summary Quick Link (Before Carousel)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: OutlinedButton.icon(
-              onPressed: () => context.push("/month-summary"),
-              icon: const Icon(Icons.analytics_outlined),
-              label: const Text("Resumo do Mês por Categorias"),
-              style: OutlinedButton.styleFrom(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.all(16),
-              ),
+          // 0. Header (Implicit in AppScaffold usually, but here added as padding title?)
+          // Spec says "Header (título da tela): 'Dashboard'".
+          // Assuming AppScaffold handles AppBar title "Dashboard".
+          // If body starts here:
+
+          // 1. Shortcut Card (Category Summary)
+          const DashboardShortcutCard(),
+          const SizedBox(height: AppSpacing.lg),
+
+          // 2. Priority Debts (If due in <= 7 days)
+          if (state.hasPriorityDebt) ...[
+            DebtsSection(
+              activeDebts: state.activeDebts,
+              totalPaidThisMonth: state.totalPaidDebts,
             ),
-          ),
-
-          // 2. Accounts Carousel (Per Account)
-          const SizedBox(height: AppSpacing.md),
-          DashboardAccountsCarousel(
-            summaries: state.accountSummaries,
-            onTap: (accountId) {
-              // Navigate to transactions filtered by account and month
-              final start = DateTime(state.date.year, state.date.month, 1);
-              final end = DateTime(
-                state.date.year,
-                state.date.month + 1,
-                0,
-                23,
-                59,
-                59,
-              );
-
-              context.read<TransactionsController>().setFilters(
-                TransactionFilters(
-                  dateFrom: start,
-                  dateTo: end,
-                  accountId: accountId,
-                ),
-              );
-              // Switch to transactions tab
-              context.go("/transactions");
-            },
-          ),
-
-          // 3. Other Currencies (Compact)
-          if (state.otherCurrencies.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.md),
-            DashboardOtherCurrenciesCard(
-              otherCurrencies: state.otherCurrencies,
-            ),
+            const SizedBox(height: AppSpacing.lg),
           ],
 
-          // 4. Debts (Keep as is)
-          const SizedBox(height: AppSpacing.lg),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [DashboardDebtsCard()],
+          // 3. Main Accounts (Carousel)
+          if (state.mainAccounts.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Contas principais",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "As que você mais usa no dia a dia",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.65),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 220, // Approx height for card
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                itemCount: state.mainAccounts.length,
+                itemBuilder: (context, index) {
+                  final summary = state.mainAccounts[index];
+                  return AccountCardStandard(
+                    summary: summary,
+                    onTap: () {
+                      final start = DateTime(
+                        state.date.year,
+                        state.date.month,
+                        1,
+                      );
+                      final end = DateTime(
+                        state.date.year,
+                        state.date.month + 1,
+                        0,
+                        23,
+                        59,
+                        59,
+                        59,
+                      );
 
-          // 5. Recurrence Summary (Keep as is)
-          const SizedBox(height: AppSpacing.md),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: RecurrenceSummaryCard(),
-          ),
+                      context.read<TransactionsController>().setFilters(
+                        TransactionFilters(
+                          dateFrom: start,
+                          dateTo: end,
+                          accountId: summary.account.id,
+                        ),
+                      );
 
-          // 6. Quick Actions
-          const SizedBox(height: AppSpacing.lg),
+                      context.go("/transactions");
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+
+          // 4. Other Accounts
+          if (state.otherAccounts.isNotEmpty) ...[
+            OtherAccountsList(accounts: state.otherAccounts),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+
+          // 6. Normal Debts (If NOT Priority)
+          // "Se existir vencimento... sobe para #2".
+          // Otherwise it stays here.
+          if (!state.hasPriorityDebt) ...[
+            DebtsSection(
+              activeDebts: state.activeDebts,
+              totalPaidThisMonth: state.totalPaidDebts,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+
+          // 7. Quick Actions
+          const SizedBox(height: 12),
           const DashboardQuickActions(),
 
           const SizedBox(height: 80),

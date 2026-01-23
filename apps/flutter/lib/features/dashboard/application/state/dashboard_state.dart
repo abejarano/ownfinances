@@ -22,24 +22,6 @@ class DashboardAccountSummary {
   });
 }
 
-class DashboardCurrencySummary {
-  final String currency;
-  final double
-  balance; // Net for the month or total balance? PO said "USDT +18.000", implying net change or total.
-  // Context: "Outras moedas: USDT +18.000". Likely month performance or total net worth?
-  // "Resumo do mês" implies month performance. But usually "Outras moedas" implies holding.
-  // Re-reading PO: "Outras moedas: USDT +18.000 • EUR +120" -> "Resumen por moneda, sin convertir".
-  // Given it's a dashboard, usually it's month flow, but "18.000" sounds like total.
-  // However, let's stick to Month Scope for consistency with the rest of the dashboard unless specified otherwise.
-  // Wait, "Resumo do mês" is the top card.
-  // Actually, let's use the Sum of Net Income-Expense for the month for now.
-
-  const DashboardCurrencySummary({
-    required this.currency,
-    required this.balance,
-  });
-}
-
 class DashboardState {
   final bool isLoading;
   final String? error;
@@ -50,18 +32,14 @@ class DashboardState {
   final List<Account> accounts;
 
   // Computed
-  final List<DashboardAccountSummary> accountSummaries;
-  final List<DashboardCurrencySummary> otherCurrencies;
-
-  // Main Currency Summary (BRL) - REMOVED
-  // final double mainCurrencyIncome;
-  // final double mainCurrencyExpense;
-  // final double mainCurrencyNet;
-  // final bool hasMainCurrencyMovements;
+  final List<DashboardAccountSummary> mainAccounts;
+  final List<DashboardAccountSummary> otherAccounts;
+  final List<Debt> activeDebts;
+  final bool hasPriorityDebt; // If any debt is due in <= 7 days
+  final double totalPaidDebts; // [NEW] Total paid to debts this month
 
   // Primary Currency Configuration
   final String primaryCurrency;
-  // final bool hasPrimaryCurrencyAccounts; - REMOVED
 
   const DashboardState({
     required this.isLoading,
@@ -69,8 +47,12 @@ class DashboardState {
     required this.date,
     required this.transactions,
     required this.accounts,
-    required this.accountSummaries,
-    required this.otherCurrencies,
+    required this.mainAccounts,
+    required this.otherAccounts,
+    required this.activeDebts,
+    required this.hasPriorityDebt,
+    required this.totalPaidDebts,
+
     required this.primaryCurrency,
   });
 
@@ -80,8 +62,12 @@ class DashboardState {
       date: DateTime.now(),
       transactions: [],
       accounts: [],
-      accountSummaries: [],
-      otherCurrencies: [],
+      mainAccounts: [],
+      otherAccounts: [],
+      activeDebts: [],
+      hasPriorityDebt: false,
+      totalPaidDebts: 0.0,
+
       primaryCurrency: "BRL", // Default
     );
   }
@@ -92,8 +78,12 @@ class DashboardState {
     DateTime? date,
     List<Transaction>? transactions,
     List<Account>? accounts,
-    List<DashboardAccountSummary>? accountSummaries,
-    List<DashboardCurrencySummary>? otherCurrencies,
+    List<DashboardAccountSummary>? mainAccounts,
+    List<DashboardAccountSummary>? otherAccounts,
+    List<Debt>? activeDebts,
+    bool? hasPriorityDebt,
+    double? totalPaidDebts,
+
     String? primaryCurrency,
   }) {
     return DashboardState(
@@ -102,8 +92,12 @@ class DashboardState {
       date: date ?? this.date,
       transactions: transactions ?? this.transactions,
       accounts: accounts ?? this.accounts,
-      accountSummaries: accountSummaries ?? this.accountSummaries,
-      otherCurrencies: otherCurrencies ?? this.otherCurrencies,
+      mainAccounts: mainAccounts ?? this.mainAccounts,
+      otherAccounts: otherAccounts ?? this.otherAccounts,
+      activeDebts: activeDebts ?? this.activeDebts,
+      hasPriorityDebt: hasPriorityDebt ?? this.hasPriorityDebt,
+      totalPaidDebts: totalPaidDebts ?? this.totalPaidDebts,
+
       primaryCurrency: primaryCurrency ?? this.primaryCurrency,
     );
   }
