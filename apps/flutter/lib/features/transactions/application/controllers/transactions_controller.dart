@@ -15,14 +15,49 @@ class TransactionsController extends ChangeNotifier {
 
   TransactionsState get state => _state;
 
-  Future<void> load() async {
-    _state = _state.copyWith(isLoading: true, error: null);
+  Future<void> load({bool clearNextPage = false}) async {
+    _state = _state.copyWith(
+      isLoading: true,
+      error: null,
+      clearNextPage: clearNextPage,
+    );
     notifyListeners();
     try {
       final result = await repository.list(filters: _state.filters);
-      _state = _state.copyWith(isLoading: false, items: result.results);
+      _state = _state.copyWith(
+        isLoading: false,
+        items: result.results,
+        nextPage: result.nextPage,
+        clearNextPage:
+            result.nextPage == null, // Ensures clean state if no next
+      );
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
+    }
+    notifyListeners();
+  }
+
+  Future<void> loadMore() async {
+    if (_state.isLoading || _state.isLoadingMore || _state.nextPage == null) {
+      return;
+    }
+
+    _state = _state.copyWith(isLoadingMore: true, error: null);
+    notifyListeners();
+
+    try {
+      final result = await repository.list(
+        filters: _state.filters.copyWith(page: _state.nextPage),
+      );
+
+      _state = _state.copyWith(
+        isLoadingMore: false,
+        items: [..._state.items, ...result.results],
+        nextPage: result.nextPage,
+        clearNextPage: result.nextPage == null,
+      );
+    } catch (error) {
+      _state = _state.copyWith(isLoadingMore: false, error: _message(error));
     }
     notifyListeners();
   }
@@ -30,7 +65,7 @@ class TransactionsController extends ChangeNotifier {
   Future<void> setFilters(TransactionFilters filters) async {
     _state = _state.copyWith(filters: filters);
     notifyListeners();
-    await load();
+    await load(clearNextPage: true);
   }
 
   Future<Transaction?> create(Map<String, dynamic> payload) async {
@@ -193,7 +228,10 @@ class TransactionsController extends ChangeNotifier {
     required String period,
   }) async {
     try {
-      final restored = await repository.restoreWithImpact(id: id, period: period);
+      final restored = await repository.restoreWithImpact(
+        id: id,
+        period: period,
+      );
       _state = _state.copyWith(items: [restored.transaction, ..._state.items]);
       notifyListeners();
       return restored;

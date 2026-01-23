@@ -7,6 +7,7 @@ class TransactionFilters {
   final String? status;
   final String? query;
   final int? limit;
+  final int? page;
 
   const TransactionFilters({
     this.dateFrom,
@@ -17,6 +18,7 @@ class TransactionFilters {
     this.status,
     this.query,
     this.limit,
+    this.page,
   });
 
   TransactionFilters copyWith({
@@ -28,6 +30,7 @@ class TransactionFilters {
     String? status,
     String? query,
     int? limit,
+    int? page,
   }) {
     return TransactionFilters(
       dateFrom: dateFrom ?? this.dateFrom,
@@ -38,6 +41,7 @@ class TransactionFilters {
       status: status ?? this.status,
       query: query ?? this.query,
       limit: limit ?? this.limit,
+      page: page ?? this.page,
     );
   }
 }

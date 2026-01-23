@@ -299,11 +299,24 @@ class DashboardController extends ChangeNotifier {
 
     final mainNet = mainIncome - mainExpense;
 
-    // Sorting Account Summaries: Active first, then inactive
+    // Sorting Account Summaries:
+    // 1. Assets (Bank/Cash) first, Liabilities (Credit Card) last
+    // 2. Active (Has Movements) first
+    // 3. Alphabetical by Name
     final sortedAccountSummaries = accountSummariesMap.values.toList()
       ..sort((a, b) {
+        final isLiabilityA = a.account.type == 'credit_card';
+        final isLiabilityB = b.account.type == 'credit_card';
+
+        // 1. Asset vs Liability
+        if (!isLiabilityA && isLiabilityB) return -1;
+        if (isLiabilityA && !isLiabilityB) return 1;
+
+        // 2. Activity (Has Movements)
         if (a.hasMovements && !b.hasMovements) return -1;
         if (!a.hasMovements && b.hasMovements) return 1;
+
+        // 3. Alphabetical
         return a.account.name.compareTo(b.account.name);
       });
 

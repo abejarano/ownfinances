@@ -1,6 +1,5 @@
 import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
-import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 
 class TransactionsState {
   final bool isLoading;
@@ -10,6 +9,8 @@ class TransactionsState {
   final String? lastCategoryId;
   final String? lastFromAccountId;
   final String? lastToAccountId;
+  final int? nextPage;
+  final bool isLoadingMore;
 
   const TransactionsState({
     required this.isLoading,
@@ -19,6 +20,8 @@ class TransactionsState {
     this.lastCategoryId,
     this.lastFromAccountId,
     this.lastToAccountId,
+    this.nextPage,
+    this.isLoadingMore = false,
   });
 
   TransactionsState copyWith({
@@ -29,6 +32,9 @@ class TransactionsState {
     String? lastCategoryId,
     String? lastFromAccountId,
     String? lastToAccountId,
+    int? nextPage,
+    bool? isLoadingMore,
+    bool clearNextPage = false, // Helper to force clear
   }) {
     return TransactionsState(
       isLoading: isLoading ?? this.isLoading,
@@ -38,6 +44,8 @@ class TransactionsState {
       lastCategoryId: lastCategoryId ?? this.lastCategoryId,
       lastFromAccountId: lastFromAccountId ?? this.lastFromAccountId,
       lastToAccountId: lastToAccountId ?? this.lastToAccountId,
+      nextPage: clearNextPage ? null : (nextPage ?? this.nextPage),
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 

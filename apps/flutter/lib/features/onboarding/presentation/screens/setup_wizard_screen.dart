@@ -423,6 +423,8 @@ class _AccountStep extends StatelessWidget {
                 DropdownMenuItem(value: "itau", child: Text("Itaú")),
                 DropdownMenuItem(value: "bradesco", child: Text("Bradesco")),
                 DropdownMenuItem(value: "caixa", child: Text("Caixa")),
+                DropdownMenuItem(value: "wise", child: Text("Wise")),
+                DropdownMenuItem(value: "neon", child: Text("Neon")),
               ],
               onChanged: onBankTypeChanged,
             ),

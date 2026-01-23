@@ -27,7 +27,9 @@ class TransactionRemoteDataSource {
         "limit": (safe != null && safe.limit != null)
             ? safe.limit.toString()
             : "50",
-        "page": "1",
+        "page": (safe != null && safe.page != null)
+            ? safe.page.toString()
+            : "1",
         "sort": "-date",
       },
     );

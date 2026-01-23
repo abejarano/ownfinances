@@ -42,23 +42,43 @@ class TransactionsScreen extends StatelessWidget {
             Expanded(
               child: txState.items.isEmpty
                   ? _buildEmptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      itemCount: groupedTransactions.length,
-                      itemBuilder: (context, index) {
-                        final item = groupedTransactions[index];
-                        if (item is String) {
-                          return _buildDateHeader(context, item);
-                        } else if (item is Transaction) {
-                          return _buildTransactionItem(
-                            context,
-                            item,
-                            categoriesState.items,
-                            accountsState.items,
-                          );
+                  : NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollInfo) {
+                        if (!txState.isLoadingMore &&
+                            scrollInfo.metrics.pixels >=
+                                scrollInfo.metrics.maxScrollExtent - 200) {
+                          txController.loadMore();
                         }
-                        return const SizedBox.shrink();
+                        return false;
                       },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        itemCount:
+                            groupedTransactions.length +
+                            (txState.isLoadingMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index >= groupedTransactions.length) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          final item = groupedTransactions[index];
+                          if (item is String) {
+                            return _buildDateHeader(context, item);
+                          } else if (item is Transaction) {
+                            return _buildTransactionItem(
+                              context,
+                              item,
+                              categoriesState.items,
+                              accountsState.items,
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     ),
             ),
           ],

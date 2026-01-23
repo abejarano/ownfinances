@@ -150,16 +150,18 @@ class _BudgetScreenState extends State<BudgetScreen> {
             // But `plannedByCategory` has the amounts.
 
             final planned = budgetState.plannedByCategory[category.id];
-            if (planned == null) return const SizedBox.shrink();
+            // if (planned == null) return const SizedBox.shrink(); // Show all categories so user can edit them
+
+            final double safePlanned = planned ?? 0.0;
 
             final controller = _controllers.putIfAbsent(category.id, () {
               return TextEditingController(
-                text: planned > 0 ? formatMoney(planned) : "",
+                text: safePlanned > 0 ? formatMoney(safePlanned) : "",
               );
             });
             // Update controller if value changed externally (e.g. reload)
-            if (planned != parseMoney(controller.text)) {
-              controller.text = planned > 0 ? formatMoney(planned) : "";
+            if (safePlanned != parseMoney(controller.text)) {
+              controller.text = safePlanned > 0 ? formatMoney(safePlanned) : "";
             }
 
             final line = summaryMap[category.id];
