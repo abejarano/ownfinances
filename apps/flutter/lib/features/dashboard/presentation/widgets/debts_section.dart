@@ -201,7 +201,7 @@ class DebtsSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Próximo: ${nearestDueDate!.day.toString().padLeft(2, '0')}/${nearestDueDate!.month.toString().padLeft(2, '0')} — ${nearestDebt!.name}",
+                          "Próximo: ${nearestDueDate.day.toString().padLeft(2, '0')}/${nearestDueDate.month.toString().padLeft(2, '0')} — ${nearestDebt.name}",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,

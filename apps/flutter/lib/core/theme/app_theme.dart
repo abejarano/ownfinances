@@ -23,10 +23,15 @@ class AppColors {
   static const Color divider = Color.fromRGBO(255, 255, 255, 0.06);
 
   // --- Text (Strict Typography Refresh v1) ---
-  static const Color textPrimary = Color(0xFFE6EDF7);
-  static const Color textSecondary = Color(0xB8E6EDF7); // 72% opacity
-  static const Color textTertiary = Color(0x85E6EDF7); // 52% opacity
-  static const Color textDisabled = Color(0x52E6EDF7); // 32% opacity (approx)
+  static const Color textPrimary = Color.fromRGBO(255, 255, 255, 0.92);
+  static const Color textSecondary = Color.fromRGBO(255, 255, 255, 0.72);
+  static const Color textTertiary = Color.fromRGBO(
+    255,
+    255,
+    255,
+    0.52,
+  ); // Placeholder/Disabled
+  static const Color textDisabled = Color.fromRGBO(255, 255, 255, 0.52);
 
   // --- Accents ---
   static const Color primary = Color(0xFF3B82F6);
