@@ -150,7 +150,7 @@ class DebtsSection extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      formatMoney(totalPaidThisMonth, withSymbol: true),
+                      formatCurrency(totalPaidThisMonth, "BRL"),
                       style: const TextStyle(
                         color: AppColors.success,
                         fontSize: 13,
@@ -172,7 +172,7 @@ class DebtsSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  formatMoney(totalDue, withSymbol: true),
+                  formatCurrency(totalDue, "BRL"),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -218,6 +218,17 @@ class DebtsSection extends StatelessWidget {
                   child: PrimaryButton(
                     label: "Pagar fatura",
                     onPressed: () => context.push("/debts"),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    "Registra um pagamento (não é cobrança automática).",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],

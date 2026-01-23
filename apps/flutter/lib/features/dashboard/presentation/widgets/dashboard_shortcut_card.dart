@@ -46,10 +46,11 @@ class DashboardShortcutCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Sem conversão automática. Veja gastos por moeda.", // Strict Copy
+                    "Sem conversão automática.\nToque para ver gastos por moeda e categoria.",
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.65),
                       fontSize: 12,
+                      height: 1.4, // Better line height
                     ),
                   ),
                 ],

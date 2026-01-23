@@ -71,113 +71,93 @@ class AccountCardStandard extends StatelessWidget {
             const Spacer(),
 
             // Main Content
-            if (!hasMovements)
-              Center(
-                child: Text(
-                  "Sem movimentos este mês",
+            // Main Content
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Saldo do mês",
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.45),
-                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 12,
                   ),
                 ),
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Resultado do mês", // Strict Copy: "Resultado do mês"
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.65),
-                      fontSize: 12,
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      hasMovements
+                          ? formatCurrency(summary.balance, currency)
+                          : "—",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                if (!hasMovements)
+                  Text(
+                    "Sem movimentos neste mês",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 14,
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        currency,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      // Income
+                      Row(
+                        children: [
+                          Text(
+                            "Entradas: ",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.65),
+                              fontSize: 11,
+                            ),
+                          ),
+                          Text(
+                            formatCurrency(summary.income, currency),
+                            style: const TextStyle(
+                              color: AppColors.success,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        formatMoney(summary.balance, withSymbol: false),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const SizedBox(height: 4),
+                      // Expense
+                      Row(
+                        children: [
+                          Text(
+                            "Saídas: ",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.65),
+                              fontSize: 11,
+                            ),
+                          ),
+                          Text(
+                            formatCurrency(summary.expense, currency),
+                            style: const TextStyle(
+                              color: AppColors.danger,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  // Income
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Icon(
-                          Icons.arrow_downward,
-                          color: AppColors.success,
-                          size: 10,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "Entradas ",
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                        ),
-                      ),
-                      Text(
-                        formatMoney(summary.income, withSymbol: true),
-                        style: const TextStyle(
-                          color: AppColors.success,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  // Expense
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Icon(
-                          Icons.arrow_upward,
-                          color: AppColors.danger,
-                          size: 10,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "Saídas ",
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                        ),
-                      ),
-                      Text(
-                        formatMoney(summary.expense, withSymbol: true),
-                        style: const TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              ],
+            ),
 
             const Spacer(),
 
