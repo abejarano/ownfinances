@@ -7,7 +7,9 @@ export class BudgetMongoRepository
   extends MongoRepository<Budget>
   implements IRepository<Budget>
 {
-  protected async ensureIndexes(collection: Collection): Promise<void> {}
+  protected async ensureIndexes(collection: Collection): Promise<void> {
+    await collection.createIndex({ userId: 1, startDate: 1, endDate: 1 })
+  }
   private static instance: BudgetMongoRepository | null = null
 
   private constructor() {
