@@ -53,15 +53,15 @@ class DashboardState {
   final List<DashboardAccountSummary> accountSummaries;
   final List<DashboardCurrencySummary> otherCurrencies;
 
-  // Main Currency Summary (BRL)
-  final double mainCurrencyIncome;
-  final double mainCurrencyExpense;
-  final double mainCurrencyNet;
-  final bool hasMainCurrencyMovements;
+  // Main Currency Summary (BRL) - REMOVED
+  // final double mainCurrencyIncome;
+  // final double mainCurrencyExpense;
+  // final double mainCurrencyNet;
+  // final bool hasMainCurrencyMovements;
 
   // Primary Currency Configuration
   final String primaryCurrency;
-  final bool hasPrimaryCurrencyAccounts;
+  // final bool hasPrimaryCurrencyAccounts; - REMOVED
 
   const DashboardState({
     required this.isLoading,
@@ -71,12 +71,7 @@ class DashboardState {
     required this.accounts,
     required this.accountSummaries,
     required this.otherCurrencies,
-    required this.mainCurrencyIncome,
-    required this.mainCurrencyExpense,
-    required this.mainCurrencyNet,
-    required this.hasMainCurrencyMovements,
     required this.primaryCurrency,
-    required this.hasPrimaryCurrencyAccounts,
   });
 
   factory DashboardState.initial() {
@@ -87,12 +82,7 @@ class DashboardState {
       accounts: [],
       accountSummaries: [],
       otherCurrencies: [],
-      mainCurrencyIncome: 0,
-      mainCurrencyExpense: 0,
-      mainCurrencyNet: 0,
-      hasMainCurrencyMovements: false,
       primaryCurrency: "BRL", // Default
-      hasPrimaryCurrencyAccounts: false,
     );
   }
 
@@ -104,12 +94,7 @@ class DashboardState {
     List<Account>? accounts,
     List<DashboardAccountSummary>? accountSummaries,
     List<DashboardCurrencySummary>? otherCurrencies,
-    double? mainCurrencyIncome,
-    double? mainCurrencyExpense,
-    double? mainCurrencyNet,
-    bool? hasMainCurrencyMovements,
     String? primaryCurrency,
-    bool? hasPrimaryCurrencyAccounts,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
@@ -119,14 +104,7 @@ class DashboardState {
       accounts: accounts ?? this.accounts,
       accountSummaries: accountSummaries ?? this.accountSummaries,
       otherCurrencies: otherCurrencies ?? this.otherCurrencies,
-      mainCurrencyIncome: mainCurrencyIncome ?? this.mainCurrencyIncome,
-      mainCurrencyExpense: mainCurrencyExpense ?? this.mainCurrencyExpense,
-      mainCurrencyNet: mainCurrencyNet ?? this.mainCurrencyNet,
-      hasMainCurrencyMovements:
-          hasMainCurrencyMovements ?? this.hasMainCurrencyMovements,
       primaryCurrency: primaryCurrency ?? this.primaryCurrency,
-      hasPrimaryCurrencyAccounts:
-          hasPrimaryCurrencyAccounts ?? this.hasPrimaryCurrencyAccounts,
     );
   }
 }

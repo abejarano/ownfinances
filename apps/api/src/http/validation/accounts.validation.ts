@@ -40,18 +40,23 @@ export function validateAccountPayload(isUpdate: boolean) {
       return next()
     }
     if (!result.issues) {
-      return res.status(422).send("Payload invalido")
+      return res.status(422).send({ error: "Payload invalido" })
     }
 
     const flattened = v.flatten(result.issues)
 
-    if (flattened.nested?.name)
-      return res.status(422).send("Falta o nome da conta")
-    if (flattened.nested?.type)
-      return res.status(422).send("Tipo de conta invalido")
-    if (flattened.nested?.currency)
-      return res.status(422).send("Moeda invalida")
+    // Handle nested issues (likely what happens with `flatten` here)
+    if (flattened.nested) {
+      if (flattened.nested.name)
+        return res.status(422).send({ error: "Falta o nome da conta" })
+      if (flattened.nested.type)
+        return res.status(422).send({ error: "Tipo de conta invalido" })
+      if (flattened.nested.currency)
+        return res.status(422).send({ error: "Moeda invalida" })
+      if (flattened.nested.bankType)
+        return res.status(422).send({ error: "Banco inválido" })
+    }
 
-    return res.status(422).send("Payload invalido")
+    return res.status(422).send({ error: "Payload invalido" })
   }
 }

@@ -42,23 +42,23 @@ export function validateGoalContributionPayload(isUpdate: boolean) {
     const result = v.safeParse(schema, payload)
 
     if (!result.success) {
-      if (!result.issues) return res.status(422).send("Payload invalido")
+      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
-      if (flattened.nested?.goalId) return res.status(422).send("Falta la meta")
+      if (flattened.nested?.goalId) return res.status(422).send({ error: "Falta la meta" })
       if (flattened.nested?.amount)
-        return res.status(422).send("Falta el monto")
-      return res.status(422).send("Payload invalido")
+        return res.status(422).send({ error: "Falta el monto" })
+      return res.status(422).send({ error: "Payload invalido" })
     }
 
     const data = payload as { amount?: number; date?: string | Date }
     if (!isUpdate && (data.amount == null || data.amount <= 0)) {
-      return res.status(422).send("El monto debe ser mayor que 0")
+      return res.status(422).send({ error: "El monto debe ser mayor que 0" })
     }
 
     if (data.date) {
       const date = new Date(data.date)
       if (Number.isNaN(date.getTime()))
-        return res.status(422).send("Fecha invalida")
+        return res.status(422).send({ error: "Fecha invalida" })
     }
 
     return next()

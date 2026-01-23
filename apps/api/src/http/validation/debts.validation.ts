@@ -61,13 +61,13 @@ export function validateDebtPayload(isUpdate: boolean) {
     }
     
     const flattened = v.flatten(result.issues)
-    if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
+    if (flattened.nested?.name) return res.status(422).send({ error: "Falta el nombre" })
 
     if (flattened.nested?.type)
-      return res.status(422).send("Tipo de deuda invalido")
+      return res.status(422).send({ error: "Tipo de deuda invalido" })
 
     if (flattened.nested?.currency)
-      return res.status(422).send("Moneda invalida")
+      return res.status(422).send({ error: "Moneda invalida" })
 
       
 
@@ -75,7 +75,7 @@ export function validateDebtPayload(isUpdate: boolean) {
 
     // Logic Rule: Credit Card MUST have linkedAccountId
     if (validatedData.type === DebtType.CreditCard && !validatedData.linkedAccountId && !isUpdate) {
-       return res.status(422).send("Cartão de crédito deve ter uma conta vinculada")
+       return res.status(422).send({ error: "Cartão de crédito deve ter uma conta vinculada" })
     }
 
     const data = payload as {
@@ -86,21 +86,21 @@ export function validateDebtPayload(isUpdate: boolean) {
 
     if (data.dueDay !== undefined) {
       if (data.dueDay < 1 || data.dueDay > 31) {
-        return res.status(422).send("Dia de vencimiento invalido")
+        return res.status(422).send({ error: "Dia de vencimiento invalido" })
       }
     }
 
     if (data.minimumPayment !== undefined && data.minimumPayment < 0) {
-      return res.status(422).send("El minimo debe ser mayor o igual a 0")
+      return res.status(422).send({ error: "El minimo debe ser mayor o igual a 0" })
     }
 
     if (data.interestRateAnnual !== undefined && data.interestRateAnnual < 0) {
-      return res.status(422).send("La tasa debe ser mayor o igual a 0")
+      return res.status(422).send({ error: "La tasa debe ser mayor o igual a 0" })
     }
 
     // @ts-ignore
     if (validatedData.initialBalance !== undefined && validatedData.initialBalance < 0) {
-      return res.status(422).send("El saldo inicial debe ser mayor o igual a 0")
+      return res.status(422).send({ error: "El saldo inicial debe ser mayor o igual a 0" })
     }
 
     return next()

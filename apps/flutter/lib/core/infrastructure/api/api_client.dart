@@ -165,12 +165,23 @@ class ApiClient {
       String message = "Erro inesperado";
       if (response.body.isNotEmpty) {
         try {
-          final payload = jsonDecode(response.body) as Map<String, dynamic>;
-          if (payload["error"] is String) {
-            message = payload["error"] as String;
+          // Add support for simple string response types (legacy)
+          // If body starts with {, it's likely JSON. If not, it's a string.
+          if (response.body.trim().startsWith("{")) {
+            final payload = jsonDecode(response.body) as Map<String, dynamic>;
+            if (payload["error"] is String) {
+              message = payload["error"] as String;
+            } else if (payload["message"] is String) {
+              // Some frameworks use 'message'
+              message = payload["message"] as String;
+            }
+          } else {
+            // Plain text error from legacy endpoints
+            message = response.body;
           }
         } catch (_) {
-          // ignore parsing error
+          // Fallback if parsing fails but body exists (e.g. plain text)
+          message = response.body;
         }
       }
       throw ApiException(message, response.statusCode);

@@ -56,21 +56,21 @@ export function validateBudgetPayload(isUpdate: boolean) {
         endDate?: string | Date
       }
       if (!isUpdate && !data?.periodType)
-        return res.status(422).send("Falta el periodo")
+        return res.status(422).send({ error: "Falta el periodo" })
 
-      if (!result.issues) return res.status(422).send("Payload invalido")
+      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
 
       if (flattened.nested?.periodType)
-        return res.status(422).send("Periodo invalido")
+        return res.status(422).send({ error: "Periodo invalido" })
       if (flattened.nested?.startDate)
-        return res.status(422).send("Falta la fecha de inicio")
+        return res.status(422).send({ error: "Falta la fecha de inicio" })
       if (flattened.nested?.endDate)
-        return res.status(422).send("Falta la fecha de fin")
+        return res.status(422).send({ error: "Falta la fecha de fin" })
       if (flattened.nested?.lines)
-        return res.status(422).send("Lineas invalidas en el presupuesto")
+        return res.status(422).send({ error: "Lineas invalidas en el presupuesto" })
 
-      return res.status(422).send("Payload invalido")
+      return res.status(422).send({ error: "Payload invalido" })
     }
 
     const maybePayload = payload as {
@@ -83,7 +83,7 @@ export function validateBudgetPayload(isUpdate: boolean) {
       if (start > end) {
         return res
           .status(422)
-          .send("La fecha de fin debe ser mayor a la fecha de inicio")
+          .send({ error: "La fecha de fin debe ser mayor a la fecha de inicio" })
       }
     }
 

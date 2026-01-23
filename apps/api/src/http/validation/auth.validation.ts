@@ -68,14 +68,14 @@ export function validateAuthSocialLoginPayload(
   const result = v.safeParse(SocialLoginSchema, payload)
   if (result.success) return next()
 
-  if (!result.issues) return res.status(422).send("Payload invalido")
+  if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
   const flattened = v.flatten(result.issues)
 
   if (flattened.nested?.provider)
-    return res.status(422).send("Provedor inválido (google ou apple)")
-  if (flattened.nested?.token) return res.status(422).send("Token obrigatório")
+    return res.status(422).send({ error: "Provedor inválido (google ou apple)" })
+  if (flattened.nested?.token) return res.status(422).send({ error: "Token obrigatório" })
 
-  return res.status(422).send("Payload invalido")
+  return res.status(422).send({ error: "Payload invalido" })
 }
 
 export function validateAuthRegisterPayload(
@@ -88,14 +88,14 @@ export function validateAuthRegisterPayload(
   const result = v.safeParse(RegisterSchema, payload)
   if (result.success) return next()
 
-  if (!result.issues) return res.status(422).send("Payload invalido")
+  if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
   const flattened = v.flatten(result.issues)
-  if (flattened.nested?.email) return res.status(422).send("Email obrigatório")
+  if (flattened.nested?.email) return res.status(422).send({ error: "Email obrigatório" })
   if (flattened.nested?.password)
-    return res.status(422).send("Senha obrigatória")
-  if (flattened.nested?.name) return res.status(422).send("Nome invalido")
+    return res.status(422).send({ error: "Senha obrigatória" })
+  if (flattened.nested?.name) return res.status(422).send({ error: "Nome invalido" })
 
-  return res.status(422).send("Payload invalido")
+  return res.status(422).send({ error: "Payload invalido" })
 }
 
 export function validateAuthLoginPayload(
@@ -109,15 +109,15 @@ export function validateAuthLoginPayload(
     const result = v.safeParse(LoginSchema, payload)
     if (result.success) return next()
 
-    if (!result.issues) return res.status(422).send("Payload invalido")
+    if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
     const flattened = v.flatten(result.issues)
 
-    if (flattened.nested?.email) return res.status(422).send("Informe o E-mail")
+    if (flattened.nested?.email) return res.status(422).send({ error: "Informe o E-mail" })
 
     if (flattened.nested?.password)
-      return res.status(422).send("Informe a senha")
+      return res.status(422).send({ error: "Informe a senha" })
 
-    return res.status(422).send("Payload invalido")
+    return res.status(422).send({ error: "Payload invalido" })
   } catch (e) {
     console.log(`errrr ${e}`)
     return HttpResponse(res, { error: "Error interno", status: 500 })
@@ -134,13 +134,13 @@ export function validateAuthRefreshPayload(
   const result = v.safeParse(RefreshSchema, payload)
   if (result.success) return next()
 
-  if (!result.issues) return res.status(422).send("Payload invalido")
+  if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
 
   const flattened = v.flatten(result.issues)
   if (flattened.nested?.refreshToken)
-    return res.status(422).send("Sessão expirada, entre novamente")
+    return res.status(422).send({ error: "Sessão expirada, entre novamente" })
 
-  return res.status(422).send("Payload invalido")
+  return res.status(422).send({ error: "Payload invalido" })
 }
 
 export function validateAuthLogoutPayload(
@@ -155,11 +155,11 @@ export function validateAuthLogoutPayload(
     return next()
   }
 
-  if (!result.issues) return res.status(422).send("Payload invalido")
+  if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
 
   const flattened = v.flatten(result.issues)
   if (flattened.nested?.refreshToken)
-    return res.status(422).send("Sessão expirada, entre novamente")
+    return res.status(422).send({ error: "Sessão expirada, entre novamente" })
 
-  return res.status(422).send("Payload invalido")
+  return res.status(422).send({ error: "Payload invalido" })
 }

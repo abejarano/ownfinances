@@ -64,13 +64,13 @@ export function validateTransactionPayload(isUpdate: boolean) {
         data?.type &&
         !Object.values(TransactionType).includes(data.type as TransactionType)
       ) {
-        return res.status(422).send("Tipo de transacao invalido")
+        return res.status(422).send({ error: "Tipo de transacao invalido" })
       }
       if (!isUpdate && !data?.type) {
-        return res.status(422).send("Falta o tipo de transacao")
+        return res.status(422).send({ error: "Falta o tipo de transacao" })
       }
       if (!isUpdate && data?.amount === undefined) {
-        return res.status(422).send("Falta o valor")
+        return res.status(422).send({ error: "Falta o valor" })
       }
       if (
         data?.status &&
@@ -78,17 +78,17 @@ export function validateTransactionPayload(isUpdate: boolean) {
           data.status as TransactionStatus
         )
       ) {
-        return res.status(422).send("Status invalido")
+        return res.status(422).send({ error: "Status invalido" })
       }
-      if (!result.issues) return res.status(422).send("Payload invalido")
+      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
       if (flattened.nested?.type)
-        return res.status(422).send("Tipo de transacao invalido")
+        return res.status(422).send({ error: "Tipo de transacao invalido" })
       if (flattened.nested?.amount)
-        return res.status(422).send("Falta o valor")
+        return res.status(422).send({ error: "Falta o valor" })
       if (flattened.nested?.status)
-        return res.status(422).send("Status invalido")
-      return res.status(422).send("Payload invalido")
+        return res.status(422).send({ error: "Status invalido" })
+      return res.status(422).send({ error: "Payload invalido" })
     }
 
     const data = req.body as {
@@ -99,13 +99,13 @@ export function validateTransactionPayload(isUpdate: boolean) {
     }
 
     if (!isUpdate && !data.type) {
-      return res.status(422).send("Falta o tipo de transacao")
+      return res.status(422).send({ error: "Falta o tipo de transacao" })
     }
     if (data.amount !== undefined && data.amount <= 0) {
-      return res.status(422).send("O valor deve ser maior que 0")
+      return res.status(422).send({ error: "O valor deve ser maior que 0" })
     }
     if (!isUpdate && data.amount === undefined) {
-      return res.status(422).send("Falta o valor")
+      return res.status(422).send({ error: "Falta o valor" })
     }
     if (
       data.status &&
@@ -113,13 +113,13 @@ export function validateTransactionPayload(isUpdate: boolean) {
         data.status as TransactionStatus
       )
     ) {
-      return res.status(422).send("Status invalido")
+      return res.status(422).send({ error: "Status invalido" })
     }
 
     if (data.date) {
       const date = new Date(data.date)
       if (Number.isNaN(date.getTime())) {
-        return res.status(422).send("Data invalida")
+        return res.status(422).send({ error: "Data invalida" })
       }
     }
 

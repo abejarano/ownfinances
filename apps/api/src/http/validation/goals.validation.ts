@@ -45,16 +45,16 @@ export function validateGoalPayload(isUpdate: boolean) {
     const result = v.safeParse(schema, payload)
 
     if (!result.success) {
-      if (!result.issues) return res.status(422).send("Payload invalido")
+      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
-      if (flattened.nested?.name) return res.status(422).send("Falta el nombre")
+      if (flattened.nested?.name) return res.status(422).send({ error: "Falta el nombre" })
       if (flattened.nested?.targetAmount)
-        return res.status(422).send("Falta el monto objetivo")
+        return res.status(422).send({ error: "Falta el monto objetivo" })
       if (flattened.nested?.currency)
-        return res.status(422).send("Moneda invalida")
+        return res.status(422).send({ error: "Moneda invalida" })
       if (flattened.nested?.startDate)
-        return res.status(422).send("Fecha invalida")
-      return res.status(422).send("Payload invalido")
+        return res.status(422).send({ error: "Fecha invalida" })
+      return res.status(422).send({ error: "Payload invalido" })
     }
 
     const data = payload as {
@@ -65,21 +65,21 @@ export function validateGoalPayload(isUpdate: boolean) {
     }
 
     if (!isUpdate && (data.targetAmount == null || data.targetAmount <= 0)) {
-      return res.status(422).send("El monto debe ser mayor que 0")
+      return res.status(422).send({ error: "El monto debe ser mayor que 0" })
     }
     if (data.monthlyContribution != null && data.monthlyContribution < 0) {
-      return res.status(422).send("El aporte debe ser mayor o igual a 0")
+      return res.status(422).send({ error: "El aporte debe ser mayor o igual a 0" })
     }
 
     if (data.startDate) {
       const date = new Date(data.startDate)
       if (Number.isNaN(date.getTime()))
-        return res.status(422).send("Fecha invalida")
+        return res.status(422).send({ error: "Fecha invalida" })
     }
     if (data.targetDate) {
       const date = new Date(data.targetDate)
       if (Number.isNaN(date.getTime()))
-        return res.status(422).send("Fecha invalida")
+        return res.status(422).send({ error: "Fecha invalida" })
     }
 
     return next()

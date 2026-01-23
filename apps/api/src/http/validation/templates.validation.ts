@@ -45,15 +45,15 @@ export function validateTemplatePayload(isUpdate: boolean) {
     const result = v.safeParse(schema, req.body)
 
     if (!result.success) {
-      if (!result.issues) return res.status(422).send("Payload invalido")
+      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
       if (flattened.nested?.name)
-        return res.status(422).send("Falta el nombre de la plantilla")
+        return res.status(422).send({ error: "Falta el nombre de la plantilla" })
       if (flattened.nested?.type)
-        return res.status(422).send("Tipo de transaccion invalido")
+        return res.status(422).send({ error: "Tipo de transaccion invalido" })
       if (flattened.nested?.amount)
-        return res.status(422).send("Falta el monto")
-      return res.status(422).send("Payload invalido")
+        return res.status(422).send({ error: "Falta el monto" })
+      return res.status(422).send({ error: "Payload invalido" })
     }
 
     return next()

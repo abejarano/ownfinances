@@ -43,15 +43,15 @@ export function validateCategoryPayload(isUpdate: boolean) {
 
     if (result.success) return next()
 
-    if (!result.issues) return res.status(422).send("Payload invalido")
+    if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
     const flattened = v.flatten(result.issues)
 
     if (flattened.nested?.name)
-      return res.status(422).send("Falta o nome da categoria")
+      return res.status(422).send({ error: "Falta o nome da categoria" })
 
     if (flattened.nested?.kind)
-      return res.status(422).send("Tipo de categoria invalido")
+      return res.status(422).send({ error: "Tipo de categoria invalido" })
 
-    return res.status(422).send("Payload invalido")
+    return res.status(422).send({ error: "Payload invalido" })
   }
 }

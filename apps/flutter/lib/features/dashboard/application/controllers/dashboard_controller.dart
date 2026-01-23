@@ -150,14 +150,8 @@ class DashboardController extends ChangeNotifier {
     // --- Rule 2: Month Summary (Dynamic Primary Currency) ---
     final primaryCurrency = settingsController.primaryCurrency;
 
-    double mainIncome = 0;
-    double mainExpense = 0;
-    bool hasMainMovements = false;
-
-    // Check if user has accounts in primary currency (for State C)
-    final hasPrimaryCurrencyAccounts = accounts.any(
-      (a) => a.currency == primaryCurrency && a.isActive,
-    );
+    // Logic for Month Summary (BRL/Primary) REMOVED.
+    // We only need primaryCurrency to filter "Other Currencies".
 
     // --- Rule 3: Account Carousel ---
     final accountSummariesMap = <String, DashboardAccountSummary>{};
@@ -179,77 +173,7 @@ class DashboardController extends ChangeNotifier {
 
     // Process Transactions
     for (final tx in transactions) {
-      // Skip transfers for Income/Expense totals to avoid double counting?
-      // Usually Dashboard Summary sums actual Income/Expense. Transfers are neutral or handled separately.
-      // However, "Resumo do mês" usually tracks Cash Flow.
-      // If I transfer BRL -> USDT, BRL has Expense (Transfer Out), USDT has Income (Transfer In).
-      // Let's stick to: Income = Type Income, Expense = Type Expense.
-      // Transfers: usually excluded from "Spending" reports, but for "Account Flow", they matter.
-      // PO Req: "Entradas / Saídas / Saldo".
-
       final absAmount = tx.amount.abs();
-
-      // 1. Identify Account
-      // Transactions have fromAccountId (expense/transfer-out) and/or toAccountId (income/transfer-in).
-      // Income tx: toAccountId
-      // Expense tx: fromAccountId
-      // Transfer tx: fromAccountId AND toAccountId
-
-      // Handle Main Currency Summary
-      // Rule 1: Include Transfers if they affect Main Currency.
-
-      // Case A: Standard Income/Expense in Main Currency
-      if (tx.currency == primaryCurrency && tx.type != 'transfer') {
-        if (tx.type == 'income') {
-          mainIncome += absAmount;
-          hasMainMovements = true;
-        } else if (tx.type == 'expense') {
-          mainExpense += absAmount;
-          hasMainMovements = true;
-        }
-      }
-
-      // Case B: Transfers involving Main Currency
-      if (tx.type == 'transfer') {
-        // Outflow from Main Currency
-        // We need to check the Source Account Currency.
-        // Ideally we have account map.
-        // But here we can check if tx.currency (which is usually source currency) matches primary.
-        // OR better: Check if the Account ID belongs to a Primary Currency Account.
-
-        // Check Outflow Side
-        if (tx.fromAccountId != null) {
-          // Actually we have the full list `accounts`.
-          // Let's find it.
-          try {
-            final fromAcc = accounts.firstWhere(
-              (a) => a.id == tx.fromAccountId,
-            );
-            if (fromAcc.currency == primaryCurrency) {
-              mainExpense += absAmount;
-              hasMainMovements = true;
-            }
-          } catch (_) {}
-        }
-
-        // Check Inflow Side
-        if (tx.toAccountId != null) {
-          try {
-            final toAcc = accounts.firstWhere((a) => a.id == tx.toAccountId);
-            if (toAcc.currency == primaryCurrency) {
-              // EXCEPTION: Paying off a Credit Card (transfer to credit_card) is NOT Income.
-              // It effectively reduces debt (Asset -> Liability repayment).
-              // We want the Outflow (Expense) to count, but NOT the Inflow (Income).
-              if (toAcc.type != 'credit_card') {
-                // Use destinationAmount if avail, else amount
-                final inflow = tx.destinationAmount ?? absAmount;
-                mainIncome += inflow;
-                hasMainMovements = true;
-              }
-            }
-          } catch (_) {}
-        }
-      }
 
       // Handle Account Summaries
       // A transaction can affect up to 2 accounts (transfer).
@@ -297,8 +221,6 @@ class DashboardController extends ChangeNotifier {
       }
     }
 
-    final mainNet = mainIncome - mainExpense;
-
     // Sorting Account Summaries:
     // 1. Assets (Bank/Cash) first, Liabilities (Credit Card) last
     // 2. Active (Has Movements) first
@@ -342,12 +264,7 @@ class DashboardController extends ChangeNotifier {
       accounts: accounts,
       accountSummaries: sortedAccountSummaries,
       otherCurrencies: otherCurrencies,
-      mainCurrencyIncome: mainIncome,
-      mainCurrencyExpense: mainExpense,
-      mainCurrencyNet: mainNet,
-      hasMainCurrencyMovements: hasMainMovements,
       primaryCurrency: primaryCurrency,
-      hasPrimaryCurrencyAccounts: hasPrimaryCurrencyAccounts,
     );
   }
 }
