@@ -15,11 +15,52 @@ export class BudgetsService {
     userId: string,
     payload: BudgetCreatePayload
   ): Promise<Result<BudgetPrimitives>> {
+    const periodType = payload.periodType ?? "monthly"
+
+    // Enforce monthly only
+    if (periodType !== "monthly") {
+      return {
+        error: "Solo se permiten presupuestos mensuales",
+        status: 400,
+      }
+    }
+
+    const startDate = new Date(payload.startDate!)
+    const endDate = new Date(payload.endDate!)
+
+    // Validate start/end dates covers full month
+    // We assume startDate must be 1st day and endDate must be last day
+    const startOfMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+    const endOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0, 23, 59, 59, 999)
+
+    // A simple check: ensure they match same month and year
+    if (
+      startDate.getFullYear() !== endDate.getFullYear() ||
+      startDate.getMonth() !== endDate.getMonth()
+    ) {
+        return {
+          error: "La fecha de inicio y fin deben pertenecer al mismo mes",
+          status: 400,
+        }
+    }
+
+    // Check for duplicates
+    const existing = await this.budgets.one({
+      userId,
+      periodType: "monthly",
+      startDate: startOfMonth,
+      endDate: endOfMonth,
+    })
+
+    if (existing) {
+      return { value: existing.toPrimitives(), status: 200 }
+    }
+
     const budget = Budget.create({
       userId,
-      periodType: payload.periodType!,
-      startDate: new Date(payload.startDate!),
-      endDate: new Date(payload.endDate!),
+      periodType: "monthly",
+      startDate: startOfMonth,
+      endDate: endOfMonth,
       lines: payload.lines ?? [],
     })
 

@@ -149,10 +149,7 @@ class _BudgetViewState extends State<BudgetView> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
-            TextButton(
-              onPressed: () => context.push("/month-summary"),
-              child: const Text("Por categoria"),
-            ),
+
             const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: () => _pickMonth(context, date),

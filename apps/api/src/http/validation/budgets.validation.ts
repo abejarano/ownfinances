@@ -15,12 +15,7 @@ export type BudgetCreatePayload = {
 
 export type BudgetUpdatePayload = Partial<BudgetCreatePayload>
 
-const BudgetPeriodSchema = v.picklist([
-  "monthly",
-  "quarterly",
-  "semiannual",
-  "annual",
-])
+const BudgetPeriodSchema = v.picklist(["monthly"])
 
 const DateLikeSchema = v.union([v.string(), v.date()])
 
