@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
+import "package:go_router/go_router.dart";
 
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/money_input.dart";
@@ -8,10 +9,11 @@ import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
-import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/core/presentation/components/money_text.dart";
+import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 
 class DebtsScreen extends StatelessWidget {
   const DebtsScreen({super.key});
@@ -54,7 +56,7 @@ class DebtsScreen extends StatelessWidget {
                     return _DebtCard(
                       debt: item,
                       onCharge: () =>
-                          _openDebtTransactionForm(context, item, "charge"),
+                          _openUnifiedTransactionForm(context, item, "charge"),
                       onPayment: () async {
                         if (item.amountDue == 0) {
                           // Confirmation dialog
@@ -114,7 +116,7 @@ class DebtsScreen extends StatelessWidget {
                           return;
                         }
 
-                        _openDebtTransactionForm(context, item, "payment");
+                        _openUnifiedTransactionForm(context, item, "payment");
                       },
                       onEdit: () =>
                           _openDebtForm(context, controller, item: item),
@@ -517,198 +519,35 @@ class DebtsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openDebtTransactionForm(
+  void _openUnifiedTransactionForm(
     BuildContext context,
     Debt debt,
-    String type,
-  ) async {
-    final controller = context.read<DebtsController>();
-    final lastAccountId = controller.state.lastAccountId;
-
-    final amountController = TextEditingController();
-    final noteController = TextEditingController();
-    DateTime date = DateTime.now();
-    String? accountId = debt.paymentAccountId ?? lastAccountId;
-    String? categoryId;
-
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final accountsState = context.watch<AccountsController>().state;
-            final accountItems = accountsState.items
-                .map((acc) => PickerItem(id: acc.id, label: acc.name))
-                .toList();
-
-            // Validate pre-selected accountId still exists
-            if (accountId != null &&
-                !accountItems.any((i) => i.id == accountId)) {
-              accountId = null;
-            }
-            if (accountId == null && accountItems.isNotEmpty) {
-              accountId = accountItems.first.id;
-            }
-
-            final categoriesState = context.watch<CategoriesController>().state;
-            final categoryItems = categoriesState.items
-                .where((cat) => cat.kind == "expense")
-                .map((cat) => PickerItem(id: cat.id, label: cat.name))
-                .toList();
-            if (categoryId == null &&
-                categoryItems.isNotEmpty &&
-                (type == "charge" ||
-                    (type == "payment" && debt.type != "credit_card"))) {
-              categoryId = categoryItems.first.id;
-            }
-            return Padding(
-              padding: EdgeInsets.only(
-                left: AppSpacing.md,
-                right: AppSpacing.md,
-                top: AppSpacing.md,
-                bottom:
-                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    type == "charge"
-                        ? "Registrar compra"
-                        : "Registrar pagamento",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  MoneyInput(label: "Valor", controller: amountController),
-                  const SizedBox(height: AppSpacing.md),
-                  if (type == "charge" ||
-                      (type == "payment" && debt.type != "credit_card")) ...[
-                    if (categoryItems.isEmpty)
-                      const Text("Voce nao tem categorias de gasto.")
-                    else
-                      CategoryPicker(
-                        label: "Categoria",
-                        items: categoryItems,
-                        value: categoryId,
-                        onSelected: (item) =>
-                            setState(() => categoryId = item.id),
-                      ),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                  if (type == "charge" && debt.type == "credit_card")
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: Text(
-                        "Saindo do cartão: ${debt.name}",
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    )
-                  else if (accountItems.isEmpty)
-                    const Text("Voce nao tem contas ativas.")
-                  else
-                    AccountPicker(
-                      label: "Conta de onde sai o pagamento",
-                      items: accountItems,
-                      value: accountId,
-                      onSelected: (item) => setState(() => accountId = item.id),
-                    ),
-                  const SizedBox(height: AppSpacing.md),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text("Fecha"),
-                    subtitle: Text(formatDate(date)),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final selected = await showDatePicker(
-                        context: context,
-                        initialDate: date,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                      if (selected != null) {
-                        setState(() => date = selected);
-                      }
-                    },
-                  ),
-                  TextField(
-                    controller: noteController,
-                    decoration: const InputDecoration(
-                      labelText: "Nota (opcional)",
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Builder(
-                    builder: (context) {
-                      final requiresAccount = type == "payment";
-                      final requiresCategory =
-                          type == "charge" ||
-                          (type == "payment" && debt.type != "credit_card");
-
-                      bool isValid = true;
-
-                      // Check Account
-                      if (requiresAccount && accountId == null) isValid = false;
-
-                      // Check Category
-                      if (requiresCategory && categoryId == null)
-                        isValid = false;
-
-                      return PrimaryButton(
-                        label: "Salvar",
-                        onPressed: isValid
-                            ? () => Navigator.of(context).pop(true)
-                            : null,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (result != true) return;
-
-    final amount = parseMoney(amountController.text.trim());
-    if (amount <= 0) {
-      if (context.mounted) {
-        showStandardSnackbar(context, "O valor deve ser maior que 0");
-      }
+    String operation, // "charge" or "payment"
+  ) {
+    if (debt.linkedAccountId == null) {
+      showStandardSnackbar(
+        context,
+        "Esta dívida não tem conta vinculada. Edite a dívida para vincular uma conta do tipo Cartão.",
+      );
       return;
     }
 
-    if ((type == "charge" ||
-            (type == "payment" && debt.type != "credit_card")) &&
-        categoryId == null) {
-      if (context.mounted) {
-        showStandardSnackbar(context, "Falta escolher uma categoria");
-      }
-      return;
-    }
-
-    final error = await controller.createDebtTransaction(
-      debtId: debt.id,
-      date: date,
-      type: type,
-      amount: amount,
-      accountId: accountId,
-      categoryId: categoryId,
-      note: noteController.text.trim().isEmpty
-          ? null
-          : noteController.text.trim(),
+    final transaction = Transaction(
+      id: "", // Temporary
+      type: operation == "charge" ? "expense" : "transfer",
+      date: DateTime.now(),
+      amount: 0,
+      currency: debt.currency,
+      categoryId: null,
+      fromAccountId: operation == "charge" ? debt.linkedAccountId : null,
+      toAccountId: operation == "payment" ? debt.linkedAccountId : null,
+      note: "",
+      tags: [],
+      status: "pending",
+      clearedAt: null,
     );
 
-    if (error != null && context.mounted) {
-      showStandardSnackbar(context, error);
-    }
+    context.push("/transactions/new", extra: transaction);
   }
 
   Future<void> _createQuickAccount(
@@ -799,68 +638,45 @@ class _DebtCard extends StatelessWidget {
       balanceWidget = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Saldo a pagar:",
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.muted,
-              fontWeight: FontWeight.w500,
-            ),
+          Text(
+            "Fatura atual:",
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
           ),
           MoneyText(
             value: debt.amountDue,
-            variant: MoneyTextVariant.xl,
+            symbol: debt.currency,
             color: AppColors.danger,
+            variant: MoneyTextVariant.l,
+          ),
+        ],
+      );
+    } else if (debt.creditBalance > 0) {
+      balanceWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Crédito disponível:",
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
+          ),
+          MoneyText(
+            value: debt.creditBalance,
+            symbol: debt.currency,
+            color: AppColors.success,
+            variant: MoneyTextVariant.l,
           ),
         ],
       );
     } else {
-      balanceWidget = Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Saldo a pagar:",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.muted,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              MoneyText(
-                value: 0,
-                variant: MoneyTextVariant.xl,
-                color: AppColors.textTertiary,
-              ),
-            ],
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Em dia ✅",
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      balanceWidget = Text(
+        "Tudo pago 🎉",
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: AppColors.success,
+          fontWeight: FontWeight.w500,
+        ),
       );
     }
 
@@ -868,128 +684,104 @@ class _DebtCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    debt.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        debt.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (dueLabel != null)
+                        Text(
+                          dueLabel,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: onHistory,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.history,
+                      size: 20,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.edit), onPressed: onEdit),
-                IconButton(icon: const Icon(Icons.delete), onPressed: onDelete),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  onSelected: (value) {
+                    if (value == "edit") onEdit();
+                    if (value == "delete") onDelete();
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: "edit",
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 16),
+                          SizedBox(width: 8),
+                          Text("Editar"),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: "delete",
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 16, color: AppColors.danger),
+                          SizedBox(width: 8),
+                          Text(
+                            "Excluir",
+                            style: TextStyle(color: AppColors.danger),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            const Divider(),
-            const SizedBox(height: AppSpacing.xs),
-
-            // Big Balance Display
-            balanceWidget,
-
-            const SizedBox(height: AppSpacing.sm),
-
-            // Credit Balance
-            if (debt.creditBalance > 0)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  "Crédito: ${formatMoney(debt.creditBalance)}",
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-
-            // Minimum Payment
-            if (debt.amountDue > 0 &&
-                debt.minimumPayment != null &&
-                debt.minimumPayment! > 0)
-              Text(
-                "Mínimo: ${formatMoney(debt.minimumPayment!)}",
-                style: const TextStyle(color: AppColors.muted, fontSize: 13),
-              ),
-
-            // Due Date
-            if (dueLabel != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  dueLabel,
-                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
-                ),
-              ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Buttons
+            const Divider(height: 24),
+            // Balance
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(children: [Expanded(child: balanceWidget)]),
+            ),
+            const SizedBox(height: 16),
+            // Actions
             Row(
               children: [
                 Expanded(
-                  child: PrimaryButton(
-                    label: "Registrar compra",
+                  child: SecondaryButton(
+                    label: "Registrar Compra",
                     onPressed: onCharge,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: SecondaryButton(
-                    label: "Registrar pagamento",
-                    onPressed: () {
-                      if (debt.amountDue == 0) {
-                        _showZeroBalancePaymentModal(context, onPayment);
-                      } else {
-                        onPayment();
-                      }
-                    },
+                  child: PrimaryButton(
+                    label: "Pagar Fatura",
+                    icon: Icons.check,
+                    onPressed: onPayment,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Center(
-              child: TextButton.icon(
-                onPressed: onHistory,
-                icon: const Icon(Icons.history),
-                label: const Text("Ver histórico"),
-              ),
-            ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showZeroBalancePaymentModal(
-    BuildContext context,
-    VoidCallback onConfirm,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Tudo pago ✅"),
-        content: const Text(
-          "Você não tem saldo a pagar. Se pagar agora, vira crédito para abater compras futuras.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onConfirm();
-            },
-            child: const Text("Pagar mesmo assim"),
-          ),
-        ],
       ),
     );
   }

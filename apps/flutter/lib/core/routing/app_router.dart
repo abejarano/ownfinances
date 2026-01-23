@@ -100,10 +100,14 @@ GoRouter createRouter({
       ),
       GoRoute(
         path: "/transactions/new",
-        builder: (context, state) => TransactionFormScreen(
-          initialType: state.uri.queryParameters["type"],
-          initialTemplate: state.extra as TransactionTemplate?,
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          return TransactionFormScreen(
+            initialType: state.uri.queryParameters["type"],
+            initialTemplate: extra is TransactionTemplate ? extra : null,
+            initialTransaction: extra is Transaction ? extra : null,
+          );
+        },
       ),
       GoRoute(
         path: "/transactions/edit",
