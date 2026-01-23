@@ -66,28 +66,50 @@ class MonthSummaryController extends ChangeNotifier {
       final categoryMap = {for (var c in categories) c.id: c};
       // remove unused accountMap
 
-      // --- Logic: Tab 1 (Primary Currency Expenses) ---
+      // --- Logic: Tab 1 (Primary Currency Expenses + Multi-Currency Chips) ---
       final categoryExpenseMap = <String, double>{};
+      final categoryOtherCurrenciesMap = <String, Map<String, double>>{};
+      final globalOtherCurrenciesMap = <String, double>{};
+
       double totalPrimaryExpense = 0;
       double totalPrimaryIncome = 0;
       bool hasPrimaryMovements = false;
 
       for (final tx in transactions) {
-        if (tx.currency != primaryCurrency) continue;
+        if (tx.type == 'transfer')
+          continue; // Don't count transfers in category list
 
-        hasPrimaryMovements = true;
+        // Primary Currency Logic
+        if (tx.currency == primaryCurrency) {
+          hasPrimaryMovements = true;
 
-        if (tx.type == 'income') {
-          totalPrimaryIncome += tx.amount.abs();
+          if (tx.type == 'income') {
+            totalPrimaryIncome += tx.amount.abs();
+          } else if (tx.type == 'expense') {
+            final amount = tx.amount.abs();
+            final catId = tx.categoryId ?? 'uncategorized';
+            categoryExpenseMap[catId] =
+                (categoryExpenseMap[catId] ?? 0) + amount;
+            totalPrimaryExpense += amount;
+          }
         }
-
-        if (tx.type == 'expense') {
-          // Standard Expense
+        // Secondary Currency Logic (Expenses Only for Category List)
+        else if (tx.type == 'expense') {
           final amount = tx.amount.abs();
           final catId = tx.categoryId ?? 'uncategorized';
+          final currency = tx.currency;
 
-          categoryExpenseMap[catId] = (categoryExpenseMap[catId] ?? 0) + amount;
-          totalPrimaryExpense += amount;
+          // Per Category
+          if (!categoryOtherCurrenciesMap.containsKey(catId)) {
+            categoryOtherCurrenciesMap[catId] = {};
+          }
+          final currentCatVal =
+              categoryOtherCurrenciesMap[catId]![currency] ?? 0;
+          categoryOtherCurrenciesMap[catId]![currency] = currentCatVal + amount;
+
+          // Global Footer
+          final currentGlobalVal = globalOtherCurrenciesMap[currency] ?? 0;
+          globalOtherCurrenciesMap[currency] = currentGlobalVal + amount;
         }
       }
 
@@ -105,14 +127,83 @@ class MonthSummaryController extends ChangeNotifier {
           color = cat.color;
         }
 
+        // Process other currencies for this category
+        final otherCurrencies = <CurrencyFlowSummary>[];
+        if (categoryOtherCurrenciesMap.containsKey(catId)) {
+          categoryOtherCurrenciesMap[catId]!.forEach((currency, amount) {
+            otherCurrencies.add(
+              CurrencyFlowSummary(
+                currency: currency,
+                income: 0,
+                expense: amount,
+                net: -amount,
+              ),
+            );
+          });
+        }
+
         return CategoryExpenseSummary(
           categoryId: catId,
           categoryName: name,
           categoryIcon: icon,
           categoryColor: color,
           amount: amount,
+          otherCurrencies: otherCurrencies,
         );
       }).toList();
+
+      // Also include categories that ONLY have secondary currencies (but 0 primary)
+      // This is important for Case 2 & 3: User might have 0 BRL but 10 USD in "Cultura"
+      categoryOtherCurrenciesMap.forEach((catId, currencyMap) {
+        if (!categoryExpenseMap.containsKey(catId)) {
+          String name = 'Sem categoria';
+          String? icon;
+          String? color;
+
+          if (catId != 'uncategorized' && categoryMap.containsKey(catId)) {
+            final cat = categoryMap[catId];
+            name = cat.name;
+            icon = cat.icon;
+            color = cat.color;
+          }
+
+          final otherCurrencies = <CurrencyFlowSummary>[];
+          currencyMap.forEach((currency, amount) {
+            otherCurrencies.add(
+              CurrencyFlowSummary(
+                currency: currency,
+                income: 0,
+                expense: amount,
+                net: -amount,
+              ),
+            );
+          });
+
+          categoryExpenses.add(
+            CategoryExpenseSummary(
+              categoryId: catId,
+              categoryName: name,
+              categoryIcon: icon,
+              categoryColor: color,
+              amount: 0, // 0 Primary
+              otherCurrencies: otherCurrencies,
+            ),
+          );
+        }
+      });
+
+      // Prepare Global Footer Totals
+      final otherCurrencyTotals = <CurrencyFlowSummary>[];
+      globalOtherCurrenciesMap.forEach((currency, amount) {
+        otherCurrencyTotals.add(
+          CurrencyFlowSummary(
+            currency: currency,
+            income: 0,
+            expense: amount,
+            net: -amount,
+          ),
+        );
+      });
 
       categoryExpenses.sort((a, b) => b.amount.compareTo(a.amount));
 
@@ -210,6 +301,7 @@ class MonthSummaryController extends ChangeNotifier {
         totalPrimaryIncome: totalPrimaryIncome,
         accountFlows: accountSummaries,
         currencyFlows: currencyFlows,
+        otherCurrencyTotals: otherCurrencyTotals,
       );
     } catch (e) {
       _state = _state.copyWith(isLoading: false, error: _message(e));

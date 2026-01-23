@@ -6,6 +6,7 @@ class CategoryExpenseSummary {
   final String? categoryIcon;
   final String? categoryColor;
   final double amount;
+  final List<CurrencyFlowSummary> otherCurrencies;
 
   CategoryExpenseSummary({
     required this.categoryId,
@@ -13,6 +14,7 @@ class CategoryExpenseSummary {
     this.categoryIcon,
     this.categoryColor,
     required this.amount,
+    this.otherCurrencies = const [],
   });
 }
 
@@ -63,6 +65,9 @@ class MonthSummaryState {
   // Tab 3: Other Currencies
   final List<CurrencyFlowSummary> currencyFlows;
 
+  // Footer: Global totals for other currencies (Tab 1 footer)
+  final List<CurrencyFlowSummary> otherCurrencyTotals;
+
   MonthSummaryState({
     required this.isLoading,
     this.error,
@@ -74,6 +79,7 @@ class MonthSummaryState {
     required this.totalPrimaryIncome,
     required this.accountFlows,
     required this.currencyFlows,
+    required this.otherCurrencyTotals,
   });
 
   factory MonthSummaryState.initial() {
@@ -87,6 +93,7 @@ class MonthSummaryState {
       totalPrimaryIncome: 0,
       accountFlows: [],
       currencyFlows: [],
+      otherCurrencyTotals: [],
     );
   }
 
@@ -101,6 +108,7 @@ class MonthSummaryState {
     double? totalPrimaryIncome,
     List<AccountFlowSummary>? accountFlows,
     List<CurrencyFlowSummary>? currencyFlows,
+    List<CurrencyFlowSummary>? otherCurrencyTotals,
   }) {
     return MonthSummaryState(
       isLoading: isLoading ?? this.isLoading,
@@ -113,6 +121,7 @@ class MonthSummaryState {
       totalPrimaryIncome: totalPrimaryIncome ?? this.totalPrimaryIncome,
       accountFlows: accountFlows ?? this.accountFlows,
       currencyFlows: currencyFlows ?? this.currencyFlows,
+      otherCurrencyTotals: otherCurrencyTotals ?? this.otherCurrencyTotals,
     );
   }
 }

@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:ownfinances/core/presentation/components/month_picker_dialog.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
+import 'package:ownfinances/core/utils/ui_helpers.dart';
 import 'package:ownfinances/features/month_summary/application/controllers/month_summary_controller.dart';
 import 'package:ownfinances/features/month_summary/application/state/month_summary_state.dart';
+import 'package:ownfinances/features/transactions/application/controllers/transactions_controller.dart';
+import 'package:ownfinances/features/transactions/domain/entities/transaction_filters.dart';
 import 'package:provider/provider.dart';
 import 'package:ownfinances/core/presentation/components/money_text.dart';
 
@@ -40,7 +43,8 @@ class _MonthSummaryScreenState extends State<MonthSummaryScreen> {
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
-              Tab(text: "Moeda principal ($primaryCurrency)"),
+              //Tab(text: "Moeda principal ($primaryCurrency)"),
+              Tab(text: "Por categoria"),
               const Tab(text: "Por conta"),
               const Tab(text: "Outras moedas"),
             ],
@@ -56,15 +60,32 @@ class _MonthSummaryScreenState extends State<MonthSummaryScreen> {
             ),
           ],
         ),
-        body: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _PrimaryCurrencyTab(state: state),
-                  _ByAccountTab(state: state),
-                  _OtherCurrenciesTab(state: state),
-                ],
+        body: Column(
+          children: [
+            // Header Helper
+            Container(
+              width: double.infinity,
+              color: AppColors.surface2,
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+              child: const Text(
+                "Sem conversão automática. Valores por moeda.",
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
+                textAlign: TextAlign.center,
               ),
+            ),
+            Expanded(
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : TabBarView(
+                      children: [
+                        _PrimaryCurrencyTab(state: state),
+                        _ByAccountTab(state: state),
+                        _OtherCurrenciesTab(state: state),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -92,7 +113,11 @@ class _PrimaryCurrencyTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Empty state for BRL
     if (!state.hasPrimaryMovements && state.categoryExpenses.isEmpty) {
+      // Check if there are movements in other currencies to show specific CTA
+      final hasOther = state.currencyFlows.isNotEmpty;
+
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -107,6 +132,17 @@ class _PrimaryCurrencyTab extends StatelessWidget {
               "Sem movimentos em ${state.primaryCurrency} neste mês.",
               style: const TextStyle(color: AppColors.muted),
             ),
+            if (hasOther) ...[
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton(
+                onPressed: () {
+                  DefaultTabController.of(
+                    context,
+                  ).animateTo(2); // Go to "Outras moedas"
+                },
+                child: const Text("Veja em Outras moedas"),
+              ),
+            ],
           ],
         ),
       );
@@ -122,13 +158,57 @@ class _PrimaryCurrencyTab extends StatelessWidget {
               final item = state.categoryExpenses[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.surface2,
-                  child: Text(
-                    item.categoryName[0],
-                    style: const TextStyle(color: AppColors.textPrimary),
-                  ),
-                ), // Placeholder for icon
+                  backgroundColor:
+                      parseColor(item.categoryColor) ?? AppColors.surface2,
+                  child: getIconFor(item.categoryIcon) != null
+                      ? Icon(
+                          getIconFor(item.categoryIcon),
+                          color: parseColor(item.categoryColor) == null
+                              ? AppColors.textPrimary
+                              : Colors.white,
+                          size: 20,
+                        )
+                      : Text(
+                          item.categoryName.isNotEmpty
+                              ? item.categoryName[0]
+                              : "?",
+                          style: TextStyle(
+                            color: parseColor(item.categoryColor) == null
+                                ? AppColors.textPrimary
+                                : Colors.white,
+                          ),
+                        ),
+                ), // Icon rendered correctly
                 title: Text(item.categoryName),
+                subtitle: item.otherCurrencies.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Wrap(
+                          spacing: 8,
+                          children: item.otherCurrencies
+                              .map(
+                                (c) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface2,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: AppColors.borderSoft,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    "${c.currency} ${formatMoney(c.expense, withSymbol: false)}", // Compact
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      )
+                    : null,
                 trailing: MoneyText(
                   value: item.amount,
                   symbol: state.primaryCurrency,
@@ -141,22 +221,19 @@ class _PrimaryCurrencyTab extends StatelessWidget {
                     state.date.year,
                     state.date.month + 1,
                     0,
+                    23,
+                    59,
+                    59,
                   );
 
-                  context.push(
-                    Uri(
-                      path: "/transactions",
-                      queryParameters: {
-                        "dateFrom": start.toIso8601String(),
-                        "dateTo": end.toIso8601String(),
-                        "categoryId": item.categoryId,
-                        // "currency": state.primaryCurrency // Transactions logic might need update to support currency filter?
-                        // The Plan said: "apenas contas cuja moeda == moeda principal"
-                        // If transactions screen doesn't filter by currency/account_currency, we might see mixed stuff.
-                        // But typically Category is enough as user categorizes mainly expenses.
-                      },
-                    ).toString(),
+                  context.read<TransactionsController>().setFilters(
+                    TransactionFilters(
+                      dateFrom: start,
+                      dateTo: end,
+                      categoryId: item.categoryId,
+                    ),
                   );
+                  context.push("/month-summary/details");
                 },
               );
             },
@@ -169,19 +246,56 @@ class _PrimaryCurrencyTab extends StatelessWidget {
             color: AppColors.surface1,
             border: Border(top: BorderSide(color: AppColors.borderSoft)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              Text(
-                "Total gastos do mês (${state.primaryCurrency}):",
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Total gastos (${state.primaryCurrency}):",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  MoneyText(
+                    value: state.totalPrimaryExpense,
+                    symbol: state.primaryCurrency,
+                    variant: MoneyTextVariant.l,
+                    color: AppColors.danger,
+                  ),
+                ],
               ),
-              MoneyText(
-                value: state.totalPrimaryExpense,
-                symbol: state.primaryCurrency,
-                variant: MoneyTextVariant.l,
-                color: AppColors.danger,
-              ),
+              if (state.otherCurrencyTotals.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Outras moedas (sem conversão):",
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: state.otherCurrencyTotals
+                          .map(
+                            (t) => Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                "${t.currency} ${formatMoney(t.expense)}",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -259,12 +373,27 @@ class _ByAccountTab extends StatelessWidget {
                       ),
                     ],
                   ),
+                if (isDebt)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Pagamentos", // "Entradas" in debt account = Payments made to it
+                        style: TextStyle(color: AppColors.success),
+                      ),
+                      MoneyText(
+                        value: flow.income,
+                        symbol: account.currency,
+                        color: AppColors.success,
+                      ),
+                    ],
+                  ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Saídas",
-                      style: TextStyle(color: AppColors.danger),
+                    Text(
+                      isDebt ? "Compras" : "Saídas",
+                      style: const TextStyle(color: AppColors.danger),
                     ),
                     MoneyText(
                       value: flow.expense,
@@ -273,28 +402,28 @@ class _ByAccountTab extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (!isDebt) ...[
-                  const Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Saldo do mês",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      MoneyText(
-                        value: flow.net,
-                        symbol: account.currency,
-                        variant: MoneyTextVariant.m,
-                      ),
-                    ],
-                  ),
-                ],
+                const Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isDebt ? "Variação no mês" : "Saldo do mês",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    MoneyText(
+                      value: flow.net,
+                      symbol: account.currency,
+                      variant: MoneyTextVariant.m,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    child: const Text("Ver transações"),
+                    child: Text(
+                      isDebt ? "Ver fatura/histórico" : "Ver transações",
+                    ),
                     onPressed: () {
                       final start = DateTime(
                         state.date.year,
@@ -305,18 +434,19 @@ class _ByAccountTab extends StatelessWidget {
                         state.date.year,
                         state.date.month + 1,
                         0,
+                        23,
+                        59,
+                        59,
                       );
 
-                      context.push(
-                        Uri(
-                          path: "/transactions",
-                          queryParameters: {
-                            "dateFrom": start.toIso8601String(),
-                            "dateTo": end.toIso8601String(),
-                            "accountId": account.id,
-                          },
-                        ).toString(),
+                      context.read<TransactionsController>().setFilters(
+                        TransactionFilters(
+                          dateFrom: start,
+                          dateTo: end,
+                          accountId: account.id,
+                        ),
                       );
+                      context.push("/month-summary/details");
                     },
                   ),
                 ),

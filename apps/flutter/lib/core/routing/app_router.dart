@@ -205,6 +205,12 @@ GoRouter createRouter({
       GoRoute(
         path: "/month-summary",
         builder: (context, state) => const MonthSummaryScreen(),
+        routes: [
+          GoRoute(
+            path: "details",
+            builder: (context, state) => const TransactionsScreen(),
+          ),
+        ],
       ),
     ],
   );

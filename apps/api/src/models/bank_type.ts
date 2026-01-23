@@ -4,4 +4,8 @@ export enum BankType {
   Caixa = "caixa",
   Bradesco = "bradesco",
   Neon = "neon",
+  Inter = "inter",
+  Wise = "wise",
+  C6 = "c6",
+  Sicoob = "sicoob",
 }

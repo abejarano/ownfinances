@@ -60,7 +60,7 @@ class AccountRepository {
       isActive: isActive,
       bankType: bankType,
     );
-    return Account.fromJson(payload["account"] as Map<String, dynamic>);
+    return Account.fromJson(payload);
   }
 
   Future<void> delete(String id) {
