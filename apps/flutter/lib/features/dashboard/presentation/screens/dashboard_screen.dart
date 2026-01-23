@@ -26,6 +26,20 @@ class DashboardScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         children: [
+          // 1. Month Summary Quick Link (Before Carousel)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: OutlinedButton.icon(
+              onPressed: () => context.push("/month-summary"),
+              icon: const Icon(Icons.analytics_outlined),
+              label: const Text("Resumo do Mês por Categorias"),
+              style: OutlinedButton.styleFrom(
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.all(16),
+              ),
+            ),
+          ),
+
           // 2. Accounts Carousel (Per Account)
           const SizedBox(height: AppSpacing.md),
           DashboardAccountsCarousel(

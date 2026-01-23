@@ -48,6 +48,7 @@ import "package:ownfinances/features/csv_import/application/controllers/csv_impo
 import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
 import "package:ownfinances/core/storage/settings_storage.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
+import "package:ownfinances/features/month_summary/application/controllers/month_summary_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -205,6 +206,14 @@ class AppProviders extends StatelessWidget {
           create: (context) => CsvImportController(
             context.read<CsvImportRepository>(),
             webSocketClient: context.read<WebSocketClient>(),
+          ),
+        ),
+        ChangeNotifierProvider<MonthSummaryController>(
+          create: (context) => MonthSummaryController(
+            transactionsRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
+            categoriesRepository: context.read<CategoryRepository>(),
+            settingsController: context.read<SettingsController>(),
           ),
         ),
 

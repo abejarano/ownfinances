@@ -12,6 +12,7 @@ import "package:ownfinances/features/reports/application/controllers/reports_con
 import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
 import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
 import "package:ownfinances/core/presentation/components/money_text.dart";
+import "package:go_router/go_router.dart";
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -98,10 +99,17 @@ class _BudgetScreenState extends State<BudgetScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "Orçamento do mês",
-              style: Theme.of(context).textTheme.titleMedium,
+            Expanded(
+              child: Text(
+                "Orçamento do mês",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
+            TextButton(
+              onPressed: () => context.push("/month-summary"),
+              child: const Text("Por categoria"),
+            ),
+            const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: () => _pickMonth(context, date),
               icon: const Icon(Icons.calendar_today),

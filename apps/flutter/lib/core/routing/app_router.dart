@@ -28,6 +28,7 @@ import "package:ownfinances/features/debts/presentation/screens/debts_screen.dar
 import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
 import "package:ownfinances/features/csv_import/presentation/screens/csv_import_wizard_screen.dart";
 import "package:ownfinances/features/csv_import/presentation/screens/csv_import_result_screen.dart";
+import "package:ownfinances/features/month_summary/presentation/screens/month_summary_screen.dart";
 
 GoRouter createRouter({
   required AuthController authController,
@@ -152,6 +153,7 @@ GoRouter createRouter({
           return CsvImportResultScreen(jobId: jobId);
         },
       ),
+
       ShellRoute(
         builder: (context, state, child) {
           final location = state.uri.toString();
@@ -199,6 +201,10 @@ GoRouter createRouter({
             builder: (context, state) => const SettingsScreen(),
           ),
         ],
+      ),
+      GoRoute(
+        path: "/month-summary",
+        builder: (context, state) => const MonthSummaryScreen(),
       ),
     ],
   );
