@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/dashboard/application/state/dashboard_state.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class OtherAccountsList extends StatelessWidget {
   final List<DashboardAccountSummary> accounts;
@@ -21,9 +22,9 @@ class OtherAccountsList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Outras contas",
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.dashboardOtherAccountsTitle,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -31,7 +32,7 @@ class OtherAccountsList extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            "Contas menos usadas ou sem movimentos no mês",
+            AppLocalizations.of(context)!.dashboardOtherAccountsDesc,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
               fontSize: 12,
@@ -103,7 +104,9 @@ class OtherAccountsList extends StatelessWidget {
                         const SizedBox(height: 4),
                         if (!summary.hasMovements)
                           Text(
-                            "Sem movimentos neste mês",
+                            AppLocalizations.of(
+                              context,
+                            )!.dashboardOtherAccountsNoMovements,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.4),
                               fontSize: 10,
@@ -111,7 +114,14 @@ class OtherAccountsList extends StatelessWidget {
                           )
                         else
                           Text(
-                            "Saldo do mês: ${formatCurrency(summary.balance, summary.account.currency)}",
+                            AppLocalizations.of(
+                              context,
+                            )!.dashboardOtherAccountsMonthBalance(
+                              formatCurrency(
+                                summary.balance,
+                                summary.account.currency,
+                              ),
+                            ),
                             style: TextStyle(
                               color: summary.balance >= 0
                                   ? AppColors.success
@@ -144,7 +154,9 @@ class OtherAccountsList extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  "Ver todas (${accounts.length})",
+                  AppLocalizations.of(
+                    context,
+                  )!.dashboardOtherAccountsViewAll(accounts.length.toString()),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,

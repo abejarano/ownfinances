@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class MonthPickerDialog extends StatefulWidget {
   final DateTime initialDate;
@@ -121,20 +122,6 @@ class _MonthPickerDialogState extends State<MonthPickerDialog> {
   }
 
   String _getMonthName(int month) {
-    const months = [
-      "Jan",
-      "Fev",
-      "Mar",
-      "Abr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Set",
-      "Out",
-      "Nov",
-      "Dez",
-    ];
-    return months[month - 1];
+    return DateFormat.MMM().format(DateTime(2023, month));
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class DashboardQuickActions extends StatelessWidget {
   const DashboardQuickActions({super.key});
@@ -13,7 +14,7 @@ class DashboardQuickActions extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Text(
-            "Ações rápidas",
+            AppLocalizations.of(context)!.dashboardQuickActionsTitle,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
@@ -25,7 +26,9 @@ class DashboardQuickActions extends StatelessWidget {
               Expanded(
                 child: _QuickActionButton(
                   icon: Icons.arrow_downward,
-                  label: "Gasto",
+                  label: AppLocalizations.of(
+                    context,
+                  )!.dashboardQuickActionExpense,
                   color: AppColors.warning,
                   onTap: () => context.push("/transactions/new?type=expense"),
                 ),
@@ -34,7 +37,9 @@ class DashboardQuickActions extends StatelessWidget {
               Expanded(
                 child: _QuickActionButton(
                   icon: Icons.arrow_upward,
-                  label: "Receita",
+                  label: AppLocalizations.of(
+                    context,
+                  )!.dashboardQuickActionIncome,
                   color: AppColors.success,
                   onTap: () => context.push("/transactions/new?type=income"),
                 ),
@@ -43,7 +48,9 @@ class DashboardQuickActions extends StatelessWidget {
               Expanded(
                 child: _QuickActionButton(
                   icon: Icons.compare_arrows,
-                  label: "Transferir",
+                  label: AppLocalizations.of(
+                    context,
+                  )!.dashboardQuickActionTransfer,
                   color: AppColors.info,
                   onTap: () => context.push("/transactions/new?type=transfer"),
                 ),
@@ -52,7 +59,9 @@ class DashboardQuickActions extends StatelessWidget {
               Expanded(
                 child: _QuickActionButton(
                   icon: Icons.repeat,
-                  label: "Contas fixas",
+                  label: AppLocalizations.of(
+                    context,
+                  )!.dashboardQuickActionFixed,
                   color: const Color(0xFFC084FC), // Violet
                   onTap: () => context.go("/budget?tab=fixed"),
                 ),

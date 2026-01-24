@@ -4,6 +4,7 @@ import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/utils/currency_utils.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/dashboard/application/state/dashboard_state.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class DashboardAccountCard extends StatelessWidget {
   final DashboardAccountSummary summary;
@@ -66,9 +67,9 @@ class DashboardAccountCard extends StatelessWidget {
                         color: AppColors.warning.withOpacity(0.3),
                       ),
                     ),
-                    child: const Text(
-                      "CARTÃO",
-                      style: TextStyle(
+                    child: Text(
+                      AppLocalizations.of(context)!.cardLabelCredit,
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: AppColors.warning,
@@ -107,9 +108,9 @@ class DashboardAccountCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Saldo a pagar",
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.cardLabelBalancePay,
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -117,7 +118,9 @@ class DashboardAccountCard extends StatelessWidget {
                   ),
                   if (summary.linkedDebt?.dueDay != null)
                     Text(
-                      "Vence dia ${summary.linkedDebt!.dueDay}",
+                      AppLocalizations.of(
+                        context,
+                      )!.cardLabelDueDay(summary.linkedDebt!.dueDay.toString()),
                       style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 12,
@@ -149,9 +152,9 @@ class DashboardAccountCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Pagamentos",
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.cardLabelPayments,
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 10,
                           ),
@@ -170,9 +173,9 @@ class DashboardAccountCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text(
-                          "Compras",
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.cardLabelPurchases,
+                          style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 10,
                           ),
@@ -191,14 +194,14 @@ class DashboardAccountCard extends StatelessWidget {
             ] else if (summary.hasMovements) ...[
               // --- ASSET LAYOUT (Standard) ---
               _RowMetric(
-                label: "Entradas",
+                label: AppLocalizations.of(context)!.cardLabelIncomes,
                 value: summary.income,
                 color: AppColors.success,
                 currency: summary.account.currency,
               ),
               const SizedBox(height: 4),
               _RowMetric(
-                label: "Saídas",
+                label: AppLocalizations.of(context)!.cardLabelExpenses,
                 value: summary.expense,
                 color: AppColors.warning,
                 currency: summary.account.currency,
@@ -211,9 +214,9 @@ class DashboardAccountCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Saldo do mês",
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.cardLabelMonthBalance,
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -230,11 +233,11 @@ class DashboardAccountCard extends StatelessWidget {
               ),
             ] else ...[
               // No Movements (Asset Only)
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Text(
-                    "Sem movimentos este mês",
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.cardLabelNoMovements,
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -261,9 +264,12 @@ class DashboardAccountCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    "Ver transações",
-                    style: TextStyle(fontSize: 12, color: AppColors.primary),
+                  child: Text(
+                    AppLocalizations.of(context)!.cardActionView,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),

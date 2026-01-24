@@ -30,6 +30,7 @@ import "package:ownfinances/features/goals/presentation/screens/goals_screen.dar
 import "package:ownfinances/features/csv_import/presentation/screens/csv_import_wizard_screen.dart";
 import "package:ownfinances/features/csv_import/presentation/screens/csv_import_result_screen.dart";
 import "package:ownfinances/features/month_summary/presentation/screens/month_summary_screen.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 GoRouter createRouter({
   required AuthController authController,
@@ -163,30 +164,35 @@ GoRouter createRouter({
         builder: (context, state, child) {
           final location = state.uri.toString();
           final currentIndex = _indexFromLocation(location);
-          return AppScaffold(
-            title: _titleFromLocation(location),
-            currentIndex: currentIndex,
-            onTap: (index) => _goToIndex(context, index),
-            drawer: const AppDrawer(),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.grid_view),
-                label: "Dashboard",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.swap_horiz),
-                label: "Transações",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.pie_chart),
-                label: "Orçamentos",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: "Ajustes",
-              ),
-            ],
-            body: child,
+          return Builder(
+            builder: (context) {
+              final loc = AppLocalizations.of(context);
+              return AppScaffold(
+                title: _titleFromLocation(location, context),
+                currentIndex: currentIndex,
+                onTap: (index) => _goToIndex(context, index),
+                drawer: const AppDrawer(),
+                items: [
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.grid_view),
+                    label: loc?.navDashboard ?? "Inicio",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.swap_horiz),
+                    label: loc?.navTransactions ?? "Transações",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.pie_chart),
+                    label: loc?.navBudgets ?? "Orçamentos",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: const Icon(Icons.settings),
+                    label: loc?.navSettings ?? "Ajustes",
+                  ),
+                ],
+                body: child,
+              );
+            },
           );
         },
         routes: [
@@ -230,11 +236,13 @@ int _indexFromLocation(String location) {
   return 0;
 }
 
-String _titleFromLocation(String location) {
-  if (location.startsWith("/transactions")) return "Transações";
-  if (location.startsWith("/budget")) return "Orçamentos";
-  if (location.startsWith("/settings")) return "Ajustes";
-  return "Dashboard";
+String _titleFromLocation(String location, BuildContext context) {
+  final loc = AppLocalizations.of(context);
+  if (location.startsWith("/transactions"))
+    return loc?.navTransactions ?? "Transações";
+  if (location.startsWith("/budget")) return loc?.navBudgets ?? "Orçamentos";
+  if (location.startsWith("/settings")) return loc?.navSettings ?? "Ajustes";
+  return loc?.navDashboard ?? "Dashboard";
 }
 
 void _goToIndex(BuildContext context, int index) {

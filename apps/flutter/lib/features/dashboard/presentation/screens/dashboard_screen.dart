@@ -98,7 +98,7 @@ class DashboardScreen extends StatelessWidget {
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: const Text("Entendi"),
+                                  child: Text(l10n.commonUnderstood),
                                 ),
                               ],
                             ),

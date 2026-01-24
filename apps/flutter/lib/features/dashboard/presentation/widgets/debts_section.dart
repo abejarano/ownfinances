@@ -4,6 +4,7 @@ import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/debts/domain/entities/debt.dart';
 import 'package:ownfinances/core/presentation/components/buttons.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class DebtsSection extends StatelessWidget {
   final List<Debt> activeDebts;
@@ -23,9 +24,9 @@ class DebtsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Dívidas",
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.debtsSectionTitle,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -43,7 +44,7 @@ class DebtsSection extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    "Você ainda não cadastrou dívidas.",
+                    AppLocalizations.of(context)!.debtsEmptyState,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
@@ -52,7 +53,7 @@ class DebtsSection extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: () => context.go("/debts"),
                     icon: const Icon(Icons.add),
-                    label: const Text("Adicionar dívida"),
+                    label: Text(AppLocalizations.of(context)!.debtsActionAdd),
                   ),
                 ],
               ),
@@ -96,19 +97,23 @@ class DebtsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Dívidas",
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.debtsSectionTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
               ),
+
               TextButton(
                 onPressed: () => context.push("/debts"),
-                child: const Text(
-                  "Ver dívidas",
-                  style: TextStyle(color: AppColors.primary, fontSize: 13),
+                child: Text(
+                  AppLocalizations.of(context)!.debtsActionViewAll,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ],
@@ -143,7 +148,7 @@ class DebtsSection extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      "Pago este mês: ",
+                      AppLocalizations.of(context)!.debtsPaidMonth,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.65),
                         fontSize: 13,
@@ -164,7 +169,7 @@ class DebtsSection extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 Text(
-                  "Total a pagar",
+                  AppLocalizations.of(context)!.debtsTotalToPay,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.65),
                     fontSize: 12,
@@ -201,7 +206,10 @@ class DebtsSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Próximo: ${nearestDueDate.day.toString().padLeft(2, '0')}/${nearestDueDate.month.toString().padLeft(2, '0')} — ${nearestDebt.name}",
+                          AppLocalizations.of(context)!.debtsNextDue(
+                            "${nearestDueDate.day.toString().padLeft(2, '0')}/${nearestDueDate.month.toString().padLeft(2, '0')}",
+                            nearestDebt.name,
+                          ),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
@@ -216,14 +224,14 @@ class DebtsSection extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: PrimaryButton(
-                    label: "Pagar fatura",
+                    label: AppLocalizations.of(context)!.debtsActionPay,
                     onPressed: () => context.push("/debts"),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    "Registra um pagamento (não é cobrança automática).",
+                    AppLocalizations.of(context)!.debtsPaymentDisclaimer,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.45),
                       fontSize: 11,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class DashboardShortcutCard extends StatelessWidget {
   const DashboardShortcutCard({super.key});
@@ -36,9 +37,9 @@ class DashboardShortcutCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Resumo do mês por categorias",
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.dashboardShortcutTitle,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -46,7 +47,7 @@ class DashboardShortcutCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Sem conversão automática.\nToque para ver gastos por moeda e categoria.",
+                    AppLocalizations.of(context)!.dashboardShortcutDesc,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.65),
                       fontSize: 12,

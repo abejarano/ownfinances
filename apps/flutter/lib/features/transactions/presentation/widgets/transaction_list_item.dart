@@ -6,6 +6,7 @@ import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/categories/domain/entities/category.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
@@ -31,12 +32,14 @@ class TransactionListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final presenter = _TransactionPresenter(
       transaction,
       fromAccount,
       toAccount,
       category,
       filterContextAccountId,
+      localizations,
     );
 
     return Dismissible(
@@ -174,6 +177,7 @@ class _TransactionPresenter {
   final Account? from;
   final Account? to;
   final Category? category;
+  final AppLocalizations l10n;
   final String? filterId;
 
   _TransactionPresenter(
@@ -182,13 +186,16 @@ class _TransactionPresenter {
     this.to,
     this.category,
     this.filterId,
+    this.l10n,
   );
 
   String get title {
-    if (item.type == 'transfer') return "Transferência";
+    if (item.type == 'transfer') return l10n.transactionTypeTransfer;
     if (item.note != null && item.note!.isNotEmpty) return item.note!;
     if (category != null) return category!.name;
-    return item.type == "income" ? "Receita" : "Despesa";
+    return item.type == "income"
+        ? l10n.transactionTypeIncome
+        : l10n.transactionTypeExpense;
   }
 
   String get subtitle {
@@ -196,7 +203,7 @@ class _TransactionPresenter {
 
     // Income/Expense Subtitle
     final accountName =
-        (item.type == 'income' ? to?.name : from?.name) ?? "Sem conta";
+        (item.type == 'income' ? to?.name : from?.name) ?? l10n.commonNoAccount;
     if (item.note != null && item.note!.isNotEmpty && category != null) {
       return "${category!.name} • $accountName";
     }
@@ -218,17 +225,17 @@ class _TransactionPresenter {
     // Case B: Outflow (Filter == From)
     if (filterId == item.fromAccountId) {
       if (isCurrencyMismatch && destVal > 0) {
-        return "para $toName (${fmt(destVal, destCurrency)})";
+        return "${l10n.commonTo} $toName (${fmt(destVal, destCurrency)})";
       }
-      return "para $toName";
+      return "${l10n.commonTo} $toName";
     }
 
     // Case C: Inflow (Filter == To)
     if (filterId == item.toAccountId) {
       if (isCurrencyMismatch) {
-        return "de $fromName (${fmt(sourceVal, sourceCurrency)})";
+        return "${l10n.commonFrom} $fromName (${fmt(sourceVal, sourceCurrency)})";
       }
-      return "de $fromName";
+      return "${l10n.commonFrom} $fromName";
     }
 
     return "$fromName → $toName";
@@ -307,7 +314,9 @@ class _TransactionPresenter {
   Color get statusColor => isPending ? AppColors.warning : AppColors.success;
   Color get statusBg =>
       isPending ? AppColors.warningSoft : AppColors.successSoft;
-  String get statusLabel => isPending ? "Pendente" : "Confirmado";
+  String get statusLabel => isPending
+      ? l10n.transactionFormStatusPending
+      : l10n.transactionFormStatusCleared;
 
   String fmt(double val, String curr) =>
       "$curr ${formatMoney(val, withSymbol: false)}";

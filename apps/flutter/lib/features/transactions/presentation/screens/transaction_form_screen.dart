@@ -286,7 +286,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           }
         }
       } catch (e) {
-        if (mounted) showStandardSnackbar(context, "Erro ao salvar compra: $e");
+        if (mounted)
+          showStandardSnackbar(
+            context,
+            AppLocalizations.of(
+              context,
+            )!.transactionFormChargeError(e.toString()),
+          );
       } finally {
         if (mounted) setState(() => _isSaving = false);
       }
@@ -317,13 +323,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           if (error != null) {
             showStandardSnackbar(context, error);
           } else {
-            showStandardSnackbar(context, "Pagamento de fatura registrado!");
+            showStandardSnackbar(
+              context,
+              AppLocalizations.of(context)!.transactionFormPaymentSuccess,
+            );
             _handleBack();
           }
         }
       } catch (e) {
         if (mounted)
-          showStandardSnackbar(context, "Erro ao registrar pagamento: $e");
+          showStandardSnackbar(
+            context,
+            AppLocalizations.of(
+              context,
+            )!.transactionFormPaymentError(e.toString()),
+          );
       } finally {
         if (mounted) setState(() => _isSaving = false);
       }
@@ -372,7 +386,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           await reportsController.load();
         }
         if (mounted) {
-          showStandardSnackbar(context, "Transação atualizada com sucesso!");
+          showStandardSnackbar(
+            context,
+            AppLocalizations.of(context)!.transactionFormSuccessUpdate,
+          );
           _handleBack();
         }
       } else {
@@ -381,7 +398,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             .createWithImpact(payload: payload, period: period);
         if (created == null) {
           if (mounted) {
-            showStandardSnackbar(context, "Erro ao salvar a transação.");
+            showStandardSnackbar(
+              context,
+              AppLocalizations.of(context)!.transactionFormErrorCreate,
+            );
           }
           return;
         }
@@ -437,17 +457,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             if (rule == null) {
               showStandardSnackbar(
                 context,
-                "Transação salva, mas não foi possível criar a recorrência.",
+                AppLocalizations.of(context)!.transactionFormRecurringError,
               );
             } else {
               showStandardSnackbar(
                 context,
-                "Transação salva e recorrência criada!",
+                AppLocalizations.of(context)!.transactionFormRecurringSuccess,
               );
             }
           }
         } else {
-          if (mounted) showStandardSnackbar(context, "Transação salva!");
+          if (mounted)
+            showStandardSnackbar(
+              context,
+              AppLocalizations.of(context)!.transactionFormSuccessSave,
+            );
         }
 
         if (_saveAsTemplate && _templateNameController.text.isNotEmpty) {
@@ -461,7 +485,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         if (mounted) _handleBack();
       }
     } catch (e) {
-      if (mounted) showStandardSnackbar(context, "Erro ao salvar: $e");
+      if (mounted)
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(
+            context,
+          )!.transactionFormErrorUpdate(e.toString()),
+        );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -512,7 +542,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     // Attempt to get label
     String label = _noteController.text.isNotEmpty
         ? _noteController.text
-        : "Transação";
+        : AppLocalizations.of(
+            context,
+          )!.transactionFormTitleNew.replaceAll("Nova ", "");
     if (_categoryId != null) {
       try {
         final cats = context.read<CategoriesController>().state.items;
@@ -545,7 +577,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  "$label\n$amountStr\nTodo dia $day", // Using newline for clarity or bullets
+                  "$label\n$amountStr\n${AppLocalizations.of(context)!.recurringSummaryDay(day)}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -694,7 +726,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       if (_findLinkedDebt(newAccountId) != null) {
         showStandardSnackbar(
           context,
-          "Cartão não pode ser conta de origem. Use sua conta bancária.",
+          AppLocalizations.of(context)!.transactionFormLabelCardSourceError,
         );
         return;
       }
@@ -877,17 +909,25 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     // --- Dynamic Title Checking ---
     String screenTitle = widget.initialTransaction != null
-        ? "Editar Transação"
-        : "Nova Transação";
-    if (isExpenseCard) screenTitle = "Compra no cartão";
-    if (isTransferCardPayment) screenTitle = "Pagamento de fatura";
+        ? AppLocalizations.of(context)!.transactionFormTitleEdit
+        : AppLocalizations.of(context)!.transactionFormTitleNew;
+    if (isExpenseCard)
+      screenTitle = AppLocalizations.of(
+        context,
+      )!.transactionFormLabelCardPurchase;
+    if (isTransferCardPayment)
+      screenTitle = AppLocalizations.of(
+        context,
+      )!.transactionFormLabelInvoicePayment;
 
     // --- Display Logic ---
     bool showValueSection = false;
     bool showGuideBlock = false;
 
     // Labels & Currencies
-    String labelValue1 = "Valor";
+    String labelValue1 = AppLocalizations.of(
+      context,
+    )!.transactionFormLabelTransferValue;
     String helper1 = "";
     String labelValue2 = "";
     String helper2 = "";
@@ -916,21 +956,35 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           mainCurrencySymbol = from.currency;
 
           if (isTransferCardPayment) {
-            labelValue1 = "Valor do pagamento";
-            helper1 = "Sai do banco e abate na fatura.";
+            labelValue1 = AppLocalizations.of(
+              context,
+            )!.transactionFormLabelPaymentValue;
+            helper1 = AppLocalizations.of(
+              context,
+            )!.transactionFormHelperPayment;
           } else if (from.currency == to.currency) {
             // State 1
-            labelValue1 = "Valor";
-            helper1 = "Valor que sai da origem e entra no destino.";
+            labelValue1 = AppLocalizations.of(
+              context,
+            )!.transactionFormLabelTransferValue;
+            helper1 = AppLocalizations.of(
+              context,
+            )!.transactionFormHelperTransfer;
           } else {
             // State 2
             fromCurr = from.currency;
             toCurr = to.currency;
-            labelValue1 = "Você envia ($fromCurr)";
-            helper1 = "Valor que sai da conta de origem.";
+            labelValue1 = AppLocalizations.of(
+              context,
+            )!.transactionFormLabelSentValue(fromCurr);
+            helper1 = AppLocalizations.of(context)!.transactionFormHelperSent;
 
-            labelValue2 = "Você recebe ($toCurr)";
-            helper2 = "Valor que entra na conta de destino.";
+            labelValue2 = AppLocalizations.of(
+              context,
+            )!.transactionFormLabelReceivedValue(toCurr);
+            helper2 = AppLocalizations.of(
+              context,
+            )!.transactionFormHelperReceived;
           }
         } catch (_) {
           // Should not happen if data integrity valid
@@ -985,12 +1039,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   vertical: 8,
                   horizontal: 16,
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.credit_card, size: 16, color: AppColors.warning),
-                    SizedBox(width: 8),
+                    const Icon(
+                      Icons.credit_card,
+                      size: 16,
+                      color: AppColors.warning,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      "Isso aumenta sua dívida. Não sai do banco agora.",
+                      AppLocalizations.of(
+                        context,
+                      )!.transactionFormLabelDebtWarning,
                       style: TextStyle(
                         color: AppColors.warning,
                         fontSize: 12,
@@ -1012,7 +1072,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   // 2. Account Selectors (Always Visible)
                   if (_type == "expense") ...[
                     AccountPicker(
-                      label: isExpenseCard ? "Cartão" : "Conta de Saída",
+                      label: isExpenseCard
+                          ? AppLocalizations.of(
+                              context,
+                            )!.transactionFormInvoiceSource
+                          : AppLocalizations.of(
+                              context,
+                            )!.transactionFormLabelSource,
                       items: accountItems,
                       value: _fromAccountId,
                       onSelected: (item) => _onAccountChanged(
@@ -1023,8 +1089,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     const SizedBox(height: 16),
                     CategoryPicker(
                       label: isExpenseCard
-                          ? "Categoria da compra"
-                          : "Categoria",
+                          ? AppLocalizations.of(
+                              context,
+                            )!.transactionFormCategoryPurchase
+                          : AppLocalizations.of(
+                              context,
+                            )!.transactionsLabelCategory,
                       items: categoryItems,
                       value: _categoryId,
                       onSelected: (item) =>
@@ -1033,7 +1103,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   ],
                   if (_type == "income") ...[
                     AccountPicker(
-                      label: "Conta de Entrada",
+                      label: AppLocalizations.of(
+                        context,
+                      )!.transactionsLabelEntryAccount,
                       items: accountItems,
                       value: _toAccountId,
                       onSelected: (item) =>
@@ -1041,7 +1113,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     ),
                     const SizedBox(height: 16),
                     CategoryPicker(
-                      label: "Categoria (Opcional)",
+                      label: AppLocalizations.of(
+                        context,
+                      )!.transactionsLabelCategoryOptional,
                       items: categoryItems,
                       value: _categoryId,
                       onSelected: (item) =>
@@ -1050,7 +1124,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   ],
                   if (_type == "transfer") ...[
                     AccountPicker(
-                      label: "De (Origem)",
+                      label: AppLocalizations.of(
+                        context,
+                      )!.transactionsLabelSource,
                       items: accountItems,
                       value: _fromAccountId,
                       onSelected: (item) => _onAccountChanged(true, item.id),
@@ -1058,8 +1134,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     const SizedBox(height: 16),
                     AccountPicker(
                       label: isTransferCardPayment
-                          ? "Cartão (Fatura)"
-                          : "Para (Destino)",
+                          ? AppLocalizations.of(
+                              context,
+                            )!.transactionFormInvoiceSource
+                          : AppLocalizations.of(
+                              context,
+                            )!.transactionsLabelDestination,
                       items:
                           accountItems, // Should we filter? No, standard list is fine. Blockers handled in selection.
                       value: _toAccountId,
@@ -1068,10 +1148,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                     if (_fromAccountId != null &&
                         _fromAccountId == _toAccountId)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 8, left: 4),
                         child: Text(
-                          "Selecione contas diferentes.",
+                          AppLocalizations.of(
+                            context,
+                          )!.transactionFormValidationSameAccount,
                           style: TextStyle(
                             color: AppColors.danger,
                             fontSize: 12,
@@ -1101,8 +1183,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             size: 32,
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            "Selecione Origem e Destino",
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.transactionFormLabelSelectSourceDest,
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -1110,7 +1194,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            "Escolha as contas para liberar o valor.",
+                            AppLocalizations.of(
+                              context,
+                            )!.transactionFormHelperSelectSourceDest,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.65),
@@ -1197,10 +1283,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                       : "pending";
                                 });
                               },
-                              side: const BorderSide(color: Colors.white54),
+                              side: BorderSide(color: Colors.white54),
                             ),
-                            const Text(
-                              "Já entrou no saldo?",
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.transactionFormLabelAlreadyCleared,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -1226,8 +1314,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               ),
                               child: Text(
                                 _status == "cleared"
-                                    ? "Confirmada"
-                                    : "Pendente",
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.transactionFormStatusCleared
+                                    : AppLocalizations.of(
+                                        context,
+                                      )!.transactionFormStatusPending,
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -1241,8 +1333,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(left: 14),
-                          child: const Text(
-                            "Se estiver pendente, pode mudar depois.",
+                          child: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.transactionFormHelperStatus,
                             style: TextStyle(
                               color: AppColors.textTertiary,
                               fontSize: 12,
@@ -1259,8 +1353,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         context,
                       ).copyWith(dividerColor: Colors.transparent),
                       child: ExpansionTile(
-                        title: const Text(
-                          "Mais opções",
+                        title: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.transactionFormLabelMoreOptions,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -1269,8 +1365,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                         subtitle: Text(
                           _isRecurring
-                              ? "Recorrente"
-                              : "Nota, Tags, Recorrência",
+                              ? AppLocalizations.of(
+                                  context,
+                                )!.transactionFormLabelMoreOptionsRecurring
+                              : AppLocalizations.of(
+                                  context,
+                                )!.transactionFormLabelMoreOptionsSubtitle,
                           style: const TextStyle(
                             color: Colors.white54,
                             fontSize: 12,
@@ -1296,7 +1396,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           TextFormField(
                             controller: _noteController,
                             style: const TextStyle(color: Colors.white),
-                            decoration: _darkInputDecoration("Nota (Opcional)"),
+                            decoration: _darkInputDecoration(
+                              AppLocalizations.of(
+                                context,
+                              )!.transactionFormLabelNote,
+                            ),
                             maxLines: 2,
                           ),
 
@@ -1305,7 +1409,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             controller: _tagsController,
                             style: const TextStyle(color: Colors.white),
                             decoration: _darkInputDecoration(
-                              "Tags (separadas por vírgula)",
+                              AppLocalizations.of(
+                                context,
+                              )!.transactionFormLabelTags,
                             ),
                           ),
 
@@ -1314,12 +1420,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           if (!isExpenseCard && !isTransferCardPayment) ...[
                             SwitchListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: const Text(
-                                "Repetir automaticamente",
+                              title: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.transactionFormLabelRepeat,
                                 style: TextStyle(color: Colors.white),
                               ),
-                              subtitle: const Text(
-                                "Cria uma conta fixa para você não esquecer.",
+                              subtitle: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.transactionFormHelperRepeat,
                                 style: TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,
@@ -1339,9 +1449,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                             // Frequency Selector
                             Row(
                               children: [
-                                _buildFreqChip("Mensal", "monthly"),
+                                _buildFreqChip(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.transactionFormLabelFrequencyMonthly,
+                                  "monthly",
+                                ),
                                 const SizedBox(width: 8),
-                                _buildFreqChip("Semanal", "weekly"),
+                                _buildFreqChip(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.transactionFormLabelFrequencyWeekly,
+                                  "weekly",
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -1356,7 +1476,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                                 ),
                                 onPressed: () =>
                                     context.push('/budget?tab=fixed'),
-                                child: const Text("Gerenciar contas fixas"),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.transactionFormActionManageFixed,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -1364,8 +1488,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text(
-                              "Salvar como Template",
+                            title: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.transactionFormLabelSaveTemplate,
                               style: TextStyle(color: Colors.white),
                             ),
                             value: _saveAsTemplate,
@@ -1380,7 +1506,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               controller: _templateNameController,
                               style: const TextStyle(color: Colors.white),
                               decoration: _darkInputDecoration(
-                                "Nome do Template",
+                                AppLocalizations.of(
+                                  context,
+                                )!.transactionFormLabelTemplateName,
                               ),
                             ),
                           ],
@@ -1395,7 +1523,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             Padding(
               padding: const EdgeInsets.all(20),
               child: PrimaryButton(
-                label: _isSaving ? "Salvando..." : "Salvar",
+                label: _isSaving
+                    ? AppLocalizations.of(context)!.transactionFormActionSaving
+                    : AppLocalizations.of(context)!.commonSave,
                 isLoading: _isSaving,
                 onPressed: _isValid ? _save : null,
               ),

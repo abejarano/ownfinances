@@ -30,7 +30,10 @@ class TransactionsScreen extends StatelessWidget {
     final filters = txState.filters;
 
     // Process transactions for grouping
-    final groupedTransactions = _groupTransactionsByDate(txState.items);
+    final groupedTransactions = _groupTransactionsByDate(
+      txState.items,
+      context,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
@@ -42,7 +45,7 @@ class TransactionsScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Expanded(
               child: txState.items.isEmpty
-                  ? _buildEmptyState()
+                  ? _buildEmptyState(context)
                   : NotificationListener<ScrollNotification>(
                       onNotification: (ScrollNotification scrollInfo) {
                         if (!txState.isLoadingMore &&
@@ -102,7 +105,7 @@ class TransactionsScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.upload_file_outlined),
             onPressed: () => context.push("/csv-import"),
-            tooltip: "Importar CSV",
+            tooltip: AppLocalizations.of(context)!.transactionsActionImportCsv,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -202,16 +205,16 @@ class TransactionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Center(
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.history, size: 48, color: AppColors.textTertiary),
           SizedBox(height: AppSpacing.md),
           Text(
-            "Nenhuma transação encontrada",
-            style: TextStyle(color: AppColors.textTertiary),
+            AppLocalizations.of(context)!.transactionsEmptyState,
+            style: const TextStyle(color: AppColors.textTertiary),
           ),
         ],
       ),
@@ -253,9 +256,9 @@ class TransactionsScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.swap_horiz, color: AppColors.info),
-              title: const Text(
-                "Transferência", // TODO: Add key for "Transfer"
-                style: TextStyle(color: AppColors.textPrimary),
+              title: Text(
+                AppLocalizations.of(context)!.transactionTypeTransfer,
+                style: const TextStyle(color: AppColors.textPrimary),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -270,14 +273,17 @@ class TransactionsScreen extends StatelessWidget {
 
   // --- Helpers ---
 
-  List<dynamic> _groupTransactionsByDate(List<Transaction> items) {
+  List<dynamic> _groupTransactionsByDate(
+    List<Transaction> items,
+    BuildContext context,
+  ) {
     if (items.isEmpty) return [];
 
     final grouped = <dynamic>[];
     String? lastDate;
 
     for (final item in items) {
-      final dateStr = _formatHeaderDate(item.date);
+      final dateStr = _formatHeaderDate(item.date, context);
       if (lastDate != dateStr) {
         grouped.add(dateStr);
         lastDate = dateStr;
@@ -287,16 +293,17 @@ class TransactionsScreen extends StatelessWidget {
     return grouped;
   }
 
-  String _formatHeaderDate(DateTime date) {
+  String _formatHeaderDate(DateTime date, BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final itemDate = DateTime(date.year, date.month, date.day);
 
-    if (itemDate == today) return "Hoje";
-    if (itemDate == yesterday) return "Ontem";
+    if (itemDate == today) return AppLocalizations.of(context)!.commonToday;
+    if (itemDate == yesterday)
+      return AppLocalizations.of(context)!.commonYesterday;
 
-    return DateFormat("EEEE, d 'de' MMMM", "pt_BR").format(date);
+    return DateFormat("EEEE, d 'de' MMMM").format(date);
   }
 
   // --- Filter Actions ---
