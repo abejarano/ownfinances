@@ -10,7 +10,10 @@ import "package:ownfinances/features/accounts/application/controllers/accounts_c
 import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 
-import 'package:ownfinances/features/accounts/presentation/widgets/account_management_card.dart';
+import "package:ownfinances/features/accounts/presentation/widgets/account_management_card.dart";
+import "package:ownfinances/features/banks/application/controllers/banks_controller.dart";
+import "package:ownfinances/features/accounts/presentation/widgets/account_form.dart";
+import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 import 'package:ownfinances/l10n/app_localizations.dart';
 
 class AccountsScreen extends StatelessWidget {
@@ -277,10 +280,18 @@ class AccountsScreen extends StatelessWidget {
     AccountsController controller, {
     Account? item,
   }) async {
+    // Load banks proactively (all or default)
+    // We assume backend handles filtering or we load all.
+    // For now, load default (e.g. BRL/empty) to ensure we have something
+    context.read<BanksController>().load();
+
     final nameController = TextEditingController(text: item?.name ?? "");
     final currencyController = TextEditingController(
       text: item?.currency ?? "BRL",
     );
+    // Only show initial balance for new accounts
+    final balanceController = item == null ? TextEditingController() : null;
+
     String type = item?.type ?? "cash";
     String? bankType = item?.bankType;
     bool isActive = item?.isActive ?? true;
@@ -311,166 +322,23 @@ class AccountsScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.commonName,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  DropdownButtonFormField<String>(
-                    value: type,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.accountTypeLabel,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: "cash",
-                        child: Text(
-                          AppLocalizations.of(context)!.accountsTypeMoney,
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: "bank",
-                        child: Text(
-                          AppLocalizations.of(context)!.accountsTypeBank,
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: "wallet",
-                        child: Text(
-                          AppLocalizations.of(context)!.accountsTypeWallet,
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: "broker",
-                        child: Text(
-                          AppLocalizations.of(context)!.accountsTypeBroker,
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: "credit_card",
-                        child: Text(
-                          AppLocalizations.of(context)!.accountsTypeCard,
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          type = value;
-                          if (type != "bank") bankType = null;
-                        });
-                      }
+                  AccountForm(
+                    nameController: nameController,
+                    accountType: type,
+                    onTypeChanged: (val) {
+                      setState(() {
+                        type = val;
+                        if (type != "bank") bankType = null;
+                      });
                     },
-                  ),
-                  if (type == "bank") ...[
-                    const SizedBox(height: AppSpacing.md),
-                    DropdownButtonFormField<String>(
-                      value: bankType,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(
-                          context,
-                        )!.accountsLabelBank,
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: "nubank",
-                          child: Text("Nubank"),
-                        ),
-                        DropdownMenuItem(value: "itau", child: Text("Itaú")),
-                        DropdownMenuItem(
-                          value: "bradesco",
-                          child: Text("Bradesco"),
-                        ),
-                        DropdownMenuItem(value: "caixa", child: Text("Caixa")),
-                        DropdownMenuItem(value: "wise", child: Text("Wise")),
-                        DropdownMenuItem(value: "neon", child: Text("Neon")),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          bankType = value;
-                        });
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.md),
-                  // Currency Selector
-                  DropdownButtonFormField<String>(
-                    value:
-                        CurrencyUtils.isValidCurrency(currencyController.text)
-                        ? (CurrencyUtils.commonCurrencies.contains(
-                                currencyController.text,
-                              )
-                              ? currencyController.text
-                              : "OTHER")
-                        : "OTHER", // Default to OTHER if unknown/invalid so user sees the text field to fix it.
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(
-                        context,
-                      )!.accountsLabelCurrency,
-                    ),
-                    items: [
-                      ...CurrencyUtils.commonCurrencies.map(
-                        (c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(CurrencyUtils.formatCurrencyLabel(c)),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: "OTHER",
-                        child: Text(
-                          AppLocalizations.of(context)!.currencyOther,
-                        ),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          if (value != "OTHER") {
-                            currencyController.text = value;
-                          } else {
-                            // If switching to OTHER and current was standard, clear it?
-                            // Or keep it to edit? Let's clear if it was a standard one.
-                            if (CurrencyUtils.commonCurrencies.contains(
-                              currencyController.text,
-                            )) {
-                              currencyController.text = "";
-                            }
-                          }
-                        });
-                      }
-                    },
-                  ),
-
-                  // "Other" Currency Input
-                  if (!CurrencyUtils.commonCurrencies.contains(
-                    currencyController.text,
-                  )) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: currencyController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(
-                          context,
-                        )!.accountsLabelCurrencyCode,
-                        hintText: AppLocalizations.of(
-                          context,
-                        )!.accountsHintCurrencyCode,
-                        helperText: AppLocalizations.of(
-                          context,
-                        )!.accountsHelperCurrencyCode,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.md),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(AppLocalizations.of(context)!.commonActive),
-                    value: isActive,
-                    onChanged: (value) => setState(() => isActive = value),
+                    bankType: bankType,
+                    onBankTypeChanged: (val) => setState(() => bankType = val),
+                    currencyController: currencyController,
+                    showCurrencySelector: true,
+                    showActiveSwitch: true,
+                    isActive: isActive,
+                    onActiveChanged: (val) => setState(() => isActive = val),
+                    initialBalanceController: balanceController,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
@@ -479,7 +347,6 @@ class AccountsScreen extends StatelessWidget {
                       final cleanCurrency = currencyController.text
                           .trim()
                           .toUpperCase();
-                      // Validation inside modal
                       if (!CurrencyUtils.isValidCurrency(cleanCurrency)) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -493,9 +360,7 @@ class AccountsScreen extends StatelessWidget {
                         );
                         return;
                       }
-                      // If valid:
-                      currencyController.text =
-                          cleanCurrency; // update controller with cleaned value
+                      currencyController.text = cleanCurrency;
                       Navigator.of(context).pop(true);
                     },
                   ),
@@ -545,15 +410,21 @@ class AccountsScreen extends StatelessWidget {
     // Logic already uppercased it.
 
     String? error;
+    Account? createdAccount;
+
     if (item == null) {
-      error = await controller.create(
+      // Create
+      final res = await controller.create(
         name: name,
         type: type,
         currency: currency,
         isActive: isActive,
         bankType: type == "bank" ? bankType : null,
       );
+      error = res.error;
+      createdAccount = res.account;
     } else {
+      // Update
       error = await controller.update(
         id: item.id,
         name: name,
@@ -563,8 +434,48 @@ class AccountsScreen extends StatelessWidget {
         bankType: type == "bank" ? bankType : null,
       );
     }
-    if (error != null && context.mounted) {
-      showStandardSnackbar(context, error);
+
+    if (context.mounted) {
+      if (error != null) {
+        showStandardSnackbar(context, error);
+      } else if (createdAccount != null && balanceController != null) {
+        // Handle Initial Balance
+        final balanceStr = balanceController.text;
+        // MoneyInput uses raw text usually or we can use the same parse logic as Wizard.
+        // Let's copy simple parsing or duplicate _parseMoney from wizard?
+        // Or just trust simple parse for now if input is cleaner.
+        // Wizard uses `_parseMoney`.
+        // Let's implement a quick parse helper here or import it?
+        // Keep it simple:
+        double? initBalance;
+        try {
+          // Remove non-numeric except dot/comma? MoneyInput allows native keyboard.
+          // Adjust to your locale handling if needed.
+          // For now, robust basic parse:
+          initBalance = double.tryParse(balanceStr.replaceAll(',', '.'));
+        } catch (_) {}
+
+        if (initBalance != null && initBalance > 0) {
+          try {
+            await context.read<TransactionRepository>().create({
+              "note": AppLocalizations.of(context)!.debtsInitialBalance,
+              "amount": initBalance,
+              "date": DateTime.now().toIso8601String(),
+              "toAccountId": createdAccount.id,
+              "type": "income",
+              "status": "cleared",
+              "currency": currency,
+            });
+            // Refresh reports to show balance immediately
+            await context.read<ReportsController>().load();
+          } catch (e) {
+            showStandardSnackbar(
+              context,
+              "Conta criada, mas erro ao definir saldo: $e",
+            );
+          }
+        }
+      }
     }
   }
 }

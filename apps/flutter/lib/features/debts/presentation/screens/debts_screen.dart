@@ -667,24 +667,19 @@ class DebtsScreen extends StatelessWidget {
 
     if (result == true && nameController.text.trim().isNotEmpty) {
       final name = nameController.text.trim();
-      final error = await controller.create(
+      final res = await controller.create(
         name: name,
         type: type,
         currency: "BRL",
         isActive: true,
       );
-      if (error != null) {
-        if (context.mounted) showStandardSnackbar(context, error);
+      if (res.error != null) {
+        if (context.mounted) showStandardSnackbar(context, res.error!);
       } else {
-        // Find the newly created account to select it
-        // We assume it's the first one matching name/type or just reload state
-        // Since we are watching state in main form, it will update.
-        // We need to find the ID to auto-select it.
-        final newItem = controller.state.items.firstWhere(
-          (a) => a.name == name && a.type == type,
-          orElse: () => controller.state.items.first, // Fallback
-        );
-        onCreated(newItem.id);
+        // Use the returned account directly
+        if (res.account != null) {
+          onCreated(res.account!.id);
+        }
       }
     }
   }

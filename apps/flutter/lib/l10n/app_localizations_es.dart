@@ -710,16 +710,16 @@ class AppLocalizationsEs extends AppLocalizations {
       'Categoría eliminada del presupuesto de este mes';
 
   @override
-  String get budgetsRemoveCategory => 'Remover do mês';
+  String get budgetsRemoveCategory => 'Remover del mes';
 
   @override
   String get budgetsSaveButton => 'Guardar Presupuesto';
 
   @override
-  String get budgetsSuccessSaved => 'Orçamento salvo!';
+  String get budgetsSuccessSaved => '¡Presupuesto guardado!';
 
   @override
-  String get accountsSuccessCurrencyFixed => 'Moedas corrigidas com sucesso!';
+  String get accountsSuccessCurrencyFixed => '¡Monedas corregidas con éxito!';
 
   @override
   String get goalsTitle => 'Metas';
@@ -1091,22 +1091,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authRegisterSubtitle => 'Solo email y contraseña. < 30s.';
 
   @override
-  String get transactionFormErrorCreate => 'Erro ao salvar a transação.';
+  String get transactionFormErrorCreate => 'Error al guardar la transacción.';
 
   @override
   String get transactionFormSuccessUpdate =>
-      'Transação atualizada com sucesso!';
+      '¡Transacción actualizada con éxito!';
 
   @override
   String transactionFormErrorUpdate(String error) {
-    return 'Erro ao salvar: $error';
+    return 'Error al guardar: $error';
   }
 
   @override
-  String get transactionFormLabelCardPurchase => 'Compra no cartão';
+  String get transactionFormLabelCardPurchase => 'Compra con Tarjeta';
 
   @override
-  String get transactionFormLabelSource => 'Conta de Saída';
+  String get transactionFormLabelSource => 'Cuenta de Origen';
 
   @override
   String get transactionsLabelDestination => 'Para (Destino)';
@@ -1116,97 +1116,97 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get transactionFormRecurringError =>
-      'Transação salva, mas não foi possível criar a recorrência.';
+      'Transacción guardada, pero no se pudo crear la recurrencia.';
 
   @override
   String get transactionFormRecurringSuccess =>
-      'Transação salva e recorrência criada!';
+      '¡Transacción guardada y recurrencia creada!';
 
   @override
   String recurringSummaryDay(Object day) {
-    return 'Todo dia $day';
+    return 'Mensualmente el día $day';
   }
 
   @override
-  String get navDashboard => 'Início';
+  String get navDashboard => 'Inicio';
 
   @override
-  String get navTransactions => 'Transações';
+  String get navTransactions => 'Transacciones';
 
   @override
-  String get navBudgets => 'Orçamentos';
+  String get navBudgets => 'Presupuestos';
 
   @override
   String get navSettings => 'Ajustes';
 
   @override
-  String get dashboardShortcutTitle => 'Resumo do mês por categorias';
+  String get dashboardShortcutTitle => 'Resumen Mensual por Categoría';
 
   @override
   String get dashboardShortcutDesc =>
-      'Sem conversão automática.\nToque para ver gastos por moeda e categoria.';
+      'Sin autoconversión.\nToca para ver gastos por moneda y categoría.';
 
   @override
-  String get dashboardQuickActionsTitle => 'Ações rápidas';
+  String get dashboardQuickActionsTitle => 'Acciones Rápidas';
 
   @override
   String get dashboardQuickActionExpense => 'Gasto';
 
   @override
-  String get dashboardQuickActionIncome => 'Receita';
+  String get dashboardQuickActionIncome => 'Ingreso';
 
   @override
-  String get dashboardQuickActionTransfer => 'Transferir';
+  String get dashboardQuickActionTransfer => 'Transferencia';
 
   @override
-  String get dashboardQuickActionFixed => 'Contas fixas';
+  String get dashboardQuickActionFixed => 'Gastos Fijos';
 
   @override
-  String get cardLabelCredit => 'CARTÃO';
+  String get cardLabelCredit => 'TARJETA';
 
   @override
-  String get cardLabelBalancePay => 'Saldo a pagar';
+  String get cardLabelBalancePay => 'Saldo a Pagar';
 
   @override
   String cardLabelDueDay(Object day) {
-    return 'Vence dia $day';
+    return 'Vence el día $day';
   }
 
   @override
-  String get cardLabelPayments => 'Pagamentos';
+  String get cardLabelPayments => 'Pagos';
 
   @override
   String get cardLabelPurchases => 'Compras';
 
   @override
-  String get cardLabelIncomes => 'Entradas';
+  String get cardLabelIncomes => 'Ingresos';
 
   @override
-  String get cardLabelExpenses => 'Saídas';
+  String get cardLabelExpenses => 'Gastos';
 
   @override
-  String get cardLabelMonthBalance => 'Saldo do mês';
+  String get cardLabelMonthBalance => 'Saldo del Mes';
 
   @override
-  String get cardLabelNoMovements => 'Sem movimentos este mês';
+  String get cardLabelNoMovements => 'Sin movimientos este mes';
 
   @override
-  String get cardActionView => 'Ver transações';
+  String get cardActionView => 'Ver transacciones';
 
   @override
-  String get debtsSectionTitle => 'Dívidas';
+  String get debtsSectionTitle => 'Deudas';
 
   @override
-  String get debtsEmptyState => 'Você ainda não cadastrou dívidas.';
+  String get debtsEmptyState => 'No has registrado deudas.';
 
   @override
-  String get debtsActionAdd => 'Adicionar dívida';
+  String get debtsActionAdd => 'Añadir Deuda';
 
   @override
-  String get debtsActionViewAll => 'Ver dívidas';
+  String get debtsActionViewAll => 'Ver Deudas';
 
   @override
-  String get debtsPaidMonth => 'Pago este mês: ';
+  String get debtsPaidMonth => 'Pagado este mes: ';
 
   @override
   String get debtsTotalToPay => 'Total a pagar';
@@ -1218,24 +1218,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get debtsPaymentDisclaimer =>
-      'Registra um pagamento (não é cobrança automática).';
+      'Registra un pago (no es un cobro automático).';
 
   @override
-  String get commonUnderstood => 'Entendi';
+  String get commonUnderstood => 'Entendido';
 
   @override
-  String get dashboardOtherAccountsTitle => 'Outras contas';
+  String get dashboardOtherAccountsTitle => 'Otras cuentas';
 
   @override
   String get dashboardOtherAccountsDesc =>
-      'Contas menos usadas ou sem movimentos no mês';
+      'Cuentas menos usadas o sin movimientos este mes';
 
   @override
-  String get dashboardOtherAccountsNoMovements => 'Sem movimentos neste mês';
+  String get dashboardOtherAccountsNoMovements => 'Sin movimientos este mes';
 
   @override
   String dashboardOtherAccountsMonthBalance(Object amount) {
-    return 'Saldo do mês: $amount';
+    return 'Saldo del mes: $amount';
   }
 
   @override
@@ -1244,143 +1244,246 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get transactionFormLabelInvoicePayment => 'Pagamento de fatura';
+  String get transactionFormLabelInvoicePayment => 'Pago de Factura';
 
   @override
   String get transactionFormLabelCardSourceError =>
-      'Cartão não pode ser conta de origem. Use sua conta bancária.';
+      'La tarjeta no puede ser cuenta de origen. Usa tu cuenta bancaria.';
 
   @override
   String get transactionFormLabelDebtWarning =>
-      'Isso aumenta sua dívida. Não sai do banco agora.';
+      'Esto aumenta tu deuda. No sale del banco ahora.';
 
   @override
-  String get transactionFormLabelPaymentValue => 'Valor do pagamento';
+  String get transactionFormLabelPaymentValue => 'Valor del Pago';
 
   @override
-  String get transactionFormHelperPayment => 'Sai do banco e abate na fatura.';
+  String get transactionFormHelperPayment =>
+      'Sale del banco y se abona a la factura.';
 
   @override
   String get transactionFormLabelTransferValue => 'Valor';
 
   @override
   String get transactionFormHelperTransfer =>
-      'Valor que sai da origem e entra no destino.';
+      'Valor que sale del origen y entra al destino.';
 
   @override
   String transactionFormLabelSentValue(String currency) {
-    return 'Você envia ($currency)';
+    return 'Envías ($currency)';
   }
 
   @override
-  String get transactionFormHelperSent => 'Valor que sai da conta de origem.';
+  String get transactionFormHelperSent =>
+      'Valor que sale de la cuenta de origen.';
 
   @override
   String transactionFormLabelReceivedValue(String currency) {
-    return 'Você recebe ($currency)';
+    return 'Recibes ($currency)';
   }
 
   @override
   String get transactionFormHelperReceived =>
-      'Valor que entra na conta de destino.';
+      'Valor que entra en la cuenta de destino.';
 
   @override
   String get transactionFormLabelSelectSourceDest =>
-      'Selecione Origem e Destino';
+      'Seleccionar Origen y Destino';
 
   @override
   String get transactionFormHelperSelectSourceDest =>
-      'Escolha as contas para liberar o valor.';
+      'Elige cuentas para liberar el valor.';
 
   @override
-  String get transactionFormLabelAlreadyCleared => 'Já entrou no saldo?';
+  String get transactionFormLabelAlreadyCleared => '¿Ya se hizo efectivo?';
 
   @override
-  String get transactionFormStatusCleared => 'Confirmada';
+  String get transactionFormStatusCleared => 'Confirmado';
 
   @override
-  String get transactionFormStatusPending => 'Pendente';
+  String get transactionFormStatusPending => 'Pendiente';
 
   @override
   String get transactionFormHelperStatus =>
-      'Se estiver pendente, pode mudar depois.';
+      'Si está pendiente, puedes cambiarlo después.';
 
   @override
-  String get transactionFormLabelMoreOptions => 'Mais opções';
+  String get transactionFormLabelMoreOptions => 'Más opciones';
 
   @override
   String get transactionFormLabelMoreOptionsSubtitle =>
-      'Nota, Tags, Recorrência';
+      'Nota, Etiquetas, Recurrencia';
 
   @override
-  String get transactionFormLabelMoreOptionsRecurring => 'Recorrente';
+  String get transactionFormLabelMoreOptionsRecurring => 'Recurrente';
 
   @override
-  String get transactionFormLabelRepeat => 'Repetir automaticamente';
+  String get transactionFormLabelRepeat => 'Repetir automáticamente';
 
   @override
   String get transactionFormHelperRepeat =>
-      'Cria uma conta fixa para você não esquecer.';
+      'Crea un gasto fijo para no olvidar.';
 
   @override
-  String get transactionFormLabelFrequencyMonthly => 'Mensal';
+  String get transactionFormLabelFrequencyMonthly => 'Mensual';
 
   @override
   String get transactionFormLabelFrequencyWeekly => 'Semanal';
 
   @override
-  String get transactionFormActionManageFixed => 'Gerenciar contas fixas';
+  String get transactionFormActionManageFixed => 'Gestionar gastos fijos';
 
   @override
-  String get transactionFormLabelSaveTemplate => 'Salvar como Template';
+  String get transactionFormLabelSaveTemplate => 'Guardar como Plantilla';
 
   @override
-  String get transactionFormLabelTemplateName => 'Nome do Template';
+  String get transactionFormLabelTemplateName => 'Nombre de la Plantilla';
 
   @override
-  String get transactionFormActionSaving => 'Salvando...';
+  String get transactionFormActionSaving => 'Guardando...';
 
   @override
   String get transactionFormValidationSameAccount =>
-      'Selecione contas diferentes.';
+      'Selecciona cuentas diferentes.';
 
   @override
-  String get transactionFormCategoryPurchase => 'Categoria da compra';
+  String get transactionFormCategoryPurchase => 'Categoría de Compra';
 
   @override
-  String get transactionFormInvoiceSource => 'Cartão (Fatura)';
+  String get transactionFormInvoiceSource => 'Tarjeta (Factura)';
 
   @override
-  String get transactionFormPaymentSuccess => 'Pagamento de fatura registrado!';
+  String get transactionFormPaymentSuccess => '¡Pago de factura registrado!';
 
   @override
   String transactionFormPaymentError(String error) {
-    return 'Erro ao registrar pagamento: $error';
+    return 'Error al registrar pago: $error';
   }
 
   @override
-  String get transactionFormChargeSuccess => 'Compra registrada!';
+  String get transactionFormChargeSuccess => '¡Compra registrada!';
 
   @override
   String transactionFormChargeError(String error) {
-    return 'Erro ao salvar compra: $error';
+    return 'Error al guardar compra: $error';
   }
 
   @override
-  String get commonToday => 'Hoje';
+  String get commonToday => 'Hoy';
 
   @override
-  String get commonYesterday => 'Ontem';
+  String get commonYesterday => 'Ayer';
 
   @override
   String get commonFrom => 'de';
 
   @override
-  String get commonTo => 'para';
+  String get commonTo => 'a';
 
   @override
-  String get commonNoAccount => 'Sem conta';
+  String get commonNoAccount => 'Sin cuenta';
 
   @override
-  String get transactionsEmptyState => 'Nenhuma transação encontrada';
+  String get transactionsEmptyState => 'No se encontraron transacciones';
+
+  @override
+  String get onboardingPreferencesTitle => 'Preferencias';
+
+  @override
+  String get onboardingPreferencesDesc =>
+      'Elige cómo quieres ver la app. Puedes cambiarlo después.';
+
+  @override
+  String get onboardingFieldLanguage => 'Idioma';
+
+  @override
+  String get onboardingFieldCurrency => 'Moneda principal';
+
+  @override
+  String get onboardingCreateAccountTitle => 'Crea tu primera cuenta';
+
+  @override
+  String get onboardingCreateAccountDesc =>
+      'Ej.: banco, efectivo, billetera. Puedes agregar más después.';
+
+  @override
+  String get onboardingFieldInitialBalance => 'Saldo inicial (opcional)';
+
+  @override
+  String get onboardingHelperInitialBalance =>
+      'Si no lo sabes ahora, déjalo en blanco.';
+
+  @override
+  String get onboardingErrorNoAccount =>
+      'Crea al menos 1 cuenta para continuar.';
+
+  @override
+  String get onboardingCategoriesTitle => 'Elige tus categorías';
+
+  @override
+  String get onboardingCategoriesDesc =>
+      'Deja marcado lo que usas. Puedes cambiarlo después.';
+
+  @override
+  String get onboardingActionSelectAll => 'Marcar todo';
+
+  @override
+  String get onboardingActionDeselectAll => 'Desmarcar todo';
+
+  @override
+  String get catHousing => 'Vivienda (alquiler/condominio)';
+
+  @override
+  String get catUtilities => 'Servicios del hogar (agua, luz, gas)';
+
+  @override
+  String get catInternet => 'Internet y celular';
+
+  @override
+  String get catGroceries => 'Supermercado';
+
+  @override
+  String get catRestaurants => 'Restaurantes';
+
+  @override
+  String get catTransport => 'Transporte y Combustible';
+
+  @override
+  String get catFuel => 'Combustible';
+
+  @override
+  String get catCarMaintenance => 'Mantenimiento del auto';
+
+  @override
+  String get catHealth => 'Salud y Farmacia';
+
+  @override
+  String get catPharmacy => 'Farmacia';
+
+  @override
+  String get catEducation => 'Educación (escuela/cursos)';
+
+  @override
+  String get catCreditCard => 'Tarjeta de crédito (gastos)';
+
+  @override
+  String get catDebts => 'Préstamos';
+
+  @override
+  String get catFees => 'Comisiones y cargos';
+
+  @override
+  String get catSubscriptions => 'Suscripciones (streaming/apps)';
+
+  @override
+  String get catPersonal => 'Cuidado personal';
+
+  @override
+  String get catClothing => 'Ropa';
+
+  @override
+  String get catWork => 'Trabajo (herramientas/servicios)';
+
+  @override
+  String get catTaxes => 'Impuestos';
 }

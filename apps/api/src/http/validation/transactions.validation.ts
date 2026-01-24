@@ -88,7 +88,11 @@ export function validateTransactionPayload(isUpdate: boolean) {
         return res.status(422).send({ error: "Falta o valor" })
       if (flattened.nested?.status)
         return res.status(422).send({ error: "Status invalido" })
-      return res.status(422).send({ error: "Payload invalido" })
+
+      const details = Object.entries(flattened.nested || {})
+        .map(([key, msgs]) => `${key}: ${msgs?.join(", ")}`)
+        .join("; ")
+      return res.status(422).send({ error: `Payload invalido: ${details}` })
     }
 
     const data = req.body as {

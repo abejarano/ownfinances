@@ -154,11 +154,9 @@ export class TransactionsService {
   ): Promise<string | null> {
     const type = payload.type
     if (type === TransactionType.Income) {
-      if (!payload.categoryId) return "Escolha uma categoria"
       if (!payload.toAccountId) return "Escolha uma conta"
     }
     if (type === TransactionType.Expense) {
-      if (!payload.categoryId) return "Escolha uma categoria"
       if (!payload.fromAccountId) return "Escolha uma conta"
     }
     if (type === TransactionType.Transfer) {

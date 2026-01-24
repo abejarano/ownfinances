@@ -13,6 +13,7 @@ import { SettingsController } from "../http/controllers/settings.controller"
 import { TemplatesController } from "../http/controllers/templates.controller"
 import { TransactionsController } from "../http/controllers/transactions.controller"
 import { TransactionsImportController } from "../http/controllers/transactions_import.controller"
+import { BanksController } from "../http/controllers/banks.controller"
 
 export const controllersModule = () =>
   new ControllersModule([
@@ -29,5 +30,7 @@ export const controllersModule = () =>
     SettingsController,
     TemplatesController,
     TransactionsImportController,
+    TransactionsImportController,
     TransactionsController,
+    BanksController,
   ])

@@ -4,8 +4,12 @@ class CurrencyUtils {
     "USD",
     "EUR",
     "GBP",
-    "USDT",
     "COP",
+    "ARS",
+    "PYG",
+    "UYU",
+    "VES",
+    "USDT",
   ];
 
   static bool isValidCurrency(String code) {
@@ -17,15 +21,25 @@ class CurrencyUtils {
   static String formatCurrencyLabel(String code) {
     switch (code) {
       case "BRL":
-        return "R\$ (BRL)";
+        return "R\$ (BRL - Real Brasileiro)";
       case "USD":
-        return "\$ (USD)";
+        return "\$ (USD - US Dollar)";
       case "EUR":
-        return "€ (EUR)";
+        return "€ (EUR - Euro)";
       case "GBP":
-        return "£ (GBP)";
+        return "£ (GBP - Libra Esterlina)";
       case "COP":
-        return "COP";
+        return "COP (Peso Colombiano)";
+      case "ARS":
+        return "ARS (Peso Argentino)";
+      case "PYG":
+        return "PYG (Guaraní)";
+      case "UYU":
+        return "UYU (Peso Uruguayo)";
+      case "VES":
+        return "VES (Bolívar Venezolano)";
+      case "USDT":
+        return "USDT (Tether)";
       default:
         // Rule: Just Code for others/crypto, no descriptive text
         return code;

@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/accounts/application/state/accounts_state.dart";
 import "package:ownfinances/features/accounts/data/repositories/account_repository.dart";
+import "package:ownfinances/features/accounts/domain/entities/account.dart";
 
 class AccountsController extends ChangeNotifier {
   final AccountRepository repository;
@@ -33,7 +34,7 @@ class AccountsController extends ChangeNotifier {
     if (!_isDisposed) notifyListeners();
   }
 
-  Future<String?> create({
+  Future<({Account? account, String? error})> create({
     required String name,
     required String type,
     String currency = "BRL",
@@ -53,9 +54,9 @@ class AccountsController extends ChangeNotifier {
         ..sort((a, b) => a.name.compareTo(b.name));
       _state = _state.copyWith(items: next);
       if (!_isDisposed) notifyListeners();
-      return null;
+      return (account: created, error: null);
     } catch (error) {
-      return _message(error);
+      return (account: null, error: _message(error));
     }
   }
 

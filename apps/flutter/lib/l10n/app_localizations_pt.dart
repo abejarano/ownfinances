@@ -1384,4 +1384,105 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get transactionsEmptyState => 'Nenhuma transação encontrada';
+
+  @override
+  String get onboardingPreferencesTitle => 'Preferências';
+
+  @override
+  String get onboardingPreferencesDesc =>
+      'Escolha como você quer ver o app. Dá pra mudar depois.';
+
+  @override
+  String get onboardingFieldLanguage => 'Idioma';
+
+  @override
+  String get onboardingFieldCurrency => 'Moeda principal';
+
+  @override
+  String get onboardingCreateAccountTitle => 'Crie sua primeira conta';
+
+  @override
+  String get onboardingCreateAccountDesc =>
+      'Ex.: banco, dinheiro, carteira. Você pode adicionar mais depois.';
+
+  @override
+  String get onboardingFieldInitialBalance => 'Saldo inicial (opcional)';
+
+  @override
+  String get onboardingHelperInitialBalance =>
+      'Se não souber agora, deixe em branco.';
+
+  @override
+  String get onboardingErrorNoAccount =>
+      'Crie pelo menos 1 conta para continuar.';
+
+  @override
+  String get onboardingCategoriesTitle => 'Escolha suas categorias';
+
+  @override
+  String get onboardingCategoriesDesc =>
+      'Deixe marcado o que você usa. Dá pra mudar depois.';
+
+  @override
+  String get onboardingActionSelectAll => 'Marcar tudo';
+
+  @override
+  String get onboardingActionDeselectAll => 'Desmarcar tudo';
+
+  @override
+  String get catHousing => 'Moradia (aluguel/condomínio)';
+
+  @override
+  String get catUtilities => 'Contas da casa (água, luz, gás)';
+
+  @override
+  String get catInternet => 'Internet e celular';
+
+  @override
+  String get catGroceries => 'Mercado';
+
+  @override
+  String get catRestaurants => 'Restaurantes';
+
+  @override
+  String get catTransport => 'Transporte (ônibus/uber)';
+
+  @override
+  String get catFuel => 'Combustível';
+
+  @override
+  String get catCarMaintenance => 'Manutenção do carro';
+
+  @override
+  String get catHealth => 'Saúde';
+
+  @override
+  String get catPharmacy => 'Farmácia';
+
+  @override
+  String get catEducation => 'Educação (escola/cursos)';
+
+  @override
+  String get catCreditCard => 'Cartão de crédito (gastos)';
+
+  @override
+  String get catDebts => 'Dívidas e empréstimos';
+
+  @override
+  String get catFees => 'Taxas e tarifas';
+
+  @override
+  String get catSubscriptions => 'Assinaturas (streaming/apps)';
+
+  @override
+  String get catPersonal => 'Cuidados pessoais';
+
+  @override
+  String get catClothing => 'Roupas';
+
+  @override
+  String get catWork => 'Trabalho (ferramentas/serviços)';
+
+  @override
+  String get catTaxes => 'Impostos';
 }

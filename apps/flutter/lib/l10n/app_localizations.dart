@@ -2623,6 +2623,198 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Nenhuma transação encontrada'**
   String get transactionsEmptyState;
+
+  /// No description provided for @onboardingPreferencesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preferências'**
+  String get onboardingPreferencesTitle;
+
+  /// No description provided for @onboardingPreferencesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha como você quer ver o app. Dá pra mudar depois.'**
+  String get onboardingPreferencesDesc;
+
+  /// No description provided for @onboardingFieldLanguage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma'**
+  String get onboardingFieldLanguage;
+
+  /// No description provided for @onboardingFieldCurrency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moeda principal'**
+  String get onboardingFieldCurrency;
+
+  /// No description provided for @onboardingCreateAccountTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie sua primeira conta'**
+  String get onboardingCreateAccountTitle;
+
+  /// No description provided for @onboardingCreateAccountDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex.: banco, dinheiro, carteira. Você pode adicionar mais depois.'**
+  String get onboardingCreateAccountDesc;
+
+  /// No description provided for @onboardingFieldInitialBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saldo inicial (opcional)'**
+  String get onboardingFieldInitialBalance;
+
+  /// No description provided for @onboardingHelperInitialBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se não souber agora, deixe em branco.'**
+  String get onboardingHelperInitialBalance;
+
+  /// No description provided for @onboardingErrorNoAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie pelo menos 1 conta para continuar.'**
+  String get onboardingErrorNoAccount;
+
+  /// No description provided for @onboardingCategoriesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha suas categorias'**
+  String get onboardingCategoriesTitle;
+
+  /// No description provided for @onboardingCategoriesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deixe marcado o que você usa. Dá pra mudar depois.'**
+  String get onboardingCategoriesDesc;
+
+  /// No description provided for @onboardingActionSelectAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Marcar tudo'**
+  String get onboardingActionSelectAll;
+
+  /// No description provided for @onboardingActionDeselectAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desmarcar tudo'**
+  String get onboardingActionDeselectAll;
+
+  /// No description provided for @catHousing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moradia (aluguel/condomínio)'**
+  String get catHousing;
+
+  /// No description provided for @catUtilities.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas da casa (água, luz, gás)'**
+  String get catUtilities;
+
+  /// No description provided for @catInternet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Internet e celular'**
+  String get catInternet;
+
+  /// No description provided for @catGroceries.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mercado'**
+  String get catGroceries;
+
+  /// No description provided for @catRestaurants.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restaurantes'**
+  String get catRestaurants;
+
+  /// No description provided for @catTransport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Transporte (ônibus/uber)'**
+  String get catTransport;
+
+  /// No description provided for @catFuel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Combustível'**
+  String get catFuel;
+
+  /// No description provided for @catCarMaintenance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Manutenção do carro'**
+  String get catCarMaintenance;
+
+  /// No description provided for @catHealth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saúde'**
+  String get catHealth;
+
+  /// No description provided for @catPharmacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Farmácia'**
+  String get catPharmacy;
+
+  /// No description provided for @catEducation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação (escola/cursos)'**
+  String get catEducation;
+
+  /// No description provided for @catCreditCard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cartão de crédito (gastos)'**
+  String get catCreditCard;
+
+  /// No description provided for @catDebts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dívidas e empréstimos'**
+  String get catDebts;
+
+  /// No description provided for @catFees.
+  ///
+  /// In pt, this message translates to:
+  /// **'Taxas e tarifas'**
+  String get catFees;
+
+  /// No description provided for @catSubscriptions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assinaturas (streaming/apps)'**
+  String get catSubscriptions;
+
+  /// No description provided for @catPersonal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cuidados pessoais'**
+  String get catPersonal;
+
+  /// No description provided for @catClothing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Roupas'**
+  String get catClothing;
+
+  /// No description provided for @catWork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trabalho (ferramentas/serviços)'**
+  String get catWork;
+
+  /// No description provided for @catTaxes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impostos'**
+  String get catTaxes;
 }
 
 class _AppLocalizationsDelegate

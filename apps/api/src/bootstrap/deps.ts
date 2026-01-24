@@ -26,6 +26,9 @@ import { ReportsService } from "../services/reports_service"
 import { TemplateService } from "../services/template_service"
 import { TransactionsImportService } from "../services/transactions_import_service"
 import { TransactionsService } from "../services/transactions_service"
+import { BanksService } from "../services/banks_service"
+
+import { BankMongoRepository } from "../repositories/bank_repository"
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository
@@ -56,6 +59,8 @@ export type AppDeps = {
   readonly importJobRepo: ImportJobMongoRepository
   readonly transactionsImportService: TransactionsImportService
   readonly userSettingsRepo: UserSettingsRepository
+  readonly bankRepo: BankMongoRepository
+  readonly banksService: BanksService
 }
 
 export class Deps {
@@ -82,6 +87,7 @@ export class Deps {
     let goalsService: GoalsService | null = null
     let goalContributionsService: GoalContributionsService | null = null
     let transactionsImportService: TransactionsImportService | null = null
+    let banksService: BanksService | null = null
 
     return {
       get categoryRepo() {
@@ -89,6 +95,14 @@ export class Deps {
       },
       get accountRepo() {
         return AccountMongoRepository.getInstance()
+      },
+      // bankRepo getter moved to end or removed to avoid duplicate
+
+      get banksService() {
+        if (!banksService) {
+          banksService = new BanksService(this.bankRepo)
+        }
+        return banksService
       },
       get transactionRepo() {
         return TransactionMongoRepository.getInstance()
@@ -250,6 +264,9 @@ export class Deps {
       },
       get userSettingsRepo() {
         return UserSettingsRepository.getInstance()
+      },
+      get bankRepo() {
+        return BankMongoRepository.getInstance()
       },
     }
   }

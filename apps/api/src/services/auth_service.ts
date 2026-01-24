@@ -3,11 +3,8 @@ import argon2 from "argon2"
 import { OAuth2Client } from "google-auth-library"
 import crypto from "node:crypto"
 import type { Result } from "../bootstrap/response"
-import { Account, AccountType } from "../models/account"
 import { RefreshToken } from "../models/auth/refresh_token"
 import { User, type UserPrimitives } from "../models/auth/user"
-import { Category } from "../models/category"
-import { createMongoId } from "../models/shared/mongo_id"
 import type { AccountMongoRepository } from "../repositories/account_repository"
 import type { CategoryMongoRepository } from "../repositories/category_repository"
 import type { RefreshTokenMongoRepository } from "../repositories/refresh_token_mongo_repository"
@@ -50,7 +47,6 @@ export class AuthService {
     })
 
     await this.users.upsert(user)
-    await this.seedDefaultCategories(user.getUserId())
 
     const refresh = await this.issueRefreshToken(user.getUserId())
     return {
@@ -113,11 +109,11 @@ export class AuthService {
             googleId:
               payload.provider === "google"
                 ? socialId
-                : primitives.googleId ?? null,
+                : (primitives.googleId ?? null),
             appleId:
               payload.provider === "apple"
                 ? socialId
-                : primitives.appleId ?? null,
+                : (primitives.appleId ?? null),
             updatedAt: new Date(),
           })
           await this.users.upsert(updated)
@@ -145,8 +141,6 @@ export class AuthService {
         })
 
         await this.users.upsert(user)
-        await this.seedDefaultCategories(user.getUserId())
-        // await this.seedDefaultAccount(user.getUserId()) // Commented to force Onboarding Wizard
       }
 
       // 5. Login (Issue Tokens)
@@ -322,88 +316,14 @@ export class AuthService {
 
     await this.refreshTokens.upsert(refreshEntity)
 
+    // Prune old tokens (keep max 5 active sessions per user)
+    // We launch this in background to avoid delaying the response, or await it.
+    // Awaiting is safer to ensure consistency.
+    await this.refreshTokens.pruneUserTokens(userId, 5)
+
     return {
       refreshToken,
     }
-  }
-
-  private async seedDefaultCategories(userId: string) {
-    const categories = [
-      {
-        name: "Alimentacao",
-        kind: "expense",
-        color: "#F97316",
-        icon: "restaurant",
-      },
-      {
-        name: "Educacao",
-        kind: "expense",
-        color: "#7C3AED",
-        icon: "education",
-      },
-      {
-        name: "Lazer",
-        kind: "expense",
-        color: "#0EA5E9",
-        icon: "leisure",
-      },
-      {
-        name: "Moradia",
-        kind: "expense",
-        color: "#DB2777",
-        icon: "home",
-      },
-      {
-        name: "Emprestimos",
-        kind: "expense",
-        color: "#E11D48",
-        icon: "shopping",
-      },
-      {
-        name: "Salario",
-        kind: "income",
-        color: "#22C55E",
-        icon: "salary",
-      },
-      {
-        name: "Sporte",
-        kind: "expense",
-        color: "#06B6D4",
-        icon: "health",
-      },
-      {
-        name: "Transporte",
-        kind: "expense",
-        color: "#64748B",
-        icon: "transport",
-      },
-    ] as const
-
-    await Promise.all(
-      categories.map((category) =>
-        this.categories.upsert(
-          Category.create({
-            userId,
-            name: category.name,
-            kind: category.kind,
-            color: category.color,
-            icon: category.icon,
-            isActive: true,
-          })
-        )
-      )
-    )
-  }
-  private async seedDefaultAccount(userId: string) {
-    const account = Account.create({
-      userId,
-      name: "Carteira",
-      type: AccountType.Wallet,
-      bankType: null,
-      currency: "BRL",
-      isActive: true,
-    })
-    await this.accounts.upsert(account)
   }
 
   /* ... */
@@ -414,7 +334,7 @@ export class AuthService {
     try {
       if (provider === "google") {
         const client = new OAuth2Client()
-        
+
         // 1. Try treating as ID Token (Mobile Flow)
         try {
           const ticket = await client.verifyIdToken({
@@ -431,15 +351,18 @@ export class AuthService {
           // 2. Fallback: Treat as Access Token (Web Flow)
           // Use getTokenInfo to validate access token
           try {
-             const tokenInfo = await client.getTokenInfo(token)
-             if (tokenInfo && tokenInfo.sub) {
-                return {
-                  email: tokenInfo.email,
-                  socialId: tokenInfo.sub, /* sub is the unique user ID */
-                }
-             }
+            const tokenInfo = await client.getTokenInfo(token)
+            if (tokenInfo && tokenInfo.sub) {
+              return {
+                email: tokenInfo.email,
+                socialId: tokenInfo.sub /* sub is the unique user ID */,
+              }
+            }
           } catch (accessTokenError) {
-            console.error("Google Token Verification Failed (ID & Access):", accessTokenError)
+            console.error(
+              "Google Token Verification Failed (ID & Access):",
+              accessTokenError
+            )
           }
         }
         return null

@@ -49,6 +49,9 @@ import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart"
 import "package:ownfinances/core/storage/settings_storage.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:ownfinances/features/month_summary/application/controllers/month_summary_controller.dart";
+import "package:ownfinances/features/banks/data/datasources/bank_remote_data_source.dart";
+import "package:ownfinances/features/banks/data/repositories/bank_repository.dart";
+import "package:ownfinances/features/banks/application/controllers/banks_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -215,6 +218,14 @@ class AppProviders extends StatelessWidget {
             categoriesRepository: context.read<CategoryRepository>(),
             settingsController: context.read<SettingsController>(),
           ),
+        ),
+
+        Provider<BankRepository>(
+          create: (context) =>
+              BankRepository(BankRemoteDataSource(context.read<ApiClient>())),
+        ),
+        ChangeNotifierProvider<BanksController>(
+          create: (context) => BanksController(context.read<BankRepository>()),
         ),
 
         ChangeNotifierProvider<OnboardingController>(

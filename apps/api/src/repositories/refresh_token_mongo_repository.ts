@@ -28,4 +28,18 @@ export class RefreshTokenMongoRepository
   collectionName(): string {
     return "refresh_tokens"
   }
+  async pruneUserTokens(userId: string, limit: number): Promise<void> {
+    const collection = await this.collection()
+    // Find tokens for user, sort by newest first
+    const tokens = await collection
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .skip(limit)
+      .toArray()
+
+    if (tokens.length > 0) {
+      const idsToDelete = tokens.map((t) => t._id)
+      await collection.deleteMany({ _id: { $in: idsToDelete } })
+    }
+  }
 }

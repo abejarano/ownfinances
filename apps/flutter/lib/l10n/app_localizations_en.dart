@@ -1381,4 +1381,105 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionsEmptyState => 'No transactions found';
+
+  @override
+  String get onboardingPreferencesTitle => 'Preferences';
+
+  @override
+  String get onboardingPreferencesDesc =>
+      'Choose how you want to use the app. You can change this later.';
+
+  @override
+  String get onboardingFieldLanguage => 'Language';
+
+  @override
+  String get onboardingFieldCurrency => 'Main currency';
+
+  @override
+  String get onboardingCreateAccountTitle => 'Create your first account';
+
+  @override
+  String get onboardingCreateAccountDesc =>
+      'Example: bank, cash, wallet. You can add more later.';
+
+  @override
+  String get onboardingFieldInitialBalance => 'Starting balance (optional)';
+
+  @override
+  String get onboardingHelperInitialBalance =>
+      'If you\'re not sure, leave it blank.';
+
+  @override
+  String get onboardingErrorNoAccount =>
+      'Create at least 1 account to continue.';
+
+  @override
+  String get onboardingCategoriesTitle => 'Choose your categories';
+
+  @override
+  String get onboardingCategoriesDesc =>
+      'Keep what you use. You can change this later.';
+
+  @override
+  String get onboardingActionSelectAll => 'Select all';
+
+  @override
+  String get onboardingActionDeselectAll => 'Deselect all';
+
+  @override
+  String get catHousing => 'Housing (rent/fees)';
+
+  @override
+  String get catUtilities => 'Utilities (water, electricity, gas)';
+
+  @override
+  String get catInternet => 'Internet & phone';
+
+  @override
+  String get catGroceries => 'Groceries';
+
+  @override
+  String get catRestaurants => 'Restaurants';
+
+  @override
+  String get catTransport => 'Transport & Fuel';
+
+  @override
+  String get catFuel => 'Fuel';
+
+  @override
+  String get catCarMaintenance => 'Car Maintenance';
+
+  @override
+  String get catHealth => 'Health & Pharmacy';
+
+  @override
+  String get catPharmacy => 'Pharmacy';
+
+  @override
+  String get catEducation => 'Education';
+
+  @override
+  String get catCreditCard => 'Credit Card (Expenses)';
+
+  @override
+  String get catDebts => 'Loans';
+
+  @override
+  String get catFees => 'Fees & charges';
+
+  @override
+  String get catSubscriptions => 'Subscriptions (apps/streaming)';
+
+  @override
+  String get catPersonal => 'Personal care';
+
+  @override
+  String get catClothing => 'Clothing';
+
+  @override
+  String get catWork => 'Work (tools/services)';
+
+  @override
+  String get catTaxes => 'Taxes';
 }

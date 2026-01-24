@@ -10,7 +10,7 @@ import { BankType } from "../../models/bank_type"
 export type AccountCreatePayload = {
   name: string
   type: AccountType
-  bankType?: BankType | null
+  bankType?: BankType | string | null
   currency?: string
   isActive?: boolean
 }
@@ -20,7 +20,7 @@ export type AccountUpdatePayload = Partial<AccountCreatePayload>
 const AccountBaseSchema = v.strictObject({
   name: v.pipe(v.string(), v.minLength(1)),
   type: v.enum_(AccountType),
-  bankType: v.optional(v.nullable(v.enum_(BankType))),
+  bankType: v.optional(v.nullable(v.union([v.enum_(BankType), v.string()]))),
   currency: v.optional(v.pipe(v.string(), v.minLength(1))),
   isActive: v.optional(v.boolean()),
 })
