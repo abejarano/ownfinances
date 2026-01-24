@@ -8,6 +8,7 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/categories/domain/entities/category.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
@@ -16,10 +17,11 @@ class CategoriesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.read<CategoriesController>();
     final state = context.watch<CategoriesController>().state;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Categorias"),
+        title: Text(l10n.drawerCategories),
 
         actions: [
           IconButton(
@@ -36,7 +38,7 @@ class CategoriesScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Categorias ativas",
+                    l10n.categoriesActive,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -82,7 +84,11 @@ class CategoriesScreen extends StatelessWidget {
                               ),
                       ),
                       title: Text(item.name),
-                      subtitle: Text(item.kind == "income" ? "Entrou" : "Saiu"),
+                      subtitle: Text(
+                        item.kind == "income"
+                            ? l10n.transactionTypeIncome
+                            : l10n.transactionTypeExpense,
+                      ),
                       trailing: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () =>
@@ -91,9 +97,8 @@ class CategoriesScreen extends StatelessWidget {
                       onLongPress: () async {
                         final confirmed = await _confirmDelete(
                           context,
-                          title: "Excluir categoria?",
-                          description:
-                              "Isso vai excluir a categoria e todas as transacoes vinculadas. Nao da pra desfazer.",
+                          title: l10n.categoriesDeleteTitle,
+                          description: l10n.categoriesDeleteDesc,
                         );
                         if (!confirmed || !context.mounted) return;
 
@@ -105,7 +110,7 @@ class CategoriesScreen extends StatelessWidget {
                         }
                         await context.read<ReportsController>().load();
                         if (context.mounted) {
-                          showStandardSnackbar(context, "Categoria excluida");
+                          showStandardSnackbar(context, l10n.categoriesDeleted);
                         }
                       },
                     );
@@ -135,11 +140,11 @@ class CategoriesScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancelar"),
+            child: Text(AppLocalizations.of(context)!.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Excluir"),
+            child: Text(AppLocalizations.of(context)!.commonDelete),
           ),
         ],
       ),
@@ -171,7 +176,10 @@ class CategoriesScreen extends StatelessWidget {
             )
             .toList();
         final parentItems = [
-          const PickerItem(id: "", label: "Sem pai"),
+          PickerItem(
+            id: "",
+            label: AppLocalizations.of(context)!.categoriesNoParent,
+          ),
           ...categories,
         ];
         return StatefulBuilder(
@@ -191,7 +199,9 @@ class CategoriesScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item == null ? "Nova categoria" : "Editar categoria",
+                    item == null
+                        ? AppLocalizations.of(context)!.categoriesNew
+                        : AppLocalizations.of(context)!.categoriesEdit,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -224,7 +234,7 @@ class CategoriesScreen extends StatelessWidget {
                       const SizedBox(width: AppSpacing.sm),
                       Text(
                         nameController.text.trim().isEmpty
-                            ? "Preview"
+                            ? AppLocalizations.of(context)!.commonPreview
                             : nameController.text.trim(),
                       ),
                     ],
@@ -232,12 +242,14 @@ class CategoriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: "Nome"),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.commonName,
+                    ),
                     onChanged: (_) => setModalState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   CategoryPicker(
-                    label: "Categoria pai",
+                    label: AppLocalizations.of(context)!.categoriesParent,
                     items: parentItems,
                     value: parentId ?? "",
                     onSelected: (item) {
@@ -249,10 +261,22 @@ class CategoriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   DropdownButtonFormField<String>(
                     value: kind,
-                    decoration: const InputDecoration(labelText: "Tipo"),
-                    items: const [
-                      DropdownMenuItem(value: "expense", child: Text("Saiu")),
-                      DropdownMenuItem(value: "income", child: Text("Entrou")),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.accountTypeLabel,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: "expense",
+                        child: Text(
+                          AppLocalizations.of(context)!.transactionTypeExpense,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: "income",
+                        child: Text(
+                          AppLocalizations.of(context)!.transactionTypeIncome,
+                        ),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value != null) {
@@ -262,7 +286,7 @@ class CategoriesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   ColorPicker(
-                    label: "Cor",
+                    label: AppLocalizations.of(context)!.categoriesColor,
                     value: color,
                     onSelected: (value) {
                       setModalState(() => color = value);
@@ -270,7 +294,7 @@ class CategoriesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   IconPicker(
-                    label: "Icone",
+                    label: AppLocalizations.of(context)!.categoriesIcon,
                     value: icon,
                     options: kIconOptions,
                     onSelected: (value) {
@@ -280,13 +304,13 @@ class CategoriesScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text("Ativa"),
+                    title: Text(AppLocalizations.of(context)!.commonActive),
                     value: isActive,
                     onChanged: (value) => setModalState(() => isActive = value),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
-                    label: "Salvar",
+                    label: AppLocalizations.of(context)!.commonSave,
                     onPressed: () {
                       Navigator.of(context).pop(true);
                     },
@@ -303,7 +327,10 @@ class CategoriesScreen extends StatelessWidget {
     final name = nameController.text.trim();
     if (name.isEmpty) {
       if (context.mounted) {
-        showStandardSnackbar(context, "Nome obrigatorio");
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(context)!.commonNameRequired,
+        );
       }
       return;
     }

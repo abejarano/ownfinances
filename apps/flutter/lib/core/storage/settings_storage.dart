@@ -6,4 +6,7 @@ abstract class SettingsStorage {
 
   Future<String?> readPrimaryCurrency();
   Future<void> savePrimaryCurrency(String currency);
+
+  Future<String?> readLocale();
+  Future<void> saveLocale(String locale);
 }

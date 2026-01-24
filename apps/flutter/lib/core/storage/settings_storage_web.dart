@@ -14,4 +14,16 @@ class SettingsStorageImpl implements SettingsStorage {
   Future<void> savePrimaryCurrency(String currency) async {
     html.window.localStorage[_primaryCurrencyKey] = currency;
   }
+
+  static const _localeKey = "of_locale";
+
+  @override
+  Future<String?> readLocale() async {
+    return html.window.localStorage[_localeKey];
+  }
+
+  @override
+  Future<void> saveLocale(String locale) async {
+    html.window.localStorage[_localeKey] = locale;
+  }
 }

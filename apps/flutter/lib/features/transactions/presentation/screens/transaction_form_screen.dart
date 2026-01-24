@@ -17,6 +17,7 @@ import "package:ownfinances/features/templates/domain/entities/transaction_templ
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final String? initialType;
@@ -277,7 +278,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           if (error != null) {
             showStandardSnackbar(context, error);
           } else {
-            showStandardSnackbar(context, "Compra registrada na fatura!");
+            showStandardSnackbar(
+              context,
+              AppLocalizations.of(context)!.transactionFormSuccessSave,
+            ); // Generic success message or keep specific? "Compra registrada"
             _handleBack();
           }
         }
@@ -468,27 +472,31 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: const Color(0xFF111C2F), // Surface 1
-            title: const Text(
-              "Alterar contas?",
-              style: TextStyle(color: Colors.white),
+            title: Text(
+              AppLocalizations.of(context)!.transactionFormChangeAccountTitle,
+              style: const TextStyle(color: Colors.white),
             ),
-            content: const Text(
-              "Isso pode mudar a moeda e limpar os valores informados.",
-              style: TextStyle(color: Color.fromRGBO(255, 255, 255, 0.65)),
+            content: Text(
+              AppLocalizations.of(context)!.transactionFormChangeAccountDesc,
+              style: const TextStyle(
+                color: Color.fromRGBO(255, 255, 255, 0.65),
+              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text(
-                  "Cancelar",
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  AppLocalizations.of(context)!.commonCancel,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  "Alterar e limpar",
-                  style: TextStyle(color: AppColors.primary),
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  )!.transactionFormChangeAccountConfirm,
+                  style: const TextStyle(color: AppColors.primary),
                 ),
               ),
             ],
@@ -521,17 +529,19 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: const Color(0xFF111C2F),
-            title: const Text(
-              "Confirmar conta fixa",
-              style: TextStyle(color: Colors.white),
+            title: Text(
+              AppLocalizations.of(context)!.transactionFormRecurringConfirm,
+              style: const TextStyle(color: Colors.white),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Você está criando uma conta fixa:",
-                  style: TextStyle(color: Colors.white70),
+                Text(
+                  AppLocalizations.of(
+                    context,
+                  )!.recurringNewRule, // Or similar "You are creating a recurring rule"
+                  style: const TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -543,25 +553,28 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  "A app só registra. Não é cobrança automática.",
-                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                Text(
+                  AppLocalizations.of(context)!.recurringAppDescription,
+                  style: const TextStyle(
+                    color: AppColors.textTertiary,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text(
-                  "Voltar",
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  AppLocalizations.of(context)!.commonBack,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  "Confirmar",
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.commonConfirm,
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -582,23 +595,23 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: const Color(0xFF111C2F),
-            title: const Text(
-              "Confirmar conversão",
-              style: TextStyle(color: Colors.white),
+            title: Text(
+              AppLocalizations.of(context)!.transactionFormConfirmConversion,
+              style: const TextStyle(color: Colors.white),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildConfirmationRow(
-                  "Você envia:",
+                  AppLocalizations.of(context)!.transactionFormLabelYouSend,
                   "${from.currency} ${formatMoney(_amount, withSymbol: false)}",
                   "${from.name} (${from.currency})",
                   AppColors.warning,
                 ),
                 const SizedBox(height: 16),
                 _buildConfirmationRow(
-                  "Você recebe:",
+                  AppLocalizations.of(context)!.transactionFormLabelYouReceive,
                   "${to.currency} ${formatMoney(_destinationAmount ?? 0, withSymbol: false)}",
                   "${to.name} (${to.currency})",
                   AppColors.success,
@@ -606,7 +619,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 if (_amount > 0 && (_destinationAmount ?? 0) > 0) ...[
                   const SizedBox(height: 16),
                   Text(
-                    "Taxa efetiva: 1 ${from.currency} ≈ ${to.currency} ${((_destinationAmount ?? 0) / _amount).toStringAsFixed(2)}",
+                    AppLocalizations.of(context)!.transactionFormEffectiveRate(
+                      from.currency,
+                      to.currency,
+                      ((_destinationAmount ?? 0) / _amount).toStringAsFixed(2),
+                    ),
                     style: const TextStyle(
                       color: AppColors.textTertiary,
                       fontSize: 12,
@@ -618,16 +635,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text(
-                  "Voltar",
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  AppLocalizations.of(context)!.commonBack,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  "Confirmar",
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.commonConfirm,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
@@ -734,9 +751,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       ),
       child: Row(
         children: [
-          _buildTypeBtn("Despesa", "expense", AppColors.warning),
-          _buildTypeBtn("Receita", "income", AppColors.success),
-          _buildTypeBtn("Transf.", "transfer", AppColors.info),
+          _buildTypeBtn(
+            AppLocalizations.of(context)!.transactionFormTypeExpense,
+            "expense",
+            AppColors.warning,
+          ),
+          _buildTypeBtn(
+            AppLocalizations.of(context)!.transactionFormTypeIncome,
+            "income",
+            AppColors.success,
+          ),
+          _buildTypeBtn(
+            AppLocalizations.of(context)!.transactionFormTypeTransfer,
+            "transfer",
+            AppColors.info,
+          ),
         ],
       ),
     );

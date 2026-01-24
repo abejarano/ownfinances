@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/features/recurring/application/controllers/recurring_controller.dart';
 import 'package:ownfinances/features/transactions/application/controllers/pending_transactions_controller.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class RecurrenceSummaryCard extends StatefulWidget {
   const RecurrenceSummaryCard({super.key});
@@ -80,7 +81,9 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Faltam $count lançamentos para gerar",
+                    AppLocalizations.of(
+                      context,
+                    )!.recurringMissingGenerated(count),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors
@@ -101,14 +104,18 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
                       foregroundColor: AppColors.bg0, // Contrast text
                       elevation: 0,
                     ),
-                    child: const Text("Planejar mês"),
+                    child: Text(
+                      AppLocalizations.of(context)!.recurringPlanMonth,
+                    ),
                   ),
                 ),
                 if (pendingCount > 0) ...[
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: () => context.push('/transactions/pending'),
-                    child: const Text("Ver pendentes"),
+                    child: Text(
+                      AppLocalizations.of(context)!.recurringViewPending,
+                    ),
                   ),
                 ],
               ],
@@ -129,9 +136,9 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
           children: [
             const Icon(Icons.check_circle, color: AppColors.success, size: 20),
             const SizedBox(width: 8),
-            const Text(
-              "Tudo pronto ✅",
-              style: TextStyle(
+            Text(
+              "${AppLocalizations.of(context)!.onboardingAllSet} ✅",
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.success,
               ),
@@ -144,7 +151,7 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
                 minimumSize: const Size(0, 0),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text("Ver regras"),
+              child: Text(AppLocalizations.of(context)!.recurringViewRules),
             ),
           ],
         ),
@@ -160,7 +167,7 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
         child: Column(
           children: [
             Text(
-              "Você ainda não tem recorrências",
+              AppLocalizations.of(context)!.recurringNoRulesYet,
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
@@ -168,7 +175,7 @@ class _RecurrenceSummaryCardState extends State<RecurrenceSummaryCard> {
             const SizedBox(height: 8),
             TextButton.icon(
               icon: const Icon(Icons.add),
-              label: const Text("Criar primeira"),
+              label: Text(AppLocalizations.of(context)!.recurringCreateFirst),
               onPressed: () => context.push('/recurring/new'),
             ),
           ],

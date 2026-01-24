@@ -12,6 +12,7 @@ import "package:ownfinances/features/dashboard/presentation/widgets/debts_sectio
 import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_quick_actions.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -20,6 +21,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<DashboardController>();
     final state = controller.state;
+    final l10n = AppLocalizations.of(context)!;
 
     return RefreshIndicator(
       onRefresh: controller.load,
@@ -53,9 +55,9 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Contas principais",
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardMainAccounts,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -65,7 +67,7 @@ class DashboardScreen extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        "As que você mais usa no dia a dia",
+                        l10n.dashboardMainAccountsDesc,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.65),
                           fontSize: 12,
@@ -78,17 +80,17 @@ class DashboardScreen extends StatelessWidget {
                             context: context,
                             builder: (context) => AlertDialog(
                               backgroundColor: AppColors.surface3,
-                              title: const Text(
-                                "Contas principais",
-                                style: TextStyle(
+                              title: Text(
+                                l10n.dashboardMainAccountsInfoTitle,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              content: const Text(
-                                "Mostramos as contas com mais movimentos neste mês.",
-                                style: TextStyle(
+                              content: Text(
+                                l10n.dashboardMainAccountsInfoBody,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
                                 ),

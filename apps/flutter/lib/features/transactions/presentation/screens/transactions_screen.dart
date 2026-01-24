@@ -15,6 +15,7 @@ import "package:ownfinances/features/transactions/domain/entities/transaction.da
 
 // Import the new widget
 import "package:ownfinances/features/transactions/presentation/widgets/transaction_list_item.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -134,21 +135,21 @@ class TransactionsScreen extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           _FilterChip(
-            label: "Conta",
+            label: AppLocalizations.of(context)!.transactionsLabelAccount,
             isActive:
                 filters.accountId != null && filters.accountId!.isNotEmpty,
             onTap: () => _showAccountPicker(context, filters),
           ),
           const SizedBox(width: AppSpacing.sm),
           _FilterChip(
-            label: "Categoria",
+            label: AppLocalizations.of(context)!.transactionsLabelCategory,
             isActive:
                 filters.categoryId != null && filters.categoryId!.isNotEmpty,
             onTap: () => _showCategoryPicker(context, filters),
           ),
           const SizedBox(width: AppSpacing.sm),
           _FilterChip(
-            label: "Status",
+            label: AppLocalizations.of(context)!.transactionsLabelStatus,
             isActive: filters.status != null,
             onTap: () => _showStatusPicker(context, filters),
           ),
@@ -230,9 +231,9 @@ class TransactionsScreen extends StatelessWidget {
                 Icons.arrow_downward,
                 color: AppColors.warning,
               ),
-              title: const Text(
-                "Despesa",
-                style: TextStyle(color: AppColors.textPrimary),
+              title: Text(
+                AppLocalizations.of(context)!.transactionTypeExpense,
+                style: const TextStyle(color: AppColors.textPrimary),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -241,9 +242,9 @@ class TransactionsScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.arrow_upward, color: AppColors.success),
-              title: const Text(
-                "Receita",
-                style: TextStyle(color: AppColors.textPrimary),
+              title: Text(
+                AppLocalizations.of(context)!.transactionTypeIncome,
+                style: const TextStyle(color: AppColors.textPrimary),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -253,7 +254,7 @@ class TransactionsScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.swap_horiz, color: AppColors.info),
               title: const Text(
-                "Transferência",
+                "Transferência", // TODO: Add key for "Transfer"
                 style: TextStyle(color: AppColors.textPrimary),
               ),
               onTap: () {
@@ -338,7 +339,9 @@ class TransactionsScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            title: const Text("Todas as contas"),
+            title: Text(
+              AppLocalizations.of(context)!.transactionsFilterAllAccounts,
+            ),
             onTap: () {
               context.read<TransactionsController>().setFilters(
                 filters.copyWith(accountId: ""), // Clear
@@ -385,7 +388,9 @@ class TransactionsScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            title: const Text("Todas as categorias"),
+            title: Text(
+              AppLocalizations.of(context)!.transactionsFilterAllCategories,
+            ),
             onTap: () {
               context.read<TransactionsController>().setFilters(
                 filters.copyWith(categoryId: ""), // Clear
@@ -430,7 +435,9 @@ class TransactionsScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            title: const Text("Todos"),
+            title: Text(
+              AppLocalizations.of(context)!.transactionsFilterAllStatus,
+            ),
             onTap: () {
               context.read<TransactionsController>().setFilters(
                 filters.copyWith(status: null),
@@ -439,7 +446,9 @@ class TransactionsScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text("Pendente"),
+            title: Text(
+              AppLocalizations.of(context)!.transactionsFilterPending,
+            ),
             onTap: () {
               context.read<TransactionsController>().setFilters(
                 filters.copyWith(status: "pending"),
@@ -448,7 +457,9 @@ class TransactionsScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            title: const Text("Confirmado"),
+            title: Text(
+              AppLocalizations.of(context)!.transactionsFilterConfirmed,
+            ),
             onTap: () {
               context.read<TransactionsController>().setFilters(
                 filters.copyWith(status: "cleared"),
@@ -465,18 +476,18 @@ class TransactionsScreen extends StatelessWidget {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text("Excluir transação?"),
-            content: const Text("Essa ação não pode ser desfeita."),
+            title: Text(AppLocalizations.of(context)!.transactionsDeleteTitle),
+            content: Text(AppLocalizations.of(context)!.transactionsDeleteDesc),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancelar"),
+                child: Text(AppLocalizations.of(context)!.commonCancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  "Excluir",
-                  style: TextStyle(color: AppColors.danger),
+                child: Text(
+                  AppLocalizations.of(context)!.commonDelete,
+                  style: const TextStyle(color: AppColors.danger),
                 ),
               ),
             ],

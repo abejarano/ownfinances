@@ -14,6 +14,7 @@ import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/core/presentation/components/money_text.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class DebtsScreen extends StatelessWidget {
   const DebtsScreen({super.key});
@@ -24,7 +25,10 @@ class DebtsScreen extends StatelessWidget {
     final state = context.watch<DebtsController>().state;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Dividas"), leading: const BackButton()),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.debtsTitle),
+        leading: const BackButton(),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -33,7 +37,7 @@ class DebtsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Passivos ativos",
+                    AppLocalizations.of(context)!.debtsActiveLiabilities,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -63,19 +67,31 @@ class DebtsScreen extends StatelessWidget {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text("Tudo pago ✅"),
-                              content: const Text(
-                                "Você não tem saldo a pagar neste cartão. Se pagar agora, este valor vira crédito para abater compras futuras.",
+                              title: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.debtsDialogPaidTitle,
+                              ),
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.debtsDialogPaidBody,
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () =>
                                       Navigator.pop(context, false),
-                                  child: const Text("Cancelar"),
+                                  child: Text(
+                                    AppLocalizations.of(context)!.commonCancel,
+                                  ),
                                 ),
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: const Text("Pagar mesmo assim"),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.debtsDialogPaidAction,
+                                  ),
                                 ),
                               ],
                             ),
@@ -88,19 +104,31 @@ class DebtsScreen extends StatelessWidget {
                           final shouldLink = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text("Conta não vinculada"),
-                              content: const Text(
-                                "Para pagar a fatura, você precisa vincular uma conta do tipo 'Cartão de Crédito' a esta dívida.",
+                              title: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.debtsDialogLinkTitle,
+                              ),
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.debtsDialogLinkBody,
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () =>
                                       Navigator.pop(context, false),
-                                  child: const Text("Cancelar"),
+                                  child: Text(
+                                    AppLocalizations.of(context)!.commonCancel,
+                                  ),
                                 ),
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  child: const Text("Vincular agora"),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.debtsDialogLinkAction,
+                                  ),
                                 ),
                               ],
                             ),
@@ -215,16 +243,22 @@ class DebtsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item == null ? "Nova divida" : "Editar divida",
+                      item == null
+                          ? AppLocalizations.of(context)!.debtsNew
+                          : AppLocalizations.of(context)!.debtsEdit,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: "Nome"),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.debtsName,
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return "Nome obrigatório";
+                          return AppLocalizations.of(
+                            context,
+                          )!.commonNameRequired;
                         }
                         return null;
                       },
@@ -232,17 +266,28 @@ class DebtsScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
                       value: type,
-                      decoration: const InputDecoration(labelText: "Tipo"),
-                      items: const [
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.debtsType,
+                      ),
+                      items: [
                         DropdownMenuItem(
                           value: "credit_card",
-                          child: Text("Cartao de credito"),
+                          child: Text(
+                            AppLocalizations.of(context)!.debtsTypeCreditCard,
+                          ),
                         ),
                         DropdownMenuItem(
                           value: "loan",
-                          child: Text("Emprestimo"),
+                          child: Text(
+                            AppLocalizations.of(context)!.debtsTypeLoan,
+                          ),
                         ),
-                        DropdownMenuItem(value: "other", child: Text("Outro")),
+                        DropdownMenuItem(
+                          value: "other",
+                          child: Text(
+                            AppLocalizations.of(context)!.debtsTypeOther,
+                          ),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value != null) {
@@ -258,16 +303,22 @@ class DebtsScreen extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "Você não tem contas do tipo 'Cartão de Crédito'.",
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.debtsNoCreditCardAccount,
+                              style: const TextStyle(
                                 color: AppColors.warning,
                                 fontSize: 13,
                               ),
                             ),
                             TextButton.icon(
                               icon: const Icon(Icons.add),
-                              label: const Text("Criar conta Cartão agora"),
+                              label: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.debtsCreateCardAccount,
+                              ),
                               onPressed: () => _createQuickAccount(
                                 context,
                                 "credit_card",
@@ -278,7 +329,9 @@ class DebtsScreen extends StatelessWidget {
                         )
                       else
                         AccountPicker(
-                          label: "Conta do cartão (Onde caem as compras)",
+                          label: AppLocalizations.of(
+                            context,
+                          )!.debtsLinkedAccount,
                           items: creditCardAccounts,
                           value: linkedAccountId,
                           onSelected: (item) =>
@@ -290,23 +343,30 @@ class DebtsScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     if (item == null)
                       MoneyInput(
-                        label: "Saldo atual (opcional)",
+                        label: AppLocalizations.of(
+                          context,
+                        )!.debtsInitialBalanceCurrent,
                         controller: initialBalanceController,
-                        helperText:
-                            "Se você já tem saldo a pagar neste cartão hoje, informe aqui. Se não, deixe 0.",
+                        helperText: AppLocalizations.of(
+                          context,
+                        )!.debtsInitialBalanceHelper,
                       )
                     else
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           MoneyInput(
-                            label: "Saldo inicial",
+                            label: AppLocalizations.of(
+                              context,
+                            )!.debtsInitialBalance,
                             controller: initialBalanceController,
                             enabled: false,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            "Saldo inicial não pode ser alterado. Ajuste registrando uma compra/pagamento.",
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.debtsInitialBalanceWarning,
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.muted,
@@ -319,9 +379,9 @@ class DebtsScreen extends StatelessWidget {
                     // Paying Account (Optional)
                     const SizedBox(height: AppSpacing.md),
                     if (payingAccounts.isEmpty)
-                      const Text(
-                        "Sem contas bancárias/dinheiro para pagar a fatura.",
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.debtsNoPayingAccount,
+                        style: const TextStyle(
                           color: AppColors.textTertiary,
                           fontSize: 12,
                         ),
@@ -331,15 +391,19 @@ class DebtsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           AccountPicker(
-                            label: "Conta pagadora padrão (Opcional)",
+                            label: AppLocalizations.of(
+                              context,
+                            )!.debtsPayingAccount,
                             items: payingAccounts,
                             value: paymentAccountId,
                             onSelected: (item) =>
                                 setState(() => paymentAccountId = item.id),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            "Conta sugerida quando você registrar o pagamento da fatura.",
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.debtsPayingAccountHelper,
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.muted,
@@ -357,8 +421,10 @@ class DebtsScreen extends StatelessWidget {
                         Expanded(
                           child: TextFormField(
                             controller: currencyController,
-                            decoration: const InputDecoration(
-                              labelText: "Moeda",
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(
+                                context,
+                              )!.accountsLabelCurrency,
                             ),
                           ),
                         ),
@@ -367,9 +433,13 @@ class DebtsScreen extends StatelessWidget {
                           child: TextFormField(
                             controller: dueDayController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: "Dia de vencimento",
-                              hintText: "Ex: 10",
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(
+                                context,
+                              )!.debtsDueDate,
+                              hintText: AppLocalizations.of(
+                                context,
+                              )!.debtsDueDateHint,
                             ),
                             validator: (value) {
                               final dueDay = int.tryParse(value?.trim() ?? "");
@@ -377,14 +447,18 @@ class DebtsScreen extends StatelessWidget {
                                 if (dueDay == null ||
                                     dueDay < 1 ||
                                     dueDay > 31) {
-                                  return "Entre 1 e 31";
+                                  return AppLocalizations.of(
+                                    context,
+                                  )!.debtsDueDateError;
                                 }
                               } else if (value != null &&
                                   value.isNotEmpty &&
                                   (dueDay == null ||
                                       dueDay < 1 ||
                                       dueDay > 31)) {
-                                return "Entre 1 e 31";
+                                return AppLocalizations.of(
+                                  context,
+                                )!.debtsDueDateError;
                               }
                               return null;
                             },
@@ -396,21 +470,25 @@ class DebtsScreen extends StatelessWidget {
 
                     // --- ADVANCED SECTION ---
                     ExpansionTile(
-                      title: const Text("Avançado (opcional)"),
+                      title: Text(AppLocalizations.of(context)!.debtsAdvanced),
                       tilePadding: EdgeInsets.zero,
                       initiallyExpanded: false,
                       children: [
                         const SizedBox(height: AppSpacing.md),
                         MoneyInput(
-                          label: "Minimo a pagar",
+                          label: AppLocalizations.of(
+                            context,
+                          )!.debtsMinimumPayment,
                           controller: minimumPaymentController,
                         ),
                         const SizedBox(height: AppSpacing.md),
                         TextField(
                           controller: interestController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: "Taxa anual (%)",
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.debtsInterestRate,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.md),
@@ -419,13 +497,13 @@ class DebtsScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text("Ativa"),
+                      title: Text(AppLocalizations.of(context)!.commonActive),
                       value: isActive,
                       onChanged: (value) => setState(() => isActive = value),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     PrimaryButton(
-                      label: "Salvar",
+                      label: AppLocalizations.of(context)!.commonSave,
                       isLoading: isSubmitting,
                       onPressed: isSubmitting
                           ? null
@@ -527,7 +605,7 @@ class DebtsScreen extends StatelessWidget {
     if (debt.linkedAccountId == null) {
       showStandardSnackbar(
         context,
-        "Esta dívida não tem conta vinculada. Edite a dívida para vincular uma conta do tipo Cartão.",
+        AppLocalizations.of(context)!.debtsErrorNoLinkedAccount,
       );
       return;
     }
@@ -561,13 +639,15 @@ class DebtsScreen extends StatelessWidget {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Criar conta rápida"),
+        title: Text(AppLocalizations.of(context)!.debtsQuickAccountTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: "Nome da conta"),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.debtsQuickAccountName,
+              ),
               autofocus: true,
             ),
           ],
@@ -575,11 +655,11 @@ class DebtsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancelar"),
+            child: Text(AppLocalizations.of(context)!.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Salvar"),
+            child: Text(AppLocalizations.of(context)!.commonSave),
           ),
         ],
       ),
@@ -630,7 +710,9 @@ class _DebtCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 1. Due Date Logic
-    final dueLabel = debt.dueDay != null ? "Vence dia ${debt.dueDay}" : null;
+    final dueLabel = debt.dueDay != null
+        ? AppLocalizations.of(context)!.debtsDueDayLabel(debt.dueDay!)
+        : null;
 
     // 2. Main Number Logic
     Widget balanceWidget;
@@ -639,7 +721,7 @@ class _DebtCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Fatura atual:",
+            AppLocalizations.of(context)!.debtsCurrentBill,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
@@ -657,7 +739,7 @@ class _DebtCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Crédito disponível:",
+            AppLocalizations.of(context)!.debtsAvailableCredit,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.textTertiary),
@@ -672,7 +754,7 @@ class _DebtCard extends StatelessWidget {
       );
     } else {
       balanceWidget = Text(
-        "Tudo pago 🎉",
+        AppLocalizations.of(context)!.debtsAllPaid,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
           color: AppColors.success,
           fontWeight: FontWeight.w500,
@@ -727,24 +809,24 @@ class _DebtCard extends StatelessWidget {
                     if (value == "delete") onDelete();
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: "edit",
                       child: Row(
                         children: [
-                          Icon(Icons.edit, size: 16),
-                          SizedBox(width: 8),
-                          Text("Editar"),
+                          const Icon(Icons.edit, size: 16),
+                          const SizedBox(width: 8),
+                          Text(AppLocalizations.of(context)!.commonEdit),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: "delete",
                       child: Row(
                         children: [
                           Icon(Icons.delete, size: 16, color: AppColors.danger),
                           SizedBox(width: 8),
                           Text(
-                            "Excluir",
+                            AppLocalizations.of(context)!.commonDelete,
                             style: TextStyle(color: AppColors.danger),
                           ),
                         ],
@@ -766,14 +848,14 @@ class _DebtCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: SecondaryButton(
-                    label: "Registrar Compra",
+                    label: AppLocalizations.of(context)!.debtsActionCharge,
                     onPressed: onCharge,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: PrimaryButton(
-                    label: "Pagar Fatura",
+                    label: AppLocalizations.of(context)!.debtsActionPay,
                     icon: Icons.check,
                     onPressed: onPayment,
                   ),

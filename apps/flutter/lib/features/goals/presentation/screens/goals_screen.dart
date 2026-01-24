@@ -10,6 +10,7 @@ import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/goals/application/controllers/goals_controller.dart";
 import "package:ownfinances/features/goals/domain/entities/goal.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 import "package:ownfinances/features/goals/domain/entities/goal_projection.dart";
 
 class GoalsScreen extends StatelessWidget {
@@ -18,7 +19,7 @@ class GoalsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Metas")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.goalsTitle)),
       body: const GoalsView(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => GoalsView.openWizard(context),
@@ -59,7 +60,7 @@ class GoalsView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  "Suas metas",
+                  AppLocalizations.of(context)!.goalsMyGoals,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -69,7 +70,7 @@ class GoalsView extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               PrimaryButton(
-                label: "Nova meta",
+                label: AppLocalizations.of(context)!.goalsNew,
                 fullWidth: false,
                 onPressed: () => _openGoalWizard(context, controller),
               ),
@@ -159,42 +160,46 @@ class GoalsView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    goal == null ? "Nova meta" : "Editar meta",
+                    goal == null
+                        ? AppLocalizations.of(context)!.goalsNew
+                        : AppLocalizations.of(context)!.goalsEdit,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   if (step == 0) ...[
                     Text(
-                      "Criar meta",
+                      AppLocalizations.of(context)!.goalsCreate,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextField(
                       controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: "Nome da meta",
-                        hintText: "Ex: Fundo de emergência",
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.goalsNameLabel,
+                        hintText: AppLocalizations.of(context)!.goalsNameHint,
                       ),
                       autofocus: goal == null,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     MoneyInput(
-                      label: "Valor alvo",
+                      label: AppLocalizations.of(context)!.goalsTargetAmount,
                       controller: targetController,
                     ),
                   ],
                   if (step == 1) ...[
                     Text(
-                      "Detalhes (opcional)",
+                      AppLocalizations.of(context)!.goalsDetailsOptional,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text("Data alvo (opcional)"),
+                      title: Text(
+                        AppLocalizations.of(context)!.goalsTargetDate,
+                      ),
                       subtitle: Text(
                         targetDate == null
-                            ? "Sem data"
+                            ? AppLocalizations.of(context)!.goalsNoDate
                             : formatDate(targetDate!),
                       ),
                       trailing: const Icon(Icons.calendar_today),
@@ -213,18 +218,22 @@ class GoalsView extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     if (suggested != null)
                       Text(
-                        "Sugerido: ${formatMoney(suggested)} por mes",
+                        AppLocalizations.of(
+                          context,
+                        )!.goalsSuggestedMonthly(formatMoney(suggested)),
                         style: const TextStyle(color: AppColors.muted),
                       ),
                     const SizedBox(height: AppSpacing.md),
                     MoneyInput(
-                      label: "Aporte mensal (opcional)",
+                      label: AppLocalizations.of(
+                        context,
+                      )!.goalsMonthlyContribution,
                       controller: monthlyController,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     if (accountItems.isNotEmpty)
                       AccountPicker(
-                        label: "Conta vinculada (opcional)",
+                        label: AppLocalizations.of(context)!.goalsLinkedAccount,
                         items: accountItems,
                         value: accountId,
                         onSelected: (item) =>
@@ -236,7 +245,7 @@ class GoalsView extends StatelessWidget {
                     children: [
                       Expanded(
                         child: SecondaryButton(
-                          label: "Cancelar",
+                          label: AppLocalizations.of(context)!.commonCancel,
                           onPressed: () => Navigator.of(context).pop(false),
                         ),
                       ),
@@ -244,14 +253,16 @@ class GoalsView extends StatelessWidget {
                       if (step > 0)
                         Expanded(
                           child: SecondaryButton(
-                            label: "Voltar",
+                            label: AppLocalizations.of(context)!.commonBack,
                             onPressed: () => setState(() => step -= 1),
                           ),
                         ),
                       if (step > 0) const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: PrimaryButton(
-                          label: step == 0 ? "Continuar" : "Salvar",
+                          label: step == 0
+                              ? AppLocalizations.of(context)!.commonContinue
+                              : AppLocalizations.of(context)!.commonSave,
                           onPressed: isSaving
                               ? null
                               : () async {
@@ -267,14 +278,18 @@ class GoalsView extends StatelessWidget {
                                   if (name.isEmpty) {
                                     showStandardSnackbar(
                                       context,
-                                      "Falta o nome",
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.goalsErrorName,
                                     );
                                     return;
                                   }
                                   if (targetAmount <= 0) {
                                     showStandardSnackbar(
                                       context,
-                                      "O valor deve ser maior que 0",
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.goalsErrorAmount,
                                     );
                                     return;
                                   }
@@ -391,17 +406,22 @@ class GoalsView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Registrar aporte",
+                    AppLocalizations.of(context)!.goalsContributionTitle,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  MoneyInput(label: "Valor", controller: amountController),
+                  MoneyInput(
+                    label: AppLocalizations.of(context)!.goalsContributionValue,
+                    controller: amountController,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   if (accountItems.isEmpty)
-                    const Text("Voce nao tem contas ativas.")
+                    Text(AppLocalizations.of(context)!.goalsNoAccounts)
                   else
                     AccountPicker(
-                      label: "Conta",
+                      label: AppLocalizations.of(
+                        context,
+                      )!.transactionsLabelAccount,
                       items: accountItems,
                       value: accountId,
                       onSelected: (item) => setState(() => accountId = item.id),
@@ -409,7 +429,7 @@ class GoalsView extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text("Fecha"),
+                    title: Text(AppLocalizations.of(context)!.goalsDate),
                     subtitle: Text(formatDate(date)),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
@@ -426,13 +446,15 @@ class GoalsView extends StatelessWidget {
                   ),
                   TextField(
                     controller: noteController,
-                    decoration: const InputDecoration(
-                      labelText: "Nota (opcional)",
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.goalsNoteOptional,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
-                    label: "Salvar",
+                    label: AppLocalizations.of(context)!.commonSave,
                     onPressed: accountItems.isEmpty
                         ? null
                         : () => Navigator.of(context).pop(true),
@@ -450,7 +472,10 @@ class GoalsView extends StatelessWidget {
     final amount = parseMoney(amountController.text.trim());
     if (amount <= 0) {
       if (context.mounted) {
-        showStandardSnackbar(context, "O valor deve ser maior que 0");
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(context)!.goalsErrorAmount,
+        );
       }
       return;
     }
@@ -488,7 +513,7 @@ class GoalsView extends StatelessWidget {
       if (context.mounted) {
         showStandardSnackbar(
           context,
-          "Configure um aporte mensal para usar aporte rápido",
+          AppLocalizations.of(context)!.goalsQuickAddConfigError,
         );
       }
       return;
@@ -504,7 +529,7 @@ class GoalsView extends StatelessWidget {
       if (context.mounted) {
         showStandardSnackbar(
           context,
-          "Configure uma conta para usar aporte rápido",
+          AppLocalizations.of(context)!.goalsAccountConfigError,
         );
       }
       return;
@@ -524,7 +549,9 @@ class GoalsView extends StatelessWidget {
     } else if (context.mounted) {
       showStandardSnackbar(
         context,
-        "Aporte de ${formatMoney(suggestedAmount)} registrado",
+        AppLocalizations.of(
+          context,
+        )!.goalsContributionSuccess(formatMoney(suggestedAmount)),
       );
     }
   }
@@ -547,7 +574,7 @@ class _GoalCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  Widget _buildProjectionText() {
+  Widget _buildProjectionText(BuildContext context) {
     final monthlyContribution =
         goal.monthlyContribution ?? projection?.monthlyContributionSuggested;
     final targetDate = goal.targetDate ?? projection?.targetDateEstimated;
@@ -557,31 +584,44 @@ class _GoalCard extends StatelessWidget {
         targetDate != null) {
       // Caso ideal: tiene aporte mensal y fecha alvo
       return Text(
-        "Se guardar ${formatMoney(monthlyContribution)}/mês, chega em ${formatDate(targetDate)}.",
+        AppLocalizations.of(context)!.goalsProjectionIdeal(
+          formatMoney(monthlyContribution),
+          formatDate(targetDate),
+        ),
         style: const TextStyle(color: AppColors.muted),
       );
     } else if (monthlyContribution != null && monthlyContribution > 0) {
       // Tiene aporte mensal pero no fecha alvo
       if (projection?.targetDateEstimated != null) {
         return Text(
-          "Guardando ${formatMoney(monthlyContribution)}/mês, chega em ${formatDate(projection!.targetDateEstimated!)}.",
+          AppLocalizations.of(context)!.goalsProjectionOnTrack(
+            formatMoney(monthlyContribution),
+            formatDate(projection!.targetDateEstimated!),
+          ),
           style: const TextStyle(color: AppColors.muted),
         );
       }
       return Text(
-        "Guardando ${formatMoney(monthlyContribution)}/mês",
+        AppLocalizations.of(
+          context,
+        )!.goalsProjectionOnTrackNoDate(formatMoney(monthlyContribution)),
         style: const TextStyle(color: AppColors.muted),
       );
     } else if (targetDate != null) {
       // Tiene fecha alvo pero no aporte mensal
       if (projection?.monthlyContributionSuggested != null) {
         return Text(
-          "Para chegar em ${formatDate(targetDate)}, precisa guardar ${formatMoney(projection!.monthlyContributionSuggested!)}/mês.",
+          AppLocalizations.of(context)!.goalsProjectionOffTrack(
+            formatDate(targetDate),
+            formatMoney(projection!.monthlyContributionSuggested!),
+          ),
           style: const TextStyle(color: AppColors.muted),
         );
       }
       return Text(
-        "Meta ${formatDate(targetDate)}",
+        AppLocalizations.of(
+          context,
+        )!.goalsProjectionDateOnly(formatDate(targetDate)),
         style: const TextStyle(color: AppColors.muted),
       );
     }
@@ -644,10 +684,12 @@ class _GoalCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              "Restante ${formatMoney(remaining)}",
+              AppLocalizations.of(
+                context,
+              )!.goalsRemaining(formatMoney(remaining)),
               style: const TextStyle(color: AppColors.muted),
             ),
-            _buildProjectionText(),
+            _buildProjectionText(context),
             const SizedBox(height: AppSpacing.sm),
             if (onQuickAdd != null &&
                 (goal.monthlyContribution != null ||
@@ -656,14 +698,14 @@ class _GoalCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: PrimaryButton(
-                      label: "Aporte rápido",
+                      label: AppLocalizations.of(context)!.goalsQuickAdd,
                       onPressed: onQuickAdd,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: SecondaryButton(
-                      label: "Personalizar",
+                      label: AppLocalizations.of(context)!.goalsCustomize,
                       onPressed: onAdd,
                     ),
                   ),
@@ -674,14 +716,16 @@ class _GoalCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: PrimaryButton(
-                      label: "Registrar aporte",
+                      label: AppLocalizations.of(
+                        context,
+                      )!.goalsContributionTitle,
                       onPressed: onAdd,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: SecondaryButton(
-                      label: "Ver detalhes",
+                      label: AppLocalizations.of(context)!.goalsViewDetails,
                       onPressed: onEdit,
                     ),
                   ),

@@ -5,11 +5,13 @@ class SettingsController extends ChangeNotifier {
   final SettingsStorage _storage;
 
   String _primaryCurrency = "BRL";
+  Locale? _locale;
   bool _isLoading = true;
 
   SettingsController(this._storage);
 
   String get primaryCurrency => _primaryCurrency;
+  Locale? get locale => _locale;
   bool get isLoading => _isLoading;
 
   Future<void> load() async {
@@ -17,9 +19,14 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final stored = await _storage.readPrimaryCurrency();
-      if (stored != null && stored.isNotEmpty) {
-        _primaryCurrency = stored;
+      final storedCurrency = await _storage.readPrimaryCurrency();
+      if (storedCurrency != null && storedCurrency.isNotEmpty) {
+        _primaryCurrency = storedCurrency;
+      }
+
+      final storedLocale = await _storage.readLocale();
+      if (storedLocale != null && storedLocale.isNotEmpty) {
+        _locale = Locale(storedLocale);
       }
     } catch (e) {
       debugPrint("Error loading settings: $e");
@@ -36,5 +43,15 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
 
     await _storage.savePrimaryCurrency(currency);
+  }
+
+  Future<void> setLocale(Locale locale) async {
+    if (_locale == locale) return;
+
+    _locale = locale;
+    debugPrint("SettingsController: setLocale to ${_locale?.languageCode}");
+    notifyListeners();
+
+    await _storage.saveLocale(locale.languageCode);
   }
 }

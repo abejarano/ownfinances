@@ -9,6 +9,7 @@ import 'package:ownfinances/features/recurring/domain/entities/recurring_rule.da
 import 'package:ownfinances/features/categories/application/controllers/categories_controller.dart';
 
 import 'package:ownfinances/core/presentation/components/month_picker_dialog.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class RecurringPlanScreen extends StatefulWidget {
   const RecurringPlanScreen({super.key});
@@ -71,10 +72,11 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
   Future<void> _run() async {
     final controller = context.read<RecurringController>();
     final result = await controller.run('monthly', _selectedDate);
+    final l10n = AppLocalizations.of(context)!;
 
     if (result != null && mounted) {
       final count = result['generated'] ?? 0;
-      showStandardSnackbar(context, "Gerados $count lançamentos!");
+      showStandardSnackbar(context, l10n.recurringGeneratedSuccess(count));
 
       // Navigate to pending or refresh?
       // Requirement: Optional "Ir para confirmar" -> pending transactions
@@ -82,19 +84,19 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text("Lançamentos gerados"),
-            content: Text("$count lançamentos foram criados como pendentes."),
+            title: Text(l10n.recurringGeneratedEntries),
+            content: Text(l10n.recurringGeneratedDialogBody(count)),
             actions: [
               TextButton(
                 onPressed: () => context.pop(),
-                child: const Text("Ficar aqui"),
+                child: Text(l10n.commonStay),
               ),
               TextButton(
                 onPressed: () {
                   context.pop(); // close dialog
                   context.push('/transacoes/pendentes'); // Assumed route
                 },
-                child: const Text("Ir para confirmar"),
+                child: Text(l10n.recurringGoToConfirm),
               ),
             ],
           ),
@@ -107,7 +109,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
       if (mounted) {
         showStandardSnackbar(
           context,
-          controller.state.error ?? "Erro ao gerar",
+          controller.state.error ?? l10n.commonErrorGenerating,
         );
       }
     }
@@ -118,6 +120,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
     final state = context.watch<RecurringController>().state;
     final loading = state.isLoading;
     final items = state.previewItems;
+    final l10n = AppLocalizations.of(context)!;
 
     // Calc summary
     final toGenerate = items.where((i) => i.status == 'new').length;
@@ -134,7 +137,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Planejar Mês"),
+        title: Text(l10n.recurringPlanMonth),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
@@ -145,7 +148,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
       body: Column(
         children: [
           _buildMonthSelector(),
-          _buildSummary(toGenerate, generated, ignored),
+          _buildSummary(l10n, toGenerate, generated, ignored),
           if (state.error != null)
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -158,9 +161,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
             child: loading
                 ? const Center(child: CircularProgressIndicator())
                 : items.isEmpty
-                ? const Center(
-                    child: Text("Nenhuma recorrência prevista para este mês."),
-                  )
+                ? Center(child: Text(l10n.recurringNonePlanned))
                 : ListView.builder(
                     itemCount: items.length,
                     itemBuilder: (context, index) {
@@ -173,7 +174,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: PrimaryButton(
-                label: "Gerar lançamentos ($toGenerate)",
+                label: l10n.recurringGenerateButton(toGenerate),
                 onPressed: _run,
               ),
             ),
@@ -225,15 +226,26 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
     return "${months[d.month - 1]} ${d.year}";
   }
 
-  Widget _buildSummary(int toGen, int gen, int ign) {
+  Widget _buildSummary(AppLocalizations l10n, int toGen, int gen, int ign) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _SummaryBadge(count: toGenerateBadge(toGen), label: "A gerar"),
-          _SummaryBadge(count: "$gen", label: "Gerados", color: Colors.green),
-          _SummaryBadge(count: "$ign", label: "Ignorados", color: Colors.grey),
+          _SummaryBadge(
+            count: toGenerateBadge(toGen),
+            label: l10n.recurringStatusToGenerate,
+          ),
+          _SummaryBadge(
+            count: "$gen",
+            label: l10n.recurringStatusGenerated,
+            color: Colors.green,
+          ),
+          _SummaryBadge(
+            count: "$ign",
+            label: l10n.recurringStatusIgnored,
+            color: Colors.grey,
+          ),
         ],
       ),
     );
@@ -258,13 +270,14 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
     // Usually category is the best descriptor.
     // If not, "Receita" or "Despesa" + amount?
     // Or just "Sem descrição" but let's try to be helpful.
-    return "Sem descrição";
+    return AppLocalizations.of(context)!.commonNoDescription;
   }
 
   Widget _buildPreviewItem(RecurringPreviewItem item) {
     final isIgnored = item.status == 'ignored';
     final isGenerated = item.status == 'already_generated';
     final isNew = item.status == 'new';
+    final l10n = AppLocalizations.of(context)!;
 
     // Check if day matches rule or is "end of month" adjustment
     // The API returns the calculated date. If it's e.g. Feb 28, but rule is 31, user might want to know.
@@ -301,8 +314,8 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isGenerated)
-              const Chip(
-                label: Text("Gerado"),
+              Chip(
+                label: Text(l10n.recurringChipGenerated),
                 backgroundColor: Colors.greenAccent,
                 visualDensity: VisualDensity.compact,
               ),
@@ -312,7 +325,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
                   Icons.unpublished_outlined,
                   color: Colors.grey,
                 ), // Unchecked box metaphor
-                tooltip: "Restaurar (Incluir na geração)",
+                tooltip: l10n.recurringRestoreTooltip,
                 onPressed: () => _undoIgnore(item.recurringRuleId),
               ),
             if (isNew)
@@ -321,7 +334,7 @@ class _RecurringPlanScreenState extends State<RecurringPlanScreen> {
                   Icons.check_box,
                   color: Colors.blue,
                 ), // Checked box metaphor
-                tooltip: "Ignorar (Não gerar)",
+                tooltip: l10n.recurringIgnoreTooltip,
                 onPressed: () => _ignore(item.recurringRuleId),
               ),
           ],

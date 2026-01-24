@@ -15,6 +15,7 @@ import "package:ownfinances/core/presentation/components/money_text.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
 import "package:ownfinances/features/recurring/presentation/screens/recurring_hub_screen.dart";
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class BudgetScreen extends StatelessWidget {
   final Map<String, String> queryParams;
@@ -37,13 +38,13 @@ class BudgetScreen extends StatelessWidget {
         children: [
           Container(
             color: Theme.of(context).scaffoldBackgroundColor, // Match bg
-            child: const TabBar(
+            child: TabBar(
               dividerColor: Colors.transparent,
               indicatorSize: TabBarIndicatorSize.tab,
               tabs: [
-                Tab(text: "Orçamentos"),
-                Tab(text: "Metas"),
-                Tab(text: "Contas fixas"),
+                Tab(text: AppLocalizations.of(context)!.budgetsTitle),
+                Tab(text: AppLocalizations.of(context)!.budgetsTabGoals),
+                Tab(text: AppLocalizations.of(context)!.budgetsTabFixed),
               ],
             ),
           ),
@@ -145,7 +146,7 @@ class _BudgetViewState extends State<BudgetView> {
           children: [
             Expanded(
               child: Text(
-                "Orçamento do mês",
+                AppLocalizations.of(context)!.budgetsMonthTitle,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -160,14 +161,14 @@ class _BudgetViewState extends State<BudgetView> {
         ),
         const SizedBox(height: AppSpacing.md),
         InlineSummaryCard(
-          title: "Plano do periodo",
+          title: AppLocalizations.of(context)!.budgetsPlanPeriod,
           planned: summary?.totals.plannedExpense ?? 0,
           actual: summary?.totals.actualExpense ?? 0,
           remaining: summary?.totals.remainingExpense ?? 0,
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          "Receitas planejadas: ${formatMoney(summary?.totals.plannedIncome ?? 0)} • Gastos planejados: ${formatMoney(summary?.totals.plannedExpense ?? 0)} • Saldo planejado: ${formatMoney(summary?.totals.plannedNet ?? 0)}",
+          "${AppLocalizations.of(context)!.budgetsHeaderIncome}: ${formatMoney(summary?.totals.plannedIncome ?? 0)} • ${AppLocalizations.of(context)!.budgetsHeaderExpense}: ${formatMoney(summary?.totals.plannedExpense ?? 0)} • ${AppLocalizations.of(context)!.budgetsHeaderBalance}: ${formatMoney(summary?.totals.plannedNet ?? 0)}",
           style: const TextStyle(color: AppColors.muted, fontSize: 13),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -239,9 +240,13 @@ class _BudgetViewState extends State<BudgetView> {
                             }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'remove',
-                              child: Text('Remover do mês'),
+                              child: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.budgetsRemoveCategory,
+                              ),
                             ),
                           ],
                         ),
@@ -252,7 +257,9 @@ class _BudgetViewState extends State<BudgetView> {
                       children: [
                         Expanded(
                           child: MoneyInput(
-                            label: "Planejado",
+                            label: AppLocalizations.of(
+                              context,
+                            )!.budgetsLabelPlanned,
                             controller: controller,
                           ),
                         ),
@@ -261,7 +268,7 @@ class _BudgetViewState extends State<BudgetView> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              "Atual",
+                              AppLocalizations.of(context)!.budgetsLabelActual,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.muted,
@@ -274,7 +281,9 @@ class _BudgetViewState extends State<BudgetView> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "Restante",
+                              AppLocalizations.of(
+                                context,
+                              )!.budgetsLabelRemaining,
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.muted,
@@ -299,7 +308,7 @@ class _BudgetViewState extends State<BudgetView> {
         const SizedBox(height: AppSpacing.md),
         if (budgetState.budget != null)
           PrimaryButton(
-            label: "Salvar orcamento",
+            label: AppLocalizations.of(context)!.budgetsSaveButton,
             onPressed: () async {
               for (final entry in _controllers.entries) {
                 context.read<BudgetController>().updatePlanned(
@@ -314,7 +323,10 @@ class _BudgetViewState extends State<BudgetView> {
               }
               await context.read<ReportsController>().load();
               if (context.mounted) {
-                showStandardSnackbar(context, "Orcamento salvo");
+                showStandardSnackbar(
+                  context,
+                  AppLocalizations.of(context)!.budgetsSuccessSaved,
+                );
               }
             },
           ),
@@ -372,7 +384,7 @@ class _BudgetViewState extends State<BudgetView> {
     } else if (context.mounted) {
       showStandardSnackbar(
         context,
-        "Categoria removida do orçamento deste mês",
+        AppLocalizations.of(context)!.budgetsSuccessRemoved,
       );
     }
   }
@@ -401,18 +413,18 @@ class _EmptyBudgetState extends StatelessWidget {
             const Icon(Icons.money_off, size: 64, color: AppColors.muted),
             const SizedBox(height: AppSpacing.md),
             Text(
-              "Sem orçamento para este mês",
+              AppLocalizations.of(context)!.budgetsEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              "Crie um orçamento para planejar seus gastos por categoria.",
+            Text(
+              AppLocalizations.of(context)!.budgetsEmptyDesc,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.muted),
+              style: const TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: AppSpacing.lg),
             PrimaryButton(
-              label: "Criar orçamento deste mês",
+              label: AppLocalizations.of(context)!.budgetsCreateButton,
               onPressed: onCreate,
             ),
           ],

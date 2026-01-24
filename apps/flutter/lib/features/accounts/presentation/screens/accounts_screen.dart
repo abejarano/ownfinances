@@ -11,6 +11,7 @@ import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 
 import 'package:ownfinances/features/accounts/presentation/widgets/account_management_card.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class AccountsScreen extends StatelessWidget {
   const AccountsScreen({super.key});
@@ -33,7 +34,7 @@ class AccountsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Contas"),
+        title: Text(AppLocalizations.of(context)!.accountsTitle),
 
         actions: [
           IconButton(
@@ -68,7 +69,9 @@ class AccountsScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            "Moedas precisam de revisão",
+                            AppLocalizations.of(
+                              context,
+                            )!.accountsWarningCurrency,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   color: AppColors.warning,
@@ -79,9 +82,9 @@ class AccountsScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      "Algumas contas estão com moeda inválida e podem causar valores errados no dashboard.",
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.accountsWarningCurrencyDesc,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textPrimary,
                       ),
@@ -126,9 +129,9 @@ class AccountsScreen extends StatelessWidget {
                             _runFixFlow(context, controller, state.items);
                           }
                         },
-                        child: const Text(
-                          "Corrigir agora",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        child: Text(
+                          AppLocalizations.of(context)!.accountsFixCurrency,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -140,7 +143,7 @@ class AccountsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Contas ativas",
+                    AppLocalizations.of(context)!.accountsActive,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -167,9 +170,12 @@ class AccountsScreen extends StatelessWidget {
                       onLongPress: () async {
                         final confirmed = await _confirmDelete(
                           context,
-                          title: "Excluir conta?",
-                          description:
-                              "Isso vai excluir a conta e todas as transacoes vinculadas. Nao da pra desfazer.",
+                          title: AppLocalizations.of(
+                            context,
+                          )!.accountsDeleteTitle,
+                          description: AppLocalizations.of(
+                            context,
+                          )!.accountsDeleteDesc,
                         );
                         if (!confirmed || !context.mounted) return;
 
@@ -181,7 +187,10 @@ class AccountsScreen extends StatelessWidget {
                         }
                         await context.read<ReportsController>().load();
                         if (context.mounted) {
-                          showStandardSnackbar(context, "Conta excluida");
+                          showStandardSnackbar(
+                            context,
+                            AppLocalizations.of(context)!.accountsDeleted,
+                          );
                         }
                       },
                       child: AccountManagementCard(
@@ -225,7 +234,10 @@ class AccountsScreen extends StatelessWidget {
           .toList();
 
       if (invalids.isEmpty && context.mounted) {
-        showStandardSnackbar(context, "Todas as moedas corrigidas!");
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(context)!.accountsSuccessCurrencyFixed,
+        );
         return;
       }
 
@@ -248,11 +260,11 @@ class AccountsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancelar"),
+            child: Text(AppLocalizations.of(context)!.commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Excluir"),
+            child: Text(AppLocalizations.of(context)!.commonDelete),
           ),
         ],
       ),
@@ -293,32 +305,54 @@ class AccountsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item == null ? "Nova conta" : "Editar conta",
+                    item == null
+                        ? AppLocalizations.of(context)!.accountsNew
+                        : AppLocalizations.of(context)!.accountsEdit,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: "Nome"),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.commonName,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   DropdownButtonFormField<String>(
                     value: type,
-                    decoration: const InputDecoration(labelText: "Tipo"),
-                    items: const [
-                      DropdownMenuItem(value: "cash", child: Text("Dinheiro")),
-                      DropdownMenuItem(value: "bank", child: Text("Banco")),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.accountTypeLabel,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: "cash",
+                        child: Text(
+                          AppLocalizations.of(context)!.accountsTypeMoney,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: "bank",
+                        child: Text(
+                          AppLocalizations.of(context)!.accountsTypeBank,
+                        ),
+                      ),
                       DropdownMenuItem(
                         value: "wallet",
-                        child: Text("Carteira"),
+                        child: Text(
+                          AppLocalizations.of(context)!.accountsTypeWallet,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: "broker",
-                        child: Text("Investimentos"),
+                        child: Text(
+                          AppLocalizations.of(context)!.accountsTypeBroker,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: "credit_card",
-                        child: Text("Cartao"),
+                        child: Text(
+                          AppLocalizations.of(context)!.accountsTypeCard,
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -334,7 +368,11 @@ class AccountsScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
                       value: bankType,
-                      decoration: const InputDecoration(labelText: "Banco"),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.accountsLabelBank,
+                      ),
                       items: const [
                         DropdownMenuItem(
                           value: "nubank",
@@ -367,7 +405,11 @@ class AccountsScreen extends StatelessWidget {
                               ? currencyController.text
                               : "OTHER")
                         : "OTHER", // Default to OTHER if unknown/invalid so user sees the text field to fix it.
-                    decoration: const InputDecoration(labelText: "Moeda"),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.accountsLabelCurrency,
+                    ),
                     items: [
                       ...CurrencyUtils.commonCurrencies.map(
                         (c) => DropdownMenuItem(
@@ -375,9 +417,11 @@ class AccountsScreen extends StatelessWidget {
                           child: Text(CurrencyUtils.formatCurrencyLabel(c)),
                         ),
                       ),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                         value: "OTHER",
-                        child: Text("Outra..."),
+                        child: Text(
+                          AppLocalizations.of(context)!.currencyOther,
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -407,10 +451,16 @@ class AccountsScreen extends StatelessWidget {
                     TextField(
                       controller: currencyController,
                       textCapitalization: TextCapitalization.characters,
-                      decoration: const InputDecoration(
-                        labelText: "Código da moeda",
-                        hintText: "Ex: COP, ARS",
-                        helperText: "Use 3-5 letras em maiúsculo. Ex: COP.",
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.accountsLabelCurrencyCode,
+                        hintText: AppLocalizations.of(
+                          context,
+                        )!.accountsHintCurrencyCode,
+                        helperText: AppLocalizations.of(
+                          context,
+                        )!.accountsHelperCurrencyCode,
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -418,13 +468,13 @@ class AccountsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text("Ativa"),
+                    title: Text(AppLocalizations.of(context)!.commonActive),
                     value: isActive,
                     onChanged: (value) => setState(() => isActive = value),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   PrimaryButton(
-                    label: "Salvar",
+                    label: AppLocalizations.of(context)!.commonSave,
                     onPressed: () {
                       final cleanCurrency = currencyController.text
                           .trim()
@@ -432,9 +482,11 @@ class AccountsScreen extends StatelessWidget {
                       // Validation inside modal
                       if (!CurrencyUtils.isValidCurrency(cleanCurrency)) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              "Código inválido. Use 3-5 letras (ex: COP).",
+                              AppLocalizations.of(
+                                context,
+                              )!.accountsErrorCurrencyInvalid,
                             ),
                             backgroundColor: AppColors.danger,
                           ),
@@ -464,7 +516,10 @@ class AccountsScreen extends StatelessWidget {
     // Strict Validation Logic
     if (name.isEmpty) {
       if (context.mounted) {
-        showStandardSnackbar(context, "Nome obrigatório");
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(context)!.commonNameRequired,
+        );
       }
       return;
     }
@@ -473,7 +528,7 @@ class AccountsScreen extends StatelessWidget {
       if (context.mounted) {
         showStandardSnackbar(
           context,
-          "Código inválido. Use 3-5 letras (ex: COP).",
+          AppLocalizations.of(context)!.accountsErrorCurrencyInvalid,
         );
       }
       // Re-open form? For now just return, user has to tap save again.

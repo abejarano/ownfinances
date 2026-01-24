@@ -15,4 +15,16 @@ class SettingsStorageImpl implements SettingsStorage {
   Future<void> savePrimaryCurrency(String currency) async {
     await _storage.write(key: _primaryCurrencyKey, value: currency);
   }
+
+  static const _localeKey = "of_locale";
+
+  @override
+  Future<String?> readLocale() async {
+    return await _storage.read(key: _localeKey);
+  }
+
+  @override
+  Future<void> saveLocale(String locale) async {
+    await _storage.write(key: _localeKey, value: locale);
+  }
 }

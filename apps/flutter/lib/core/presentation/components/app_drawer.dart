@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/features/auth/application/controllers/auth_controller.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
+import 'package:ownfinances/features/settings/application/controllers/settings_controller.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -11,6 +13,7 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentRoute = GoRouterState.of(context).uri.toString();
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     // Helper for active state
     bool isActive(String route) {
@@ -25,11 +28,11 @@ class AppDrawer extends StatelessWidget {
         children: [
           _buildHeader(context),
 
-          _buildSectionTitle(context, 'GESTÃO'),
+          _buildSectionTitle(context, l10n.drawerManagement),
           _buildNavItem(
             context,
             icon: Icons.category_outlined,
-            label: 'Categorias',
+            label: l10n.drawerCategories,
             route: '/categories',
             selected: isActive('/categories'),
             onTap: () => context.push('/categories'),
@@ -37,7 +40,7 @@ class AppDrawer extends StatelessWidget {
           _buildNavItem(
             context,
             icon: Icons.account_balance_wallet_outlined,
-            label: 'Contas',
+            label: l10n.drawerAccounts,
             route: '/accounts',
             selected: isActive('/accounts'),
             onTap: () => context.push('/accounts'),
@@ -45,7 +48,7 @@ class AppDrawer extends StatelessWidget {
           _buildNavItem(
             context,
             icon: Icons.credit_card_outlined,
-            label: 'Dívidas',
+            label: l10n.drawerDebts,
             route: '/debts',
             selected: isActive('/debts'),
             onTap: () => context.push('/debts'),
@@ -53,7 +56,7 @@ class AppDrawer extends StatelessWidget {
           _buildNavItem(
             context,
             icon: Icons.flag_outlined,
-            label: 'Metas',
+            label: l10n.drawerGoals,
             route: '/goals',
             selected: isActive('/goals'),
             onTap: () => context.push('/goals'),
@@ -61,38 +64,41 @@ class AppDrawer extends StatelessWidget {
           _buildNavItem(
             context,
             icon: Icons.repeat_outlined,
-            label: 'Contas fixas', // Changed from Recorrência
+            label: l10n.drawerRecurring,
             route: '/recurring',
             selected: isActive('/recurring'),
             onTap: () => context.push('/recurring'),
           ),
           const Divider(),
-          _buildSectionTitle(context, 'AJUSTES'),
+          _buildSectionTitle(context, l10n.drawerSettings),
           _buildNavItem(
             context,
             icon: Icons.settings_outlined,
-            label: 'Ajustes',
+            label: l10n.settingsTitle,
             route: '/settings',
             selected: isActive('/settings'),
             onTap: () => context.go('/settings'),
           ),
           const Divider(),
-          _buildSectionTitle(context, 'CONTA'),
+          _buildSectionTitle(context, l10n.drawerAccount),
           ListTile(
             leading: const Icon(Icons.logout, color: AppColors.danger),
-            title: const Text(
-              'Sair',
-              style: TextStyle(color: AppColors.danger),
+            title: Text(
+              l10n.drawerLogout,
+              style: const TextStyle(color: AppColors.danger),
             ),
             onTap: () {
               context.read<AuthController>().logout();
             },
           ),
-          const Padding(
-            padding: EdgeInsets.all(16.0),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Versão 1.0.0',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              l10n.settingsVersionValue('1.0.0'),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
             ),
           ),
         ],
@@ -101,6 +107,7 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return DrawerHeader(
       decoration: const BoxDecoration(color: AppColors.surface1),
       child: Column(
@@ -113,9 +120,12 @@ class AppDrawer extends StatelessWidget {
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Finanças simples, sem complicação.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          Text(
+            l10n.appTagline,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -125,9 +135,14 @@ class AppDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.borderSoft),
             ),
-            child: const Text(
-              'Moeda principal: BRL', // Placeholder, ideally dynamic from settings
-              style: TextStyle(fontSize: 10, color: AppColors.textPrimary),
+            child: Text(
+              l10n.drawerMainCurrency(
+                context.watch<SettingsController>().primaryCurrency,
+              ),
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],

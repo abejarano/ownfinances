@@ -6,6 +6,7 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:ownfinances/core/utils/currency_utils.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -51,8 +52,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Configuração salva com sucesso!"),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.successSettingsUpdate),
             backgroundColor: AppColors.success,
           ),
         );
@@ -66,7 +67,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Erro ao atualizar configuração: $e"),
+            content: Text(
+              AppLocalizations.of(context)!.errorSettingsUpdate(e.toString()),
+            ),
             backgroundColor: AppColors.danger,
           ),
         );
@@ -106,12 +109,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Gerenciar",
+                            AppLocalizations.of(
+                              context,
+                            )!.settingsManageShortcutTitle,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            "Categorias, contas, dívidas e metas ficam no menu.",
+                            AppLocalizations.of(
+                              context,
+                            )!.settingsManageShortcutDesc,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.textSecondary),
                           ),
@@ -129,7 +136,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: () {
                           Scaffold.of(context).openDrawer();
                         },
-                        child: const Text("Abrir menu"),
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.settingsManageShortcutButton,
+                        ),
                       );
                     },
                   ),
@@ -141,7 +152,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: AppSpacing.lg),
 
         // 1. Preferências Section
-        _buildSectionTitle(context, "Preferências"),
+        _buildSectionTitle(
+          context,
+          AppLocalizations.of(context)!.settingsPreferences,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Card(
           child: Column(
@@ -153,10 +167,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Icons.monetization_on_outlined,
                       color: AppColors.textTertiary,
                     ),
-                    title: const Text("Moeda principal"),
-                    subtitle: const Text(
-                      "O Resumo do mês usa apenas esta moeda. Outras moedas aparecem nas contas (sem conversão).",
-                      style: TextStyle(
+                    title: Text(
+                      AppLocalizations.of(context)!.settingsMainCurrency,
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.settingsMainCurrencyDesc,
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -184,23 +200,75 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                 },
               ),
+              const Divider(indent: 16, endIndent: 16),
+              Consumer<SettingsController>(
+                builder: (context, settings, child) {
+                  final currentLocale = settings.locale?.languageCode ?? "pt";
+                  String languageLabel;
+                  switch (currentLocale) {
+                    case "en":
+                      languageLabel = AppLocalizations.of(
+                        context,
+                      )!.languageEnglish;
+                      break;
+                    case "es":
+                      languageLabel = AppLocalizations.of(
+                        context,
+                      )!.languageSpanish;
+                      break;
+                    default:
+                      languageLabel = AppLocalizations.of(
+                        context,
+                      )!.languagePortuguese;
+                  }
+
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.language_outlined,
+                      color: AppColors.textTertiary,
+                    ),
+                    title: Text(AppLocalizations.of(context)!.settingsLanguage),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          languageLabel,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textTertiary,
+                        ),
+                      ],
+                    ),
+                    onTap: () => _showLanguagePicker(context, settings),
+                  );
+                },
+              ),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
 
         // 2. Automação Section (Updated Copy)
-        _buildSectionTitle(context, "Automação"),
+        _buildSectionTitle(
+          context,
+          AppLocalizations.of(context)!.settingsAutomation,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Card(
           // Uses standard SURFACE-1 from theme
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text("Gerar automaticamente"),
-                subtitle: const Text(
-                  "Cria lançamentos de contas fixas ao iniciar o mês (não movimenta dinheiro).",
-                  style: TextStyle(color: AppColors.textSecondary),
+                title: Text(AppLocalizations.of(context)!.settingsAutoGenerate),
+                subtitle: Text(
+                  AppLocalizations.of(context)!.settingsAutoGenerateDesc,
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
                 value: _autoGenerateRecurring,
                 onChanged: _isLoading ? null : _updateAutoGenerate,
@@ -209,16 +277,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 tileColor: Colors.transparent, // Uses card background
               ),
               if (_autoGenerateRecurring)
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: AppColors.info),
-                      SizedBox(width: 8),
+                      const Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: AppColors.info,
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          "As transações serão criadas como pendentes na data prevista.",
-                          style: TextStyle(
+                          AppLocalizations.of(
+                            context,
+                          )!.settingsAutoGenerateInfo,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textTertiary,
                           ),
@@ -234,16 +308,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: AppSpacing.lg),
 
         // 3. Conta Section
-        _buildSectionTitle(context, "Conta"),
+        _buildSectionTitle(
+          context,
+          AppLocalizations.of(context)!.settingsAccountSection,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Card(
           child: Column(
             children: [
               ListTile(
                 leading: const Icon(Icons.logout, color: AppColors.danger),
-                title: const Text(
-                  "Sair",
-                  style: TextStyle(color: AppColors.danger),
+                title: Text(
+                  AppLocalizations.of(context)!.drawerLogout,
+                  style: const TextStyle(color: AppColors.danger),
                 ),
                 onTap: () async {
                   await context.read<AuthController>().logout();
@@ -253,15 +330,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               const Divider(indent: 16, endIndent: 16),
-              const ListTile(
-                leading: Icon(
+              ListTile(
+                leading: const Icon(
                   Icons.info_outline,
                   color: AppColors.textTertiary,
                 ),
-                title: Text("Versão"),
+                title: Text(AppLocalizations.of(context)!.settingsVersion),
                 trailing: Text(
-                  "1.0.0",
-                  style: TextStyle(color: AppColors.textTertiary),
+                  AppLocalizations.of(context)!.settingsVersionValue("1.0.0"),
+                  style: const TextStyle(color: AppColors.textTertiary),
                 ),
               ),
             ],
@@ -301,7 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Moeda principal"),
+              title: Text(AppLocalizations.of(context)!.settingsMainCurrency),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -318,7 +395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     RadioListTile<String>(
-                      title: const Text("Outra"),
+                      title: Text(AppLocalizations.of(context)!.currencyOther),
                       value: "OTHER",
                       groupValue: selected,
                       onChanged: (val) {
@@ -332,10 +409,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: TextField(
                           controller: customController,
                           textCapitalization: TextCapitalization.characters,
-                          decoration: const InputDecoration(
-                            labelText: "Código (ex: COP)",
-                            hintText: "3-5 letras maiúsculas",
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.currencyCustomLabel,
+                            hintText: AppLocalizations.of(
+                              context,
+                            )!.currencyCustomHint,
+                            border: const OutlineInputBorder(),
                           ),
                           onChanged: (_) => setState(() {}), // Refresh for val
                         ),
@@ -346,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancelar"),
+                  child: Text(AppLocalizations.of(context)!.commonCancel),
                 ),
                 TextButton(
                   onPressed: () {
@@ -356,9 +437,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // Validation: 3-5 chars, A-Z only
                       if (!RegExp(r'^[A-Z]{3,5}$').hasMatch(finalVal)) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              "Código inválido. Use 3 a 5 letras (A-Z).",
+                              AppLocalizations.of(context)!.currencyInvalid,
                             ),
                             backgroundColor: AppColors.danger,
                           ),
@@ -369,12 +450,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller.setPrimaryCurrency(finalVal);
                     Navigator.pop(context);
                   },
-                  child: const Text("Salvar"),
+                  child: Text(AppLocalizations.of(context)!.commonSave),
                 ),
               ],
             );
           },
         );
+      },
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, SettingsController settings) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface1,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.settingsLanguage,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 16),
+              _buildLanguageOption(
+                context,
+                settings,
+                "pt",
+                AppLocalizations.of(context)!.languagePortuguese,
+              ),
+              _buildLanguageOption(
+                context,
+                settings,
+                "en",
+                AppLocalizations.of(context)!.languageEnglish,
+              ),
+              _buildLanguageOption(
+                context,
+                settings,
+                "es",
+                AppLocalizations.of(context)!.languageSpanish,
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(
+    BuildContext context,
+    SettingsController settings,
+    String code,
+    String label,
+  ) {
+    final isSelected = (settings.locale?.languageCode ?? "pt") == code;
+    return ListTile(
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check, color: AppColors.primary)
+          : null,
+      onTap: () {
+        settings.setLocale(Locale(code));
+        Navigator.pop(context);
       },
     );
   }

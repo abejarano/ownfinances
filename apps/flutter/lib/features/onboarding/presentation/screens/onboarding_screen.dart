@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatelessWidget {
   final VoidCallback onStart;
@@ -9,6 +10,7 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -18,17 +20,20 @@ class OnboardingScreen extends StatelessWidget {
             children: [
               const Spacer(),
               Text(
-                "Seu dinheiro claro",
+                l10n.appTagline,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: AppSpacing.md),
-              const Text("• Registrar gasto em 3 toques"),
+              Text(l10n.onboardingFeature1),
               const SizedBox(height: AppSpacing.sm),
-              const Text("• Ver saldo real e planejado"),
+              Text(l10n.onboardingFeature2),
               const SizedBox(height: AppSpacing.sm),
-              const Text("• Tudo em um so lugar, sem jargao"),
+              Text(l10n.onboardingFeature3),
               const Spacer(),
-              PrimaryButton(label: "Comecar", onPressed: onStart),
+              PrimaryButton(
+                label: l10n.onboardingStartFast,
+                onPressed: onStart,
+              ),
             ],
           ),
         ),

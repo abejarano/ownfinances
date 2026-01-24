@@ -5,6 +5,7 @@ import "package:ownfinances/features/auth/application/controllers/auth_controlle
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -58,9 +59,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 36),
-                    const Text(
-                      "Entrar",
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.authLoginTitle,
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
                         color: textPrimary,
@@ -74,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ), // Subtitle -> Google CTA: 24px (used 32 for better breath)
                     // 2. Google CTA
                     _SocialButton(
-                      label: "Continuar com Google",
+                      label: AppLocalizations.of(context)!.authContinueGoogle,
                       onPressed: _isLoading ? null : _onLoginGoogle,
                       backgroundColor: Colors.white,
                       textColor: const Color(0xFF111827),
@@ -86,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (isIOS) ...[
                       const SizedBox(height: 16),
                       _SocialButton(
-                        label: "Continuar com Apple",
+                        label: AppLocalizations.of(context)!.authContinueApple,
                         onPressed: _isLoading ? null : _onLoginApple,
                         backgroundColor: Colors.black,
                         textColor: Colors.white,
@@ -104,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            "ou",
+                            AppLocalizations.of(context)!.authOr,
                             style: TextStyle(
                               color: const Color.fromRGBO(229, 231, 235, 0.60),
                               fontSize: 14,
@@ -120,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // 4. Email CTA
                     if (!_showEmailForm)
                       _OutlineButton(
-                        label: "Entrar com e-mail",
+                        label: AppLocalizations.of(context)!.authLoginEmail,
                         onPressed: _isLoading
                             ? null
                             : () => setState(() => _showEmailForm = true),
@@ -143,8 +144,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               style: const TextStyle(color: textPrimary),
-                              decoration: const InputDecoration(
-                                labelText: "Email",
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(
+                                  context,
+                                )!.authEmailLabel,
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -156,8 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _passwordController,
                               obscureText: true,
                               style: const TextStyle(color: textPrimary),
-                              decoration: const InputDecoration(
-                                labelText: "Senha",
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(
+                                  context,
+                                )!.authPasswordLabel,
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -203,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 24, top: 16),
               child: Text(
-                "Usamos seu login apenas para acessar sua conta.",
+                AppLocalizations.of(context)!.authDisclaimer,
                 style: TextStyle(
                   fontSize: 12,
                   color: const Color.fromRGBO(229, 231, 235, 0.50),

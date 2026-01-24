@@ -6,6 +6,7 @@ import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/recurring/application/controllers/recurring_controller.dart';
 import 'package:ownfinances/features/transactions/application/controllers/pending_transactions_controller.dart';
 import 'package:ownfinances/features/recurring/domain/entities/recurring_rule.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class RecurringHubScreen extends StatefulWidget {
   const RecurringHubScreen({super.key});
@@ -19,7 +20,7 @@ class _RecurringHubScreenState extends State<RecurringHubScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Recorrências"),
+        title: Text(AppLocalizations.of(context)!.recurringTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -79,6 +80,7 @@ class _RecurringHubViewState extends State<RecurringHubView> {
     // Split rules
     final activeRules = rules.where((r) => r.active).toList();
     final inactiveRules = rules.where((r) => !r.active).toList();
+    final l10n = AppLocalizations.of(context)!;
 
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
@@ -93,19 +95,19 @@ class _RecurringHubViewState extends State<RecurringHubView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Contas fixas",
+                    l10n.drawerRecurring,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
-                    "O app só registra. Não cobra.",
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  Text(
+                    l10n.recurringAppDescription,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
               PrimaryButton(
-                label: "Nova",
+                label: l10n.commonNew,
                 fullWidth: false,
                 onPressed: () => context.push('/recurring/new'),
               ),
@@ -126,7 +128,10 @@ class _RecurringHubViewState extends State<RecurringHubView> {
           const Divider(height: 32),
 
           // 4. My Rules List
-          Text("Minhas regras", style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            l10n.recurringMyRules,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
 
           if (isLoading && rules.isEmpty)
@@ -145,11 +150,11 @@ class _RecurringHubViewState extends State<RecurringHubView> {
 
             if (inactiveRules.isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Padding(
-                padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
                 child: Text(
-                  "Inativas",
-                  style: TextStyle(
+                  l10n.recurringInactive,
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontWeight: FontWeight.bold,
                   ),
@@ -200,13 +205,13 @@ class _RecurringHubViewState extends State<RecurringHubView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Planejar mês",
+                        AppLocalizations.of(context)!.recurringPlanMonth,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Gere os lançamentos do mês a partir das regras.",
+                        AppLocalizations.of(context)!.recurringPlanMonthDesc,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -220,7 +225,7 @@ class _RecurringHubViewState extends State<RecurringHubView> {
               child: ElevatedButton.icon(
                 onPressed: _openPlanner,
                 icon: const Icon(Icons.arrow_forward),
-                label: const Text("Abrir planejador"),
+                label: Text(AppLocalizations.of(context)!.recurringOpenPlanner),
               ),
             ),
           ],
@@ -248,19 +253,21 @@ class _RecurringHubViewState extends State<RecurringHubView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Confirmação pendente",
+                    AppLocalizations.of(context)!.recurringPendingConfirmation,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.orange.shade900,
                     ),
                   ),
-                  Text("Você tem $count itens para confirmar."),
+                  Text(
+                    AppLocalizations.of(context)!.recurringPendingItems(count),
+                  ),
                 ],
               ),
             ),
             TextButton(
               onPressed: () => context.push('/transactions/pending'),
-              child: const Text("Ver"),
+              child: Text(AppLocalizations.of(context)!.commonView),
             ),
           ],
         ),
@@ -276,14 +283,14 @@ class _RecurringHubViewState extends State<RecurringHubView> {
         children: [
           Icon(Icons.rule, size: 48, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text(
-            "Crie uma recorrência para planejar seu mês em segundos.",
+          Text(
+            AppLocalizations.of(context)!.recurringEmptyState,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: const TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 16),
           SecondaryButton(
-            label: "Nova recorrência",
+            label: AppLocalizations.of(context)!.recurringNewRule,
             onPressed: () => context.push('/recurring/new'),
           ),
         ],

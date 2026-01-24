@@ -5,6 +5,7 @@ import "package:ownfinances/features/auth/application/controllers/auth_controlle
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -28,7 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Criar conta")),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.authRegisterTitle),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -36,31 +39,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Registro rápido",
+                AppLocalizations.of(context)!.authRegisterQuick,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: AppSpacing.sm),
-              const Text("Só email e senha. Em menos de 30s."),
+              Text(AppLocalizations.of(context)!.authRegisterSubtitle),
               const SizedBox(height: AppSpacing.lg),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: "Email"),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.authEmailLabel,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: "Senha"),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.authPasswordLabel,
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
-                label: _isLoading ? "Criando..." : "Criar conta",
+                label: _isLoading
+                    ? AppLocalizations.of(context)!.authLoadingRegister
+                    : AppLocalizations.of(context)!.authButtonRegister,
                 onPressed: _isLoading ? null : _onRegister,
               ),
               const SizedBox(height: AppSpacing.sm),
               SecondaryButton(
-                label: "Já tenho conta",
+                label: AppLocalizations.of(context)!.authSwitchToLogin,
                 onPressed: _isLoading ? null : () => context.go("/login"),
               ),
             ],

@@ -11,6 +11,7 @@ import "package:ownfinances/features/budgets/domain/entities/budget.dart";
 import "package:ownfinances/features/budgets/data/repositories/budget_repository.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
@@ -110,11 +111,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final categories = _selectedCategories();
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Comecar rapido"),
+        title: Text(l10n.onboardingStartFast),
         leading: IconButton(icon: const Icon(Icons.close), onPressed: _skip),
-        actions: [TextButton(onPressed: _skip, child: const Text("Pular"))],
+        actions: [TextButton(onPressed: _skip, child: Text(l10n.commonSkip))],
       ),
       body: PageView(
         controller: _pageController,
@@ -174,12 +176,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           children: [
             if (_step > 0)
               Expanded(
-                child: SecondaryButton(label: "Voltar", onPressed: _prevStep),
+                child: SecondaryButton(
+                  label: l10n.commonBack,
+                  onPressed: _prevStep,
+                ),
               ),
             if (_step > 0) const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: PrimaryButton(
-                label: _step == 4 ? "Finalizar" : "Proximo",
+                label: _step == 4 ? l10n.commonFinish : l10n.commonNext,
                 onPressed: _isSaving ? null : _nextStep,
               ),
             ),
@@ -341,26 +346,28 @@ class _WelcomeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Bem-vindo!", style: Theme.of(context).textTheme.headlineMedium),
+          Text(
+            l10n.onboardingWelcome,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
           const SizedBox(height: AppSpacing.sm),
-          const Text("Vamos deixar tudo pronto em menos de 60 segundos."),
+          Text(l10n.onboardingDescription),
           const SizedBox(height: AppSpacing.lg),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text("Quero usar exemplos"),
-            subtitle: const Text(
-              "Criamos categorias e um orcamento base para voce editar depois.",
-            ),
+            title: Text(l10n.onboardingUseExamples),
+            subtitle: Text(l10n.onboardingExamplesCreated),
             value: useExamples,
             onChanged: onToggleExamples,
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text("Voce pode pular e ajustar depois."),
+          Text(l10n.onboardingSkipDescription),
         ],
       ),
     );
@@ -384,30 +391,40 @@ class _AccountStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Conta principal",
+            l10n.onboardingMainAccount,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text("Criaremos uma conta para voce registrar gastos."),
+          Text(l10n.onboardingCreateAccount),
           const SizedBox(height: AppSpacing.md),
           TextField(
             controller: controller,
-            decoration: const InputDecoration(labelText: "Nome da conta"),
+            decoration: InputDecoration(labelText: l10n.accountNameLabel),
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
             value: accountType,
-            decoration: const InputDecoration(labelText: "Tipo"),
-            items: const [
-              DropdownMenuItem(value: "bank", child: Text("Banco")),
-              DropdownMenuItem(value: "cash", child: Text("Dinheiro")),
-              DropdownMenuItem(value: "wallet", child: Text("Carteira")),
+            decoration: InputDecoration(labelText: l10n.accountTypeLabel),
+            items: [
+              DropdownMenuItem(
+                value: "bank",
+                child: Text(l10n.accountTypeBank),
+              ),
+              DropdownMenuItem(
+                value: "cash",
+                child: Text(l10n.accountTypeCash),
+              ),
+              DropdownMenuItem(
+                value: "wallet",
+                child: Text(l10n.accountTypeWallet),
+              ),
             ],
             onChanged: (value) {
               if (value != null) onTypeChanged(value);
@@ -417,7 +434,7 @@ class _AccountStep extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             DropdownButtonFormField<String>(
               value: bankType,
-              decoration: const InputDecoration(labelText: "Banco"),
+              decoration: InputDecoration(labelText: l10n.accountTypeBank),
               items: const [
                 DropdownMenuItem(value: "nubank", child: Text("Nubank")),
                 DropdownMenuItem(value: "itau", child: Text("Itaú")),
@@ -452,17 +469,18 @@ class _CategoriesStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Categorias base",
+            l10n.onboardingBaseCategories,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text("Escolha o que quer criar agora."),
+          Text(l10n.onboardingChooseCreation),
           const SizedBox(height: AppSpacing.md),
           Expanded(
             child: ListView.separated(
@@ -473,7 +491,11 @@ class _CategoriesStep extends StatelessWidget {
                 return CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(item.name),
-                  subtitle: Text(item.kind == "income" ? "Receita" : "Gasto"),
+                  subtitle: Text(
+                    item.kind == "income"
+                        ? l10n.transactionTypeIncome
+                        : l10n.transactionTypeExpense,
+                  ),
                   value: item.selected,
                   onChanged: (_) => onToggleCategory(item),
                 );
@@ -483,8 +505,8 @@ class _CategoriesStep extends StatelessWidget {
           if (useExamples)
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text("Criar orcamento base"),
-              subtitle: const Text("Voce podera editar depois."),
+              title: Text(l10n.onboardingCreateBudget),
+              subtitle: Text(l10n.onboardingCreateBudgetDesc),
               value: createBudget,
               onChanged: onToggleBudget,
             ),
@@ -501,22 +523,23 @@ class _FinishStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Tudo pronto",
+            l10n.onboardingAllSet,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text("Voce ja pode registrar seu primeiro gasto."),
+          Text(l10n.onboardingFirstTransaction),
           const SizedBox(height: AppSpacing.lg),
           Text(
             useExamples
-                ? "Criamos exemplos basicos para voce ajustar depois."
-                : "Criamos o minimo para voce comecar.",
+                ? l10n.onboardingExamplesCreated
+                : l10n.onboardingMinimumCreated,
           ),
         ],
       ),
@@ -576,25 +599,26 @@ class _CreditCardStepState extends State<_CreditCardStep> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Cartoes de credito",
+            l10n.onboardingCreditCards,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text("Adicione seus cartoes para controlar faturas."),
+          Text(l10n.onboardingAddCards),
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _controller,
-                  decoration: const InputDecoration(
-                    labelText: "Nome do cartao",
+                  decoration: InputDecoration(
+                    labelText: l10n.onboardingCardName,
                     hintText: "Ex: Nubank",
                   ),
                   onSubmitted: (_) => _add(),
@@ -606,9 +630,9 @@ class _CreditCardStepState extends State<_CreditCardStep> {
           ),
           const SizedBox(height: AppSpacing.md),
           if (widget.cards.isEmpty)
-            const Text(
-              "Nenhum cartao adicionado. Clique em + para adicionar ou Proximo para pular.",
-              style: TextStyle(color: Colors.grey),
+            Text(
+              l10n.onboardingNoCards,
+              style: const TextStyle(color: Colors.grey),
             ),
           Expanded(
             child: ListView.separated(

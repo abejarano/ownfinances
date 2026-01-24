@@ -11,6 +11,7 @@ import 'package:ownfinances/features/transactions/application/controllers/transa
 import 'package:ownfinances/features/transactions/domain/entities/transaction_filters.dart';
 import 'package:provider/provider.dart';
 import 'package:ownfinances/core/presentation/components/money_text.dart';
+import 'package:ownfinances/l10n/app_localizations.dart';
 
 class MonthSummaryScreen extends StatefulWidget {
   const MonthSummaryScreen({super.key});
@@ -38,15 +39,21 @@ class _MonthSummaryScreenState extends State<MonthSummaryScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Resumo geral do mês"),
+          title: Text(AppLocalizations.of(context)!.monthSummaryTitle),
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
               //Tab(text: "Moeda principal ($primaryCurrency)"),
-              Tab(text: "Por categoria"),
-              const Tab(text: "Por conta"),
-              const Tab(text: "Outras moedas"),
+              Tab(
+                text: AppLocalizations.of(context)!.monthSummaryTabCategories,
+              ),
+              Tab(text: AppLocalizations.of(context)!.monthSummaryTabAccounts),
+              Tab(
+                text: AppLocalizations.of(
+                  context,
+                )!.monthSummaryTabOtherCurrencies,
+              ),
             ],
           ),
           actions: [
@@ -67,9 +74,9 @@ class _MonthSummaryScreenState extends State<MonthSummaryScreen> {
               width: double.infinity,
               color: AppColors.surface2,
               padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-              child: const Text(
-                "Sem conversão automática. Valores por moeda.",
-                style: TextStyle(fontSize: 12, color: AppColors.muted),
+              child: Text(
+                AppLocalizations.of(context)!.monthSummaryHeaderHelper,
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -129,7 +136,9 @@ class _PrimaryCurrencyTab extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              "Sem movimentos em ${state.primaryCurrency} neste mês.",
+              AppLocalizations.of(
+                context,
+              )!.monthSummaryEmptyPrimary(state.primaryCurrency),
               style: const TextStyle(color: AppColors.muted),
             ),
             if (hasOther) ...[
@@ -140,7 +149,9 @@ class _PrimaryCurrencyTab extends StatelessWidget {
                     context,
                   ).animateTo(2); // Go to "Outras moedas"
                 },
-                child: const Text("Veja em Outras moedas"),
+                child: Text(
+                  AppLocalizations.of(context)!.monthSummarySeeOtherCurrencies,
+                ),
               ),
             ],
           ],
@@ -252,7 +263,9 @@ class _PrimaryCurrencyTab extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Total gastos (${state.primaryCurrency}):",
+                    AppLocalizations.of(
+                      context,
+                    )!.monthSummaryTotalSpent(state.primaryCurrency),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   MoneyText(
@@ -270,9 +283,12 @@ class _PrimaryCurrencyTab extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Outras moedas (sem conversão):",
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    Text(
+                      AppLocalizations.of(context)!.monthSummaryOtherCurrencies,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.muted,
+                      ),
                     ),
                     const Spacer(),
                     Column(
@@ -311,10 +327,10 @@ class _ByAccountTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.accountFlows.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          "Nenhuma conta encontrada",
-          style: TextStyle(color: AppColors.muted),
+          AppLocalizations.of(context)!.monthSummaryNoAccounts,
+          style: const TextStyle(color: AppColors.muted),
         ),
       );
     }
@@ -362,9 +378,9 @@ class _ByAccountTab extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Entradas",
-                        style: TextStyle(color: AppColors.success),
+                      Text(
+                        AppLocalizations.of(context)!.monthSummaryIncome,
+                        style: const TextStyle(color: AppColors.success),
                       ),
                       MoneyText(
                         value: flow.income,
@@ -377,9 +393,11 @@ class _ByAccountTab extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Pagamentos", // "Entradas" in debt account = Payments made to it
-                        style: TextStyle(color: AppColors.success),
+                      Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.monthSummaryPayments, // "Entradas" in debt account = Payments made to it
+                        style: const TextStyle(color: AppColors.success),
                       ),
                       MoneyText(
                         value: flow.income,
@@ -392,7 +410,9 @@ class _ByAccountTab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isDebt ? "Compras" : "Saídas",
+                      isDebt
+                          ? AppLocalizations.of(context)!.monthSummaryPurchases
+                          : AppLocalizations.of(context)!.monthSummaryExpenses,
                       style: const TextStyle(color: AppColors.danger),
                     ),
                     MoneyText(
@@ -407,7 +427,11 @@ class _ByAccountTab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isDebt ? "Variação no mês" : "Saldo do mês",
+                      isDebt
+                          ? AppLocalizations.of(context)!.monthSummaryNetMonth
+                          : AppLocalizations.of(
+                              context,
+                            )!.monthSummaryBalanceMonth,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     MoneyText(
@@ -422,7 +446,13 @@ class _ByAccountTab extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton(
                     child: Text(
-                      isDebt ? "Ver fatura/histórico" : "Ver transações",
+                      isDebt
+                          ? AppLocalizations.of(
+                              context,
+                            )!.monthSummaryViewInvoice
+                          : AppLocalizations.of(
+                              context,
+                            )!.monthSummaryViewTransactions,
                     ),
                     onPressed: () {
                       final start = DateTime(
@@ -466,10 +496,10 @@ class _OtherCurrenciesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.currencyFlows.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          "Nenhuma outra moeda movimentada",
-          style: TextStyle(color: AppColors.muted),
+          AppLocalizations.of(context)!.monthSummaryNoOtherCurrencies,
+          style: const TextStyle(color: AppColors.muted),
         ),
       );
     }
@@ -480,17 +510,19 @@ class _OtherCurrenciesTab extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.md),
           color: AppColors.surface2.withOpacity(0.5),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Outras moedas (sem conversão)",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                AppLocalizations.of(context)!.monthSummaryOtherCurrencies,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                "Os valores abaixo não são convertidos para a moeda principal.",
-                style: TextStyle(fontSize: 12, color: AppColors.muted),
+                AppLocalizations.of(
+                  context,
+                )!.monthSummaryOtherCurrenciesSubtitle,
+                style: const TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ],
           ),
@@ -522,9 +554,11 @@ class _OtherCurrenciesTab extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Entradas",
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.monthSummaryIncome,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: AppColors.muted,
                                 ),
@@ -539,9 +573,11 @@ class _OtherCurrenciesTab extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text(
-                                "Saídas",
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.monthSummaryExpenses,
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: AppColors.muted,
                                 ),
@@ -559,7 +595,7 @@ class _OtherCurrenciesTab extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text("Líquido"),
+                          Text(AppLocalizations.of(context)!.monthSummaryNet),
                           MoneyText(
                             value: flow.net,
                             symbol: flow.currency,
