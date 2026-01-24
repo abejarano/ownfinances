@@ -609,6 +609,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsActive => 'Active Accounts';
 
   @override
+  String get accountsCardsSection => 'Cards';
+
+  @override
+  String get accountsCardChip => 'CARD';
+
+  @override
+  String get accountsCardCurrentBill => 'Current bill';
+
+  @override
+  String get accountsCardViewDebts => 'View in Debts';
+
+  @override
   String get accountsDeleteTitle => 'Delete account?';
 
   @override

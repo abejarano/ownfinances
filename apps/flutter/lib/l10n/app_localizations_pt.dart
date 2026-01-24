@@ -609,6 +609,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get accountsActive => 'Contas ativas';
 
   @override
+  String get accountsCardsSection => 'Cartões';
+
+  @override
+  String get accountsCardChip => 'CARTÃO';
+
+  @override
+  String get accountsCardCurrentBill => 'Fatura atual';
+
+  @override
+  String get accountsCardViewDebts => 'Ver em Dívidas';
+
+  @override
   String get accountsDeleteTitle => 'Excluir conta?';
 
   @override

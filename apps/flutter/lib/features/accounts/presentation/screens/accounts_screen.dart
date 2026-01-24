@@ -9,8 +9,11 @@ import "package:ownfinances/core/utils/currency_utils.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
+import "package:ownfinances/features/debts/domain/entities/debt.dart";
 
 import "package:ownfinances/features/accounts/presentation/widgets/account_management_card.dart";
+import "package:ownfinances/features/accounts/presentation/widgets/credit_card_account_card.dart";
 import "package:ownfinances/features/banks/application/controllers/banks_controller.dart";
 import "package:ownfinances/features/accounts/presentation/widgets/account_form.dart";
 import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
@@ -24,20 +27,31 @@ class AccountsScreen extends StatelessWidget {
     final controller = context.read<AccountsController>();
     final state = context.watch<AccountsController>().state;
     final reportsState = context.watch<ReportsController>().state;
+    final debtsState = context.watch<DebtsController>().state;
     final balanceMap = {
       for (final item in reportsState.balances?.balances ?? [])
         item.accountId: item.balance,
     };
+    final debtsByAccountId = <String, Debt>{};
+    for (final debt in debtsState.items) {
+      final accountId = debt.linkedAccountId;
+      if (accountId != null) debtsByAccountId[accountId] = debt;
+    }
 
     // Check for invalid currencies (legacy data)
     final accountsWithInvalidCurrency = state.items
         .where((a) => !CurrencyUtils.isValidCurrency(a.currency))
         .toList();
     final hasInvalidCurrency = accountsWithInvalidCurrency.isNotEmpty;
+    final normalAccounts =
+        state.items.where((a) => a.type != "credit_card").toList();
+    final cardAccounts =
+        state.items.where((a) => a.type == "credit_card").toList();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.accountsTitle),
+        title: Text(l10n.accountsTitle),
 
         actions: [
           IconButton(
@@ -72,9 +86,7 @@ class AccountsScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            AppLocalizations.of(
-                              context,
-                            )!.accountsWarningCurrency,
+                            l10n.accountsWarningCurrency,
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(
                                   color: AppColors.warning,
@@ -86,7 +98,7 @@ class AccountsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      AppLocalizations.of(context)!.accountsWarningCurrencyDesc,
+                      l10n.accountsWarningCurrencyDesc,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textPrimary,
@@ -133,7 +145,7 @@ class AccountsScreen extends StatelessWidget {
                           }
                         },
                         child: Text(
-                          AppLocalizations.of(context)!.accountsFixCurrency,
+                          l10n.accountsFixCurrency,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -146,7 +158,7 @@ class AccountsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(context)!.accountsActive,
+                    l10n.accountsActive,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -161,49 +173,55 @@ class AccountsScreen extends StatelessWidget {
               const Center(child: CircularProgressIndicator()),
             if (!state.isLoading)
               Expanded(
-                child: ListView.separated(
-                  itemCount: state.items.length,
+                child: ListView(
                   padding: const EdgeInsets.only(bottom: 80), // Fab space
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final item = state.items[index];
-                    final balance = balanceMap[item.id] ?? 0.0;
-
-                    return GestureDetector(
-                      onLongPress: () async {
-                        final confirmed = await _confirmDelete(
-                          context,
-                          title: AppLocalizations.of(
-                            context,
-                          )!.accountsDeleteTitle,
-                          description: AppLocalizations.of(
-                            context,
-                          )!.accountsDeleteDesc,
-                        );
-                        if (!confirmed || !context.mounted) return;
-
-                        final error = await controller.remove(item.id);
-                        if (!context.mounted) return;
-                        if (error != null) {
-                          showStandardSnackbar(context, error);
-                          return;
-                        }
-                        await context.read<ReportsController>().load();
-                        if (context.mounted) {
-                          showStandardSnackbar(
-                            context,
-                            AppLocalizations.of(context)!.accountsDeleted,
-                          );
-                        }
-                      },
-                      child: AccountManagementCard(
-                        account: item,
-                        balance: balance,
-                        onEdit: () =>
-                            _openForm(context, controller, item: item),
+                  children: [
+                    if (normalAccounts.isNotEmpty) ...[
+                      Text(
+                        l10n.accountsTitle,
+                        style: Theme.of(context).textTheme.titleSmall,
                       ),
-                    );
-                  },
+                      const SizedBox(height: AppSpacing.sm),
+                      for (final item in normalAccounts) ...[
+                        _buildAccountCard(
+                          context,
+                          controller,
+                          item,
+                          AccountManagementCard(
+                            account: item,
+                            balance: balanceMap[item.id] ?? 0.0,
+                            onEdit: () =>
+                                _openForm(context, controller, item: item),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+                    if (cardAccounts.isNotEmpty) ...[
+                      if (normalAccounts.isNotEmpty)
+                        const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        l10n.accountsCardsSection,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      for (final item in cardAccounts) ...[
+                        _buildAccountCard(
+                          context,
+                          controller,
+                          item,
+                          CreditCardAccountCard(
+                            account: item,
+                            debt: debtsByAccountId[item.id],
+                            onEdit: () =>
+                                _openForm(context, controller, item: item),
+                            onViewDebts: () => context.push("/debts"),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+                  ],
                 ),
               ),
           ],
@@ -248,6 +266,39 @@ class AccountsScreen extends StatelessWidget {
       // Required UX: "automáticamente ir a la siguiente".
       // So we just loop.
     }
+  }
+
+  Widget _buildAccountCard(
+    BuildContext context,
+    AccountsController controller,
+    Account item,
+    Widget child,
+  ) {
+    return GestureDetector(
+      onLongPress: () async {
+        final confirmed = await _confirmDelete(
+          context,
+          title: AppLocalizations.of(context)!.accountsDeleteTitle,
+          description: AppLocalizations.of(context)!.accountsDeleteDesc,
+        );
+        if (!confirmed || !context.mounted) return;
+
+        final error = await controller.remove(item.id);
+        if (!context.mounted) return;
+        if (error != null) {
+          showStandardSnackbar(context, error);
+          return;
+        }
+        await context.read<ReportsController>().load();
+        if (context.mounted) {
+          showStandardSnackbar(
+            context,
+            AppLocalizations.of(context)!.accountsDeleted,
+          );
+        }
+      },
+      child: child,
+    );
   }
 
   Future<bool> _confirmDelete(

@@ -1220,6 +1220,30 @@ abstract class AppLocalizations {
   /// **'Contas ativas'**
   String get accountsActive;
 
+  /// No description provided for @accountsCardsSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cartões'**
+  String get accountsCardsSection;
+
+  /// No description provided for @accountsCardChip.
+  ///
+  /// In pt, this message translates to:
+  /// **'CARTÃO'**
+  String get accountsCardChip;
+
+  /// No description provided for @accountsCardCurrentBill.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fatura atual'**
+  String get accountsCardCurrentBill;
+
+  /// No description provided for @accountsCardViewDebts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver em Dívidas'**
+  String get accountsCardViewDebts;
+
   /// No description provided for @accountsDeleteTitle.
   ///
   /// In pt, this message translates to:

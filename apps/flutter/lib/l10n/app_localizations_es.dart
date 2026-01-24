@@ -609,6 +609,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get accountsActive => 'Cuentas activas';
 
   @override
+  String get accountsCardsSection => 'Tarjetas';
+
+  @override
+  String get accountsCardChip => 'TARJETA';
+
+  @override
+  String get accountsCardCurrentBill => 'Factura actual';
+
+  @override
+  String get accountsCardViewDebts => 'Ver en Deudas';
+
+  @override
   String get accountsDeleteTitle => '¿Eliminar cuenta?';
 
   @override
