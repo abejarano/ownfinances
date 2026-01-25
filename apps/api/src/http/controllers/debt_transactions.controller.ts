@@ -1,8 +1,3 @@
-import type { DebtTransactionMongoRepository } from "../../repositories/debt_transaction_repository"
-import { DebtTransaction } from "../../models/debt_transaction"
-import type { DebtTransactionPrimitives } from "../../models/debt_transaction"
-import type { DebtTransactionsService } from "../../services/debt_transactions_service"
-import { buildDebtTransactionsCriteria } from "../criteria/debt_transactions.criteria"
 import {
   Body,
   Controller,
@@ -17,14 +12,19 @@ import {
   Use,
   type ServerResponse,
 } from "bun-platform-kit"
-import { AuthMiddleware } from "../middleware/auth.middleware"
 import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
+import type { DebtTransactionPrimitives } from "../../models/debt_transaction"
+import { DebtTransaction } from "../../models/debt_transaction"
+import type { DebtTransactionMongoRepository } from "../../repositories/debt_transaction_repository"
+import type { DebtTransactionsService } from "../../services/debt_transactions_service"
+import { buildDebtTransactionsCriteria } from "../criteria/debt_transactions.criteria"
+import { AuthMiddleware } from "../middleware/auth.middleware"
 import {
   validateDebtTransactionPayload,
   type DebtTransactionCreatePayload,
 } from "../validation/debt_transactions.validation"
-import { Deps } from "../../bootstrap/deps"
 
 @Controller("/debt_transactions")
 export class DebtTransactionsController {

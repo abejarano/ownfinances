@@ -80,7 +80,8 @@ export function validateTransactionPayload(isUpdate: boolean) {
       ) {
         return res.status(422).send({ error: "Status invalido" })
       }
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
       if (flattened.nested?.type)
         return res.status(422).send({ error: "Tipo de transacao invalido" })

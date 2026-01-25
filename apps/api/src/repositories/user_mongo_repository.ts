@@ -30,9 +30,6 @@ export class UserMongoRepository
       { googleId: 1 },
       { unique: true, sparse: true }
     )
-    await collection.createIndex(
-      { appleId: 1 },
-      { unique: true, sparse: true }
-    )
+    await collection.createIndex({ appleId: 1 }, { unique: true, sparse: true })
   }
 }

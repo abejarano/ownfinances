@@ -59,7 +59,7 @@ export class Debt extends AggregateRoot {
       type: props.type,
       linkedAccountId: props.linkedAccountId,
       paymentAccountId: props.paymentAccountId,
-  currency: props.currency ?? "BRL",
+      currency: props.currency ?? "BRL",
       currentBalance: 0,
       initialBalance: props.initialBalance ?? 0,
       dueDay: props.dueDay,

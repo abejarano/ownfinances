@@ -4,9 +4,9 @@ import type { CategoryMongoRepository } from "../../repositories/category_reposi
 import type { CategoriesService } from "../../services/categories_service"
 import { buildCategoriesCriteria } from "../criteria/categories.criteria"
 import {
+  validateCategoryPayload,
   type CategoryCreatePayload,
   type CategoryUpdatePayload,
-  validateCategoryPayload,
 } from "../validation/categories.validation"
 
 import {

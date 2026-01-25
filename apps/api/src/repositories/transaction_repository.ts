@@ -178,13 +178,23 @@ export class TransactionMongoRepository
                         [TransactionType.Income, TransactionType.Transfer],
                       ],
                     },
-                    [{ accountId: "$toAccountId", amount: {
-                      $cond: [
-                        { $and: [ { $eq: ["$type", TransactionType.Transfer] }, { $gt: ["$destinationAmount", 0] } ] },
-                        "$destinationAmount",
-                        "$amount"
-                      ]
-                    } }],
+                    [
+                      {
+                        accountId: "$toAccountId",
+                        amount: {
+                          $cond: [
+                            {
+                              $and: [
+                                { $eq: ["$type", TransactionType.Transfer] },
+                                { $gt: ["$destinationAmount", 0] },
+                              ],
+                            },
+                            "$destinationAmount",
+                            "$amount",
+                          ],
+                        },
+                      },
+                    ],
                     [],
                   ],
                 },

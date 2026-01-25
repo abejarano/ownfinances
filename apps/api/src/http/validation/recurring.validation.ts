@@ -4,8 +4,8 @@ import type {
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import { TransactionType } from "../../models/transaction"
 import { RecurringFrequency } from "../../models/recurring/recurring_rule"
+import { TransactionType } from "../../models/transaction"
 
 export type RecurringTemplatePayload = {
   type: TransactionType
@@ -90,7 +90,8 @@ export function validateRecurringRulePayload(isUpdate: boolean) {
     const schema = isUpdate ? RuleUpdateSchema : RuleSchema
     const result = v.safeParse(schema, req.body)
     if (!result.success) {
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
       if (flattened.nested?.frequency)
         return res.status(422).send({ error: "Frecuencia invalida" })
@@ -114,11 +115,13 @@ export function validateRecurringRunQuery() {
   ): Promise<void> => {
     const result = v.safeParse(RunQuerySchema, req.query)
     if (!result.success) {
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
       if (flattened.nested?.period)
         return res.status(422).send({ error: "Periodo invalido" })
-      if (flattened.nested?.date) return res.status(422).send({ error: "Fecha invalida" })
+      if (flattened.nested?.date)
+        return res.status(422).send({ error: "Fecha invalida" })
       return res.status(422).send({ error: "Payload invalido" })
     }
     return next()
@@ -133,9 +136,11 @@ export function validateRecurringMaterializePayload() {
   ): Promise<void> => {
     const result = v.safeParse(MaterializeSchema, req.body)
     if (!result.success) {
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
-      if (flattened.nested?.date) return res.status(422).send({ error: "Fecha invalida" })
+      if (flattened.nested?.date)
+        return res.status(422).send({ error: "Fecha invalida" })
       return res.status(422).send({ error: "Payload invalido" })
     }
     return next()
@@ -150,9 +155,11 @@ export function validateRecurringSplitPayload() {
   ): Promise<void> => {
     const result = v.safeParse(SplitSchema, req.body)
     if (!result.success) {
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
-      if (flattened.nested?.date) return res.status(422).send({ error: "Fecha invalida" })
+      if (flattened.nested?.date)
+        return res.status(422).send({ error: "Fecha invalida" })
       if (flattened.nested?.template)
         return res.status(422).send({ error: "Plantilla invalida" })
       return res.status(422).send({ error: "Payload invalido" })

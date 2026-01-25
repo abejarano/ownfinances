@@ -120,6 +120,10 @@ export class GoalContributionsService {
       goalContributionId: existingPrimitives.goalContributionId,
       userId: existingPrimitives.userId,
       date: payload.date ? new Date(payload.date) : existingPrimitives.date,
+      accountId:
+        payload.accountId === undefined
+          ? existingPrimitives.accountId
+          : payload.accountId ?? undefined,
       updatedAt: new Date(),
     }
 

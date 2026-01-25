@@ -22,6 +22,7 @@ import {
 } from "../models/debt_transaction"
 import type { DebtMongoRepository } from "../repositories/debt_repository"
 import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository"
+import { computePeriodRange } from "../shared/dates"
 
 export class DebtsService {
   constructor(
@@ -38,7 +39,7 @@ export class DebtsService {
 
     // Map: DebtId -> Balance
     const balanceMap = new Map<string, number>()
-    
+
     for (const row of transactionSums) {
       const current = balanceMap.get(row.debtId) ?? 0
       let modifier = 0
@@ -58,10 +59,11 @@ export class DebtsService {
       const debt = Debt.fromPrimitives(item)
       const primitives = debt.toPrimitives()
       const computedBalance = balanceMap.get(primitives.debtId) ?? 0
-      
+
       primitives.amountDue = Math.max(0, computedBalance)
-      primitives.creditBalance = computedBalance < 0 ? Math.abs(computedBalance) : 0
-      
+      primitives.creditBalance =
+        computedBalance < 0 ? Math.abs(computedBalance) : 0
+
       return primitives
     })
 
@@ -181,15 +183,9 @@ export class DebtsService {
     const balanceComputed = charges + fees + interest - payments
 
     const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const monthEnd = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999
+    const { start: monthStart, end: monthEnd } = computePeriodRange(
+      "monthly",
+      now
     )
     const paymentRows = await this.debtTransactions.sumByDebt(userId, {
       debtId,
@@ -250,31 +246,9 @@ export class DebtsService {
     let dateFrom: string | undefined
     let dateTo: string | undefined
 
-    if (month) {
-      // month format: YYYY-MM
-      const [yearStr, monthStr] = month.split("-")
-      const year = parseInt(yearStr!, 10)
-      const monthNum = parseInt(monthStr!, 10) - 1 // JavaScript months are 0-indexed
-      const start = new Date(year, monthNum, 1)
-      const end = new Date(year, monthNum + 1, 0, 23, 59, 59, 999)
-      dateFrom = start.toISOString()
-      dateTo = end.toISOString()
-    } else {
-      // Si no se especifica mes, usar el mes actual
-      const now = new Date()
-      const start = new Date(now.getFullYear(), now.getMonth(), 1)
-      const end = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999
-      )
-      dateFrom = start.toISOString()
-      dateTo = end.toISOString()
-    }
+    const range = computePeriodRange("monthly", month ?? new Date())
+    dateFrom = range.start.toISOString()
+    dateTo = range.end.toISOString()
 
     const query: Record<string, string | undefined> = {
       debtId,
@@ -294,9 +268,7 @@ export class DebtsService {
     }
   }
 
-  async overview(
-    userId: string
-  ): Promise<
+  async overview(userId: string): Promise<
     Result<{
       totalAmountDue: number
       totalPaidThisMonth: number
@@ -347,15 +319,9 @@ export class DebtsService {
     }
 
     const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const monthEnd = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999
+    const { start: monthStart, end: monthEnd } = computePeriodRange(
+      "monthly",
+      now
     )
 
     const debtsData = await Promise.all(

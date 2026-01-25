@@ -1,4 +1,5 @@
 import { createHash } from "crypto"
+import type { Result } from "../bootstrap/response"
 import { AccountType } from "../models/account"
 import { BankType } from "../models/bank_type"
 import { ImportJob, ImportJobStatus } from "../models/import_job"
@@ -7,7 +8,6 @@ import type { AccountMongoRepository } from "../repositories/account_repository"
 import type { ImportJobMongoRepository } from "../repositories/import_job_repository"
 import type { TransactionMongoRepository } from "../repositories/transaction_repository"
 import { getBankAdapter } from "./bank_adapters"
-import type { Result } from "../bootstrap/response"
 import type { BankAdapter } from "./bank_adapters/bank_adapter.interface"
 
 export type ImportPreviewRow = {

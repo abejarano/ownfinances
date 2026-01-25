@@ -20,6 +20,7 @@ import type { TransactionPrimitives } from "../../models/transaction"
 import { Transaction } from "../../models/transaction"
 import type { TransactionMongoRepository } from "../../repositories/transaction_repository"
 import type { ReportsService } from "../../services/reports_service"
+import { computePeriodRange } from "../../shared/dates"
 import type { TransactionsService } from "../../services/transactions_service"
 import { buildTransactionsCriteria } from "../criteria/transactions.criteria"
 import { AuthMiddleware } from "../middleware/auth.middleware"
@@ -202,13 +203,11 @@ export class TransactionsController {
     // Optional filters
     if (query.month) {
       // month format: YYYY-MM
-      const [year, month] = query.month.split("-").map(Number)
-      const startDate = new Date(year!, month! - 1, 1)
-      const endDate = new Date(year!, month!, 0, 23, 59, 59, 999)
+      const range = computePeriodRange("monthly", query.month)
       filters.push({
         field: "date",
         operator: "BETWEEN",
-        value: { start: startDate, end: endDate },
+        value: { start: range.start, end: range.end },
       })
     }
 

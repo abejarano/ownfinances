@@ -1,6 +1,4 @@
-import type { Paginate } from "@abejarano/ts-mongodb-criteria"
 import type { Result } from "../bootstrap/response"
-import { buildDebtTransactionsCriteria } from "../http/criteria/debt_transactions.criteria"
 import type {
   DebtTransactionCreatePayload,
   DebtTransactionUpdatePayload,
@@ -65,10 +63,11 @@ export class DebtTransactionsService {
       if (debtPrimitives.type === "credit_card") {
         // --- CASO TC: Gasto desde la cuenta de la tarjeta (linkedAccountId) ---
         if (!debtPrimitives.linkedAccountId) {
-            return {
-              error: "Este cartão deve estar vinculado a uma conta do tipo Cartão.",
-              status: 400,
-            }
+          return {
+            error:
+              "Este cartão deve estar vinculado a uma conta do tipo Cartão.",
+            status: 400,
+          }
         }
         if (!payload.categoryId) {
           return { error: "Compra no cartão exige categoria.", status: 400 }
@@ -95,52 +94,58 @@ export class DebtTransactionsService {
         // No especificó que Charge en Loan cree Transaction bancaria.
         // Asumimos que Charge en Loan es solo "Sumar Deuda".)
       }
-    } else if (payload.type === DebtTransactionType.Payment && payload.accountId) {
-       // 2. PAGO (PAYMENT): Disminuye deuda
-       if (debtPrimitives.type === "credit_card") {
-         // --- CASO TC: Transferencia desde Banco (paymentAccountId) a Tarjeta (linkedAccountId) ---
-         if (!debtPrimitives.linkedAccountId) {
-            return {
-              error: "Este cartão deve estar vinculado a uma conta do tipo Cartão para receber pagamentos.",
-              status: 400,
-            }
-         }
-         // No requiere categoría porque es Transferencia
+    } else if (
+      payload.type === DebtTransactionType.Payment &&
+      payload.accountId
+    ) {
+      // 2. PAGO (PAYMENT): Disminuye deuda
+      if (debtPrimitives.type === "credit_card") {
+        // --- CASO TC: Transferencia desde Banco (paymentAccountId) a Tarjeta (linkedAccountId) ---
+        if (!debtPrimitives.linkedAccountId) {
+          return {
+            error:
+              "Este cartão deve estar vinculado a uma conta do tipo Cartão para receber pagamentos.",
+            status: 400,
+          }
+        }
+        // No requiere categoría porque es Transferencia
 
-         const transaction = Transaction.create({
-           userId,
-           type: TransactionType.Transfer,
-           date,
-           amount: payload.amount!,
-           currency,
-           categoryId: null, // Transferencias no llevan categoría
-           fromAccountId: payload.accountId, // Sale del Banco
-           toAccountId: debtPrimitives.linkedAccountId, // Entra a la Tarjeta (bajando su deuda neta)
-           note: payload.note ?? `Pagamento fatura ${debtPrimitives.name}`,
-           status: TransactionStatus.Cleared,
-         })
-         await this.transactions.upsert(transaction)
+        const transaction = Transaction.create({
+          userId,
+          type: TransactionType.Transfer,
+          date,
+          amount: payload.amount!,
+          currency,
+          categoryId: null, // Transferencias no llevan categoría
+          fromAccountId: payload.accountId, // Sale del Banco
+          toAccountId: debtPrimitives.linkedAccountId, // Entra a la Tarjeta (bajando su deuda neta)
+          note: payload.note ?? `Pagamento fatura ${debtPrimitives.name}`,
+          status: TransactionStatus.Cleared,
+        })
+        await this.transactions.upsert(transaction)
+      } else {
+        // --- CASO PRESTAMO: Gasto desde Banco (paymentAccountId) ---
+        if (!payload.categoryId) {
+          return {
+            error: "Pagamento de empréstimo requer categoria.",
+            status: 400,
+          }
+        }
 
-       } else {
-         // --- CASO PRESTAMO: Gasto desde Banco (paymentAccountId) ---
-         if (!payload.categoryId) {
-           return { error: "Pagamento de empréstimo requer categoria.", status: 400 }
-         }
-
-         const transaction = Transaction.create({
-           userId,
-           type: TransactionType.Expense,
-           date,
-           amount: payload.amount!,
-           currency,
-           categoryId: payload.categoryId,
-           fromAccountId: payload.accountId, // Sale del Banco
-           toAccountId: null,
-           note: payload.note ?? `Pagamento empréstimo ${debtPrimitives.name}`,
-           status: TransactionStatus.Cleared,
-         })
-         await this.transactions.upsert(transaction)
-       }
+        const transaction = Transaction.create({
+          userId,
+          type: TransactionType.Expense,
+          date,
+          amount: payload.amount!,
+          currency,
+          categoryId: payload.categoryId,
+          fromAccountId: payload.accountId, // Sale del Banco
+          toAccountId: null,
+          note: payload.note ?? `Pagamento empréstimo ${debtPrimitives.name}`,
+          status: TransactionStatus.Cleared,
+        })
+        await this.transactions.upsert(transaction)
+      }
     }
 
     return { value: { debtTransaction: tx.toPrimitives() }, status: 201 }

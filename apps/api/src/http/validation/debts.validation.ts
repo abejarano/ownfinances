@@ -1,10 +1,10 @@
-import * as v from "valibot"
-import { DebtType } from "../../models/debt"
 import type {
   NextFunction,
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
+import * as v from "valibot"
+import { DebtType } from "../../models/debt"
 
 export type DebtCreatePayload = {
   name: string
@@ -59,9 +59,10 @@ export function validateDebtPayload(isUpdate: boolean) {
     if (result.success) {
       return next()
     }
-    
+
     const flattened = v.flatten(result.issues)
-    if (flattened.nested?.name) return res.status(422).send({ error: "Falta el nombre" })
+    if (flattened.nested?.name)
+      return res.status(422).send({ error: "Falta el nombre" })
 
     if (flattened.nested?.type)
       return res.status(422).send({ error: "Tipo de deuda invalido" })
@@ -69,13 +70,17 @@ export function validateDebtPayload(isUpdate: boolean) {
     if (flattened.nested?.currency)
       return res.status(422).send({ error: "Moneda invalida" })
 
-      
-
     const validatedData = payload as DebtCreatePayload
 
     // Logic Rule: Credit Card MUST have linkedAccountId
-    if (validatedData.type === DebtType.CreditCard && !validatedData.linkedAccountId && !isUpdate) {
-       return res.status(422).send({ error: "Cartão de crédito deve ter uma conta vinculada" })
+    if (
+      validatedData.type === DebtType.CreditCard &&
+      !validatedData.linkedAccountId &&
+      !isUpdate
+    ) {
+      return res
+        .status(422)
+        .send({ error: "Cartão de crédito deve ter uma conta vinculada" })
     }
 
     const data = payload as {
@@ -91,16 +96,25 @@ export function validateDebtPayload(isUpdate: boolean) {
     }
 
     if (data.minimumPayment !== undefined && data.minimumPayment < 0) {
-      return res.status(422).send({ error: "El minimo debe ser mayor o igual a 0" })
+      return res
+        .status(422)
+        .send({ error: "El minimo debe ser mayor o igual a 0" })
     }
 
     if (data.interestRateAnnual !== undefined && data.interestRateAnnual < 0) {
-      return res.status(422).send({ error: "La tasa debe ser mayor o igual a 0" })
+      return res
+        .status(422)
+        .send({ error: "La tasa debe ser mayor o igual a 0" })
     }
 
     // @ts-ignore
-    if (validatedData.initialBalance !== undefined && validatedData.initialBalance < 0) {
-      return res.status(422).send({ error: "El saldo inicial debe ser mayor o igual a 0" })
+    if (
+      validatedData.initialBalance !== undefined &&
+      validatedData.initialBalance < 0
+    ) {
+      return res
+        .status(422)
+        .send({ error: "El saldo inicial debe ser mayor o igual a 0" })
     }
 
     return next()

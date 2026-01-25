@@ -2,6 +2,7 @@
 
 Meta: código limpio, sin “god files”, contratos consistentes, UX-first.
 Si hay conflicto con decisiones previas, prevalecen los patrones actuales.
+Base: Clean Code y principios SOLID siempre.
 
 ---
 

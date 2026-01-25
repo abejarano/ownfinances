@@ -15,7 +15,7 @@ export type BankPrimitives = {
 
 export class Bank extends AggregateRoot {
   override getId(): string {
-      return this.props.id ?? this.props.bankId
+    return this.props.id ?? this.props.bankId
   }
   private readonly props: BankPrimitives
 

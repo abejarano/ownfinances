@@ -72,8 +72,11 @@ export function validateAuthSocialLoginPayload(
   const flattened = v.flatten(result.issues)
 
   if (flattened.nested?.provider)
-    return res.status(422).send({ error: "Provedor inválido (google ou apple)" })
-  if (flattened.nested?.token) return res.status(422).send({ error: "Token obrigatório" })
+    return res
+      .status(422)
+      .send({ error: "Provedor inválido (google ou apple)" })
+  if (flattened.nested?.token)
+    return res.status(422).send({ error: "Token obrigatório" })
 
   return res.status(422).send({ error: "Payload invalido" })
 }
@@ -90,10 +93,12 @@ export function validateAuthRegisterPayload(
 
   if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
   const flattened = v.flatten(result.issues)
-  if (flattened.nested?.email) return res.status(422).send({ error: "Email obrigatório" })
+  if (flattened.nested?.email)
+    return res.status(422).send({ error: "Email obrigatório" })
   if (flattened.nested?.password)
     return res.status(422).send({ error: "Senha obrigatória" })
-  if (flattened.nested?.name) return res.status(422).send({ error: "Nome invalido" })
+  if (flattened.nested?.name)
+    return res.status(422).send({ error: "Nome invalido" })
 
   return res.status(422).send({ error: "Payload invalido" })
 }
@@ -109,10 +114,12 @@ export function validateAuthLoginPayload(
     const result = v.safeParse(LoginSchema, payload)
     if (result.success) return next()
 
-    if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+    if (!result.issues)
+      return res.status(422).send({ error: "Payload invalido" })
     const flattened = v.flatten(result.issues)
 
-    if (flattened.nested?.email) return res.status(422).send({ error: "Informe o E-mail" })
+    if (flattened.nested?.email)
+      return res.status(422).send({ error: "Informe o E-mail" })
 
     if (flattened.nested?.password)
       return res.status(422).send({ error: "Informe a senha" })

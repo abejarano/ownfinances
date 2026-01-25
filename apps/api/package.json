@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
-    "format": "bunx prettier --write \"src/**/*.{ts}\""
+    "format": "prettier --write \"src/**/*.{ts,hbs}\" ",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0"
   },
   "peerDependencies": {

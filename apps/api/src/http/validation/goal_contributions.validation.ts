@@ -42,9 +42,11 @@ export function validateGoalContributionPayload(isUpdate: boolean) {
     const result = v.safeParse(schema, payload)
 
     if (!result.success) {
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
-      if (flattened.nested?.goalId) return res.status(422).send({ error: "Falta la meta" })
+      if (flattened.nested?.goalId)
+        return res.status(422).send({ error: "Falta la meta" })
       if (flattened.nested?.amount)
         return res.status(422).send({ error: "Falta el monto" })
       return res.status(422).send({ error: "Payload invalido" })

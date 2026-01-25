@@ -56,6 +56,7 @@ Presentation (Widgets)
 ← Data (Repo impl + DTO + Mappers + Datasources)
 
 Domain no importa Flutter, Riverpod, Dio.
+Widgets deben ser reusables, pequenos y con un solo objetivo.
 
 ---
 

@@ -30,15 +30,20 @@ export class ReportsController {
     @Res() res: ServerResponse
   ) {
     const period = query.period as BudgetPeriodType | undefined
-    const date = query.date ? new Date(query.date) : new Date()
+    const dateRaw = query.date
+    const parsedDate = dateRaw ? new Date(dateRaw) : new Date()
 
     if (!period)
       return HttpResponse(res, { error: "Falta el periodo", status: 400 })
 
-    if (Number.isNaN(date.getTime()))
+    if (Number.isNaN(parsedDate.getTime()))
       return HttpResponse(res, { error: "Fecha invalida", status: 400 })
 
-    const result = await this.reports.summary(req.userId ?? "", period, date)
+    const result = await this.reports.summary(
+      req.userId ?? "",
+      period,
+      dateRaw ?? parsedDate
+    )
     return HttpResponse(res, result)
   }
 
@@ -50,15 +55,20 @@ export class ReportsController {
     @Res() res: ServerResponse
   ) {
     const period = query.period as BudgetPeriodType | undefined
-    const date = query.date ? new Date(query.date) : new Date()
+    const dateRaw = query.date
+    const parsedDate = dateRaw ? new Date(dateRaw) : new Date()
 
     if (!period)
       return HttpResponse(res, { error: "Falta el periodo", status: 400 })
 
-    if (Number.isNaN(date.getTime()))
+    if (Number.isNaN(parsedDate.getTime()))
       return HttpResponse(res, { error: "Fecha invalida", status: 400 })
 
-    const result = await this.reports.balances(req.userId ?? "", period, date)
+    const result = await this.reports.balances(
+      req.userId ?? "",
+      period,
+      dateRaw ?? parsedDate
+    )
     return HttpResponse(res, result)
   }
 }

@@ -1,7 +1,7 @@
 import type { BudgetPeriodType, BudgetPrimitives } from "../../models/budget"
 import type { BudgetMongoRepository } from "../../repositories/budget_repository"
 import type { BudgetsService } from "../../services/budgets_service"
-import { computePeriodRange } from "../../services/reports_service"
+import { computePeriodRange, getRangeAnchorDate } from "../../shared/dates"
 import { buildBudgetsCriteria } from "../criteria/budgets.criteria"
 
 import {
@@ -77,19 +77,21 @@ export class BudgetsController {
     @Res() res: ServerResponse
   ) {
     const period = query.period as BudgetPeriodType | undefined
-    const date = query.date ? new Date(query.date) : new Date()
+    const dateRaw = query.date
+    const parsedDate = dateRaw ? new Date(dateRaw) : new Date()
     if (!period)
       return HttpResponse(res, { error: "Falta el periodo", status: 400 })
 
-    if (Number.isNaN(date.getTime()))
+    if (Number.isNaN(parsedDate.getTime()))
       return HttpResponse(res, { error: "Fecha invalida", status: 400 })
 
-    const range = computePeriodRange(period, date)
+    const range = computePeriodRange(period, dateRaw ?? parsedDate)
+    const anchorDate = getRangeAnchorDate(range)
     const budget = await this.repo.one({
       userId: req.userId ?? "",
       periodType: period,
-      startDate: { $lte: date } as any,
-      endDate: { $gte: date } as any,
+      startDate: { $lte: anchorDate } as any,
+      endDate: { $gte: anchorDate } as any,
     })
 
     if (!budget) {
@@ -164,21 +166,22 @@ export class BudgetsController {
     @Res() res: ServerResponse
   ) {
     const period = query.period as BudgetPeriodType | undefined
-    const date = query.date ? new Date(query.date) : new Date()
+    const dateRaw = query.date
+    const parsedDate = dateRaw ? new Date(dateRaw) : new Date()
 
     if (!period) {
       return HttpResponse(res, { error: "Falta el periodo", status: 400 })
     }
-    if (Number.isNaN(date.getTime())) {
+    if (Number.isNaN(parsedDate.getTime())) {
       return HttpResponse(res, { error: "Fecha invalida", status: 400 })
     }
 
-    const range = computePeriodRange(period, date)
+    const range = computePeriodRange(period, dateRaw ?? parsedDate)
+    const anchorDate = getRangeAnchorDate(range)
     const response = await this.service.removeLine(
       req.userId ?? "",
       period,
-      range.start,
-      range.end,
+      anchorDate,
       categoryId
     )
 

@@ -45,9 +45,11 @@ export function validateGoalPayload(isUpdate: boolean) {
     const result = v.safeParse(schema, payload)
 
     if (!result.success) {
-      if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+      if (!result.issues)
+        return res.status(422).send({ error: "Payload invalido" })
       const flattened = v.flatten(result.issues)
-      if (flattened.nested?.name) return res.status(422).send({ error: "Falta el nombre" })
+      if (flattened.nested?.name)
+        return res.status(422).send({ error: "Falta el nombre" })
       if (flattened.nested?.targetAmount)
         return res.status(422).send({ error: "Falta el monto objetivo" })
       if (flattened.nested?.currency)
@@ -68,7 +70,9 @@ export function validateGoalPayload(isUpdate: boolean) {
       return res.status(422).send({ error: "El monto debe ser mayor que 0" })
     }
     if (data.monthlyContribution != null && data.monthlyContribution < 0) {
-      return res.status(422).send({ error: "El aporte debe ser mayor o igual a 0" })
+      return res
+        .status(422)
+        .send({ error: "El aporte debe ser mayor o igual a 0" })
     }
 
     if (data.startDate) {

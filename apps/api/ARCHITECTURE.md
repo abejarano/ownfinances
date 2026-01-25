@@ -1,6 +1,7 @@
 # ARCHITECTURE.md — Desquadra API (Bun + bun-platform-kit + Mongo)
 
 Objetivo: API estable, multi-tenant real, Clean Architecture estricta, contratos consistentes y UX-friendly.
+Base: Clean Code y principios SOLID en toda la base.
 
 ---
 
@@ -23,6 +24,7 @@ HTTP (bun-platform-kit)
 → Models (Entities + Rules + Interfaces)
 ← Infrastructure (Mongo Repos)
 
+Regla #0: aplicar Clean Code y principios SOLID en cada capa.
 Regla #1: Models no depende de nada externo.
 Regla #2: Valores fijos se definen con `enum`; `type` se usa para shapes.
 Regla #3: AggregateRoot usa `static create(...)`; no se instancia con `new` ni se crea `id` manual.

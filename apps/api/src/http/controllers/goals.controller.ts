@@ -1,24 +1,24 @@
-import type { GoalMongoRepository } from "../../repositories/goal_repository"
-import { Goal } from "../../models/goal"
 import type { GoalPrimitives } from "../../models/goal"
-import type { GoalsService } from "../../services/goals_service"
-import type { GoalContributionsService } from "../../services/goal_contributions_service"
-import type { GoalContributionMongoRepository } from "../../repositories/goal_contribution_repository"
-import { buildGoalsCriteria } from "../criteria/goals.criteria"
-import { buildGoalContributionsCriteria } from "../criteria/goal_contributions.criteria"
+import { Goal } from "../../models/goal"
 import {
-  validateGoalPayload,
-  type GoalCreatePayload,
-  type GoalUpdatePayload,
-} from "../validation/goals.validation"
+  GoalContribution,
+  type GoalContributionPrimitives,
+} from "../../models/goal_contribution"
+import type { GoalContributionMongoRepository } from "../../repositories/goal_contribution_repository"
+import type { GoalMongoRepository } from "../../repositories/goal_repository"
+import type { GoalContributionsService } from "../../services/goal_contributions_service"
+import type { GoalsService } from "../../services/goals_service"
+import { buildGoalContributionsCriteria } from "../criteria/goal_contributions.criteria"
+import { buildGoalsCriteria } from "../criteria/goals.criteria"
 import type {
   GoalContributionCreatePayload,
   GoalContributionUpdatePayload,
 } from "../validation/goal_contributions.validation"
 import {
-  GoalContribution,
-  type GoalContributionPrimitives,
-} from "../../models/goal_contribution"
+  validateGoalPayload,
+  type GoalCreatePayload,
+  type GoalUpdatePayload,
+} from "../validation/goals.validation"
 
 import {
   Body,
@@ -34,10 +34,10 @@ import {
   Use,
   type ServerResponse,
 } from "bun-platform-kit"
-import { Deps } from "../../bootstrap/deps"
-import { AuthMiddleware } from "../middleware/auth.middleware"
 import type { AuthenticatedRequest } from "../../@types/request"
+import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
+import { AuthMiddleware } from "../middleware/auth.middleware"
 
 @Controller("/goals")
 export class GoalsController {

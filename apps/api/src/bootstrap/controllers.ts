@@ -1,6 +1,7 @@
 import { ControllersModule } from "bun-platform-kit"
 import { AccountsController } from "../http/controllers/accounts.controller"
 import { AuthController } from "../http/controllers/auth.controller"
+import { BanksController } from "../http/controllers/banks.controller"
 import { BudgetsController } from "../http/controllers/budgets.controller"
 import { CategoriesController } from "../http/controllers/categories.controller"
 import { DebtTransactionsController } from "../http/controllers/debt_transactions.controller"
@@ -13,7 +14,6 @@ import { SettingsController } from "../http/controllers/settings.controller"
 import { TemplatesController } from "../http/controllers/templates.controller"
 import { TransactionsController } from "../http/controllers/transactions.controller"
 import { TransactionsImportController } from "../http/controllers/transactions_import.controller"
-import { BanksController } from "../http/controllers/banks.controller"
 
 export const controllersModule = () =>
   new ControllersModule([

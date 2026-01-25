@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test"
-import { DebtsService } from "./debts_service"
 import { DebtType } from "../models/debt"
 import { DebtTransactionType } from "../models/debt_transaction"
+import { DebtsService } from "./debts_service"
 
 // Mock repositories
 const mockDebtRepo = {
@@ -20,10 +20,7 @@ const mockTransactionRepo = {
 describe("DebtsService", () => {
   let service: DebtsService
 
-  service = new DebtsService(
-    mockDebtRepo as any,
-    mockTransactionRepo as any
-  )
+  service = new DebtsService(mockDebtRepo as any, mockTransactionRepo as any)
 
   describe("create", () => {
     it("should NOT create a transaction if initialBalance is 0", async () => {
@@ -39,7 +36,7 @@ describe("DebtsService", () => {
 
       // Expect debt upsert
       expect(mockDebtRepo.upsert).toHaveBeenCalled()
-      
+
       // Expect NO transaction upsert
       expect(mockTransactionRepo.upsert).not.toHaveBeenCalled()
     })
@@ -57,7 +54,7 @@ describe("DebtsService", () => {
 
       expect(mockDebtRepo.upsert).toHaveBeenCalled()
       expect(mockTransactionRepo.upsert).toHaveBeenCalledTimes(1)
-      
+
       // We can inspect arguments if needed, but just ensuring it's called is good for MVP
       // If we want to be strict:
       const calls = (mockTransactionRepo.upsert as any).mock.calls
@@ -74,33 +71,37 @@ describe("DebtsService", () => {
       const userId = "user1"
 
       // Mock debt existing
-      mockDebtRepo.one = mock(() => Promise.resolve({
-        toPrimitives: () => ({ dueDay: 10, name: "Test" }) // partial mock
-      } as any))
+      mockDebtRepo.one = mock(() =>
+        Promise.resolve({
+          toPrimitives: () => ({ dueDay: 10, name: "Test" }), // partial mock
+        } as any)
+      )
 
       // Mock transactions sum
       // Charges: 100, Payments: 150
       mockTransactionRepo.sumByDebt = mock((uid, filters) => {
         // sumByDebt is called twice: once for totals, once for this month payments
         // We can distinguish by args or just return generic structure if simple
-        
+
         // If filters has 'start' it's likely the monthly payments check
         if (filters.start) {
-             return Promise.resolve([{ type: DebtTransactionType.Payment, total: 50 }]) 
+          return Promise.resolve([
+            { type: DebtTransactionType.Payment, total: 50 },
+          ])
         }
 
         // Overall totals
         return Promise.resolve([
-            { type: DebtTransactionType.Charge, total: 100 },
-            { type: DebtTransactionType.Payment, total: 150 }
+          { type: DebtTransactionType.Charge, total: 100 },
+          { type: DebtTransactionType.Payment, total: 150 },
         ])
       })
 
       const result = await service.summary(userId, debtId)
-      
+
       expect(result.status).toBe(200)
       const data = result.value!
-      
+
       // Balance = 100 - 150 = -50
       // AmountDue = max(0, -50) = 0
       // CreditBalance = abs(-50) = 50

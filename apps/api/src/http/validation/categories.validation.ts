@@ -43,7 +43,8 @@ export function validateCategoryPayload(isUpdate: boolean) {
 
     if (result.success) return next()
 
-    if (!result.issues) return res.status(422).send({ error: "Payload invalido" })
+    if (!result.issues)
+      return res.status(422).send({ error: "Payload invalido" })
     const flattened = v.flatten(result.issues)
 
     if (flattened.nested?.name)

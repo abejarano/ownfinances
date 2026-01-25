@@ -7,6 +7,7 @@ import type {
   BudgetCreatePayload,
   BudgetUpdatePayload,
 } from "../http/validation/budgets.validation"
+import { computePeriodRange, getRangeAnchorDate } from "../shared/dates"
 
 export class BudgetsService {
   constructor(private readonly budgets: BudgetMongoRepository) {}
@@ -25,31 +26,23 @@ export class BudgetsService {
       }
     }
 
-    const startDate = new Date(payload.startDate!)
-    const endDate = new Date(payload.endDate!)
+    const startRange = computePeriodRange("monthly", payload.startDate!)
+    const endRange = computePeriodRange("monthly", payload.endDate!)
+    const anchorDate = getRangeAnchorDate(startRange)
 
-    // Validate start/end dates covers full month
-    // We assume startDate must be 1st day and endDate must be last day
-    const startOfMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
-    const endOfMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0, 23, 59, 59, 999)
-
-    // A simple check: ensure they match same month and year
-    if (
-      startDate.getFullYear() !== endDate.getFullYear() ||
-      startDate.getMonth() !== endDate.getMonth()
-    ) {
-        return {
-          error: "La fecha de inicio y fin deben pertenecer al mismo mes",
-          status: 400,
-        }
+    if (startRange.start.getTime() !== endRange.start.getTime()) {
+      return {
+        error: "La fecha de inicio y fin deben pertenecer al mismo mes",
+        status: 400,
+      }
     }
 
     // Check for duplicates
     const existing = await this.budgets.one({
       userId,
       periodType: "monthly",
-      startDate: startOfMonth,
-      endDate: endOfMonth,
+      startDate: { $lte: anchorDate } as any,
+      endDate: { $gte: anchorDate } as any,
     })
 
     if (existing) {
@@ -59,8 +52,8 @@ export class BudgetsService {
     const budget = Budget.create({
       userId,
       periodType: "monthly",
-      startDate: startOfMonth,
-      endDate: endOfMonth,
+      startDate: startRange.start,
+      endDate: startRange.end,
       lines: payload.lines ?? [],
     })
 
@@ -118,19 +111,21 @@ export class BudgetsService {
   async removeLine(
     userId: string,
     periodType: string,
-    startDate: Date,
-    endDate: Date,
+    referenceDate: Date,
     categoryId: string
   ): Promise<Result<BudgetPrimitives>> {
     const existing = await this.budgets.one({
       userId,
       periodType,
-      startDate,
-      endDate,
+      startDate: { $lte: referenceDate } as any,
+      endDate: { $gte: referenceDate } as any,
     })
 
     if (!existing) {
-      return { error: "Presupuesto no encontrado para este periodo", status: 404 }
+      return {
+        error: "Presupuesto no encontrado para este periodo",
+        status: 404,
+      }
     }
 
     const primitives = existing.toPrimitives()

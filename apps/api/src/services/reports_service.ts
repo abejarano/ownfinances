@@ -3,6 +3,8 @@ import type { BudgetPeriodType } from "../models/budget"
 import type { BudgetMongoRepository } from "../repositories/budget_repository"
 import type { CategoryMongoRepository } from "../repositories/category_repository"
 import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+import type { DateInput } from "../shared/dates"
+import { computePeriodRange } from "../shared/dates"
 
 export type Summary = {
   range: { start: Date; end: Date }
@@ -41,7 +43,7 @@ export class ReportsService {
   async summary(
     userId: string,
     period: BudgetPeriodType,
-    date: Date
+    date: DateInput
   ): Promise<Result<Summary>> {
     const range = computePeriodRange(period, date)
 
@@ -150,7 +152,7 @@ export class ReportsService {
   async balances(
     userId: string,
     period: BudgetPeriodType,
-    date: Date
+    date: DateInput
   ): Promise<
     Result<{
       range: { start: Date; end: Date }
@@ -171,29 +173,4 @@ export class ReportsService {
       status: 200,
     }
   }
-}
-
-export function computePeriodRange(period: BudgetPeriodType, date: Date) {
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-
-  if (period === "monthly") {
-    start.setDate(1)
-    end.setMonth(start.getMonth() + 1, 0)
-  } else if (period === "quarterly") {
-    const quarterStart = Math.floor(start.getMonth() / 3) * 3
-    start.setMonth(quarterStart, 1)
-    end.setMonth(quarterStart + 3, 0)
-  } else if (period === "semiannual") {
-    const halfStart = start.getMonth() < 6 ? 0 : 6
-    start.setMonth(halfStart, 1)
-    end.setMonth(halfStart + 6, 0)
-  } else {
-    start.setMonth(0, 1)
-    end.setMonth(12, 0)
-  }
-
-  end.setHours(23, 59, 59, 999)
-  return { start, end }
 }

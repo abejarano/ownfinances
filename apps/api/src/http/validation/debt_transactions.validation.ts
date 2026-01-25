@@ -1,10 +1,10 @@
-import * as v from "valibot"
-import { DebtTransactionType } from "../../models/debt_transaction"
 import type {
   NextFunction,
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
+import * as v from "valibot"
+import { DebtTransactionType } from "../../models/debt_transaction"
 
 export type DebtTransactionCreatePayload = {
   debtId: string
@@ -54,11 +54,16 @@ export function validateDebtTransactionPayload(isUpdate: boolean) {
     if (!result.success) {
       const flattened = v.flatten(result.issues)
 
-      if (flattened.nested?.debtId) return res.status(422).json({ error: "Falta la deuda" })
-      if (flattened.nested?.type) return res.status(422).json({ error: "Tipo invalido" })
-      if (flattened.nested?.amount) return res.status(422).json({ error: "Falta el monto" })
-      
-      const paramError = flattened.nested ? Object.values(flattened.nested)[0]?.[0] : "Payload invalido"
+      if (flattened.nested?.debtId)
+        return res.status(422).json({ error: "Falta la deuda" })
+      if (flattened.nested?.type)
+        return res.status(422).json({ error: "Tipo invalido" })
+      if (flattened.nested?.amount)
+        return res.status(422).json({ error: "Falta el monto" })
+
+      const paramError = flattened.nested
+        ? Object.values(flattened.nested)[0]?.[0]
+        : "Payload invalido"
       return res.status(422).json({ error: paramError })
     }
 
@@ -100,7 +105,9 @@ export function validateDebtTransactionPayload(isUpdate: boolean) {
     if (!isUpdate && data.type === DebtTransactionType.Charge) {
       const payloadWithCategory = payload as { categoryId?: string | null }
       if (!payloadWithCategory.categoryId) {
-        return res.status(422).json({ error: "Falta la categoria para la compra" })
+        return res
+          .status(422)
+          .json({ error: "Falta la categoria para la compra" })
       }
     }
 

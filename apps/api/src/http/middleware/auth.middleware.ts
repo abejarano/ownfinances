@@ -27,7 +27,7 @@ export const AuthMiddleware = async (
   const token = authHeader.replace("Bearer ", "").trim()
   try {
     const { payload } = await jwtVerify(token, encoder.encode(jwtSecret))
-    
+
     if (!payload.sub) {
       console.error("AuthMiddleware: Payload missing 'sub' claim", payload)
       return res.status(401).send("Sessão expirada, entre novamente")

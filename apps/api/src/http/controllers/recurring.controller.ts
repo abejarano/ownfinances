@@ -16,6 +16,7 @@ import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
 import type { RecurringService } from "../../services/recurring_service"
+import { computePeriodRange } from "../../shared/dates"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 import {
   validateRecurringMaterializePayload,
@@ -84,9 +85,7 @@ export class RecurringController {
     let date: Date
 
     if (query.month) {
-      // Parse YYYY-MM format
-      const [year, month] = query.month.split("-").map(Number)
-      date = new Date(year!, month! - 1, 1)
+      date = computePeriodRange("monthly", query.month).start
     } else if (query.date) {
       date = new Date(query.date)
     } else {
@@ -206,9 +205,7 @@ export class RecurringController {
     const monthParam = queryMonth || bodyMonth
 
     if (monthParam) {
-      // Parse YYYY-MM format
-      const [year, month] = monthParam.split("-").map(Number)
-      date = new Date(year!, month! - 1, 1)
+      date = computePeriodRange("monthly", monthParam).start
     } else if (queryDate) {
       date = new Date(queryDate)
     } else if (body?.date) {

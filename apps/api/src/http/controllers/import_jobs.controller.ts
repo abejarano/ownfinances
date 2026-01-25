@@ -1,4 +1,3 @@
-import type { ImportJobMongoRepository } from "../../repositories/import_job_repository"
 import {
   Controller,
   Get,
@@ -8,8 +7,9 @@ import {
   type ServerResponse,
 } from "bun-platform-kit"
 import type { AuthenticatedRequest } from "../../@types/request"
-import { HttpResponse } from "../../bootstrap/response"
 import { Deps } from "../../bootstrap/deps"
+import { HttpResponse } from "../../bootstrap/response"
+import type { ImportJobMongoRepository } from "../../repositories/import_job_repository"
 
 @Controller("/imports")
 export class ImportJobsController {

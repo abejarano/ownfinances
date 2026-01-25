@@ -5,6 +5,12 @@ import {
   Order,
   type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
+import type { Result } from "../bootstrap/response"
+import type {
+  RecurringRuleCreatePayload,
+  RecurringRuleUpdatePayload,
+  RecurringTemplatePayload,
+} from "../http/validation/recurring.validation"
 import {
   GeneratedInstance,
   type GeneratedInstancePrimitives,
@@ -18,12 +24,7 @@ import { Transaction, TransactionStatus } from "../models/transaction"
 import { GeneratedInstanceMongoRepository } from "../repositories/generated_instance_repository"
 import { RecurringRuleMongoRepository } from "../repositories/recurring_rule_repository"
 import { TransactionMongoRepository } from "../repositories/transaction_repository"
-import type {
-  RecurringRuleCreatePayload,
-  RecurringRuleUpdatePayload,
-  RecurringTemplatePayload,
-} from "../http/validation/recurring.validation"
-import type { Result } from "../bootstrap/response"
+import { computePeriodRange } from "../shared/dates"
 
 export interface RecurringPreviewItem {
   recurringRuleId: string
@@ -160,7 +161,7 @@ export class RecurringService {
   ): Promise<Result<{ ok: boolean }>> {
     const dateStr = date.toISOString().split("T")[0]
     const uniqueKey = `${recurringRuleId}_${dateStr}`
-    
+
     const instance = await this.instanceRepo.one({ uniqueKey, userId })
     if (!instance) {
       return { error: "Instance not found", status: 404 }
@@ -246,12 +247,16 @@ export class RecurringService {
     date: Date
   ): Promise<Result<RecurringPreviewItem[]>> {
     const startTotal = performance.now()
-    console.log(`[RecurringService] Preview started for user ${userId}, period ${period}, date ${date.toISOString()}`)
+    console.log(
+      `[RecurringService] Preview started for user ${userId}, period ${period}, date ${date.toISOString()}`
+    )
     const { start, end } = this.computeRange(period, date)
 
     const startRules = performance.now()
     const rules = await this.getUserRules(userId)
-    console.log(`[RecurringService] Found ${rules.length} active rules (took ${(performance.now() - startRules).toFixed(2)}ms)`)
+    console.log(
+      `[RecurringService] Found ${rules.length} active rules (took ${(performance.now() - startRules).toFixed(2)}ms)`
+    )
 
     const startInstances = performance.now()
     const instancesInPeriod = await this.getInstancesInPeriod(
@@ -259,7 +264,9 @@ export class RecurringService {
       start,
       end
     )
-    console.log(`[RecurringService] Loaded instances (took ${(performance.now() - startInstances).toFixed(2)}ms)`)
+    console.log(
+      `[RecurringService] Loaded instances (took ${(performance.now() - startInstances).toFixed(2)}ms)`
+    )
 
     const result: RecurringPreviewItem[] = []
 
@@ -286,14 +293,21 @@ export class RecurringService {
         }
         const ruleTime = performance.now() - startRule
         if (ruleTime > 100) {
-             console.warn(`[RecurringService] Slow rule ${rule.ruleId}: ${ruleTime.toFixed(2)}ms`)
+          console.warn(
+            `[RecurringService] Slow rule ${rule.ruleId}: ${ruleTime.toFixed(2)}ms`
+          )
         }
       } catch (e) {
-        console.error(`[RecurringService] Error processing rule ${rule.ruleId}:`, e)
+        console.error(
+          `[RecurringService] Error processing rule ${rule.ruleId}:`,
+          e
+        )
       }
     }
 
-    console.log(`[RecurringService] Preview finished, returning ${result.length} items (Total: ${(performance.now() - startTotal).toFixed(2)}ms)`)
+    console.log(
+      `[RecurringService] Preview finished, returning ${result.length} items (Total: ${(performance.now() - startTotal).toFixed(2)}ms)`
+    )
     return { value: result, status: 200 }
   }
 
@@ -447,13 +461,7 @@ export class RecurringService {
   }
 
   private computeRange(period: "monthly", date: Date) {
-    const start = new Date(date)
-    start.setDate(1)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date(start)
-    end.setMonth(end.getMonth() + 1, 0) // Last day of month
-    end.setHours(23, 59, 59, 999)
-    return { start, end }
+    return computePeriodRange(period, date)
   }
 
   private async getUserRules(userId: string) {
@@ -481,12 +489,14 @@ export class RecurringService {
     windowEnd: Date
   ): Date[] {
     const dates: Date[] = []
-    
+
     // Safety: Ensure interval is at least 1
     if (rule.interval < 1) {
-        console.warn(`[RecurringService] Rule ${rule.ruleId} has invalid interval ${rule.interval}, treating as 1`)
-        // Hack: treat as 1 explicitly for calculation without mutating rule object deeper
-        // Actually we can't mutate rule here easily, so let's just use a local var
+      console.warn(
+        `[RecurringService] Rule ${rule.ruleId} has invalid interval ${rule.interval}, treating as 1`
+      )
+      // Hack: treat as 1 explicitly for calculation without mutating rule object deeper
+      // Actually we can't mutate rule here easily, so let's just use a local var
     }
     const safeInterval = Math.max(1, rule.interval)
 
@@ -496,44 +506,52 @@ export class RecurringService {
 
     const startDay = new Date(rule.startDate).getDate()
     let current = new Date(rule.startDate)
-    
+
     // Optimization: Jump to near windowStart to avoid iterating from ancient history
     // We want 'current' to be the first occurrence >= windowStart (or just before it)
     if (current < windowStart) {
       if (rule.frequency === RecurringFrequency.Monthly) {
         // Calculate months difference
-        const monthsDiff = (windowStart.getFullYear() - current.getFullYear()) * 12 + (windowStart.getMonth() - current.getMonth())
+        const monthsDiff =
+          (windowStart.getFullYear() - current.getFullYear()) * 12 +
+          (windowStart.getMonth() - current.getMonth())
         if (monthsDiff > 0) {
           // How many intervals fit?
           const intervalsToSkip = Math.floor(monthsDiff / safeInterval)
           // Add them
           if (intervalsToSkip > 0) {
-              current.setDate(1)
-              current.setMonth(current.getMonth() + (intervalsToSkip * safeInterval))
-              
-              const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
-              const targetDay = Math.min(startDay, daysInMonth)
-              current.setDate(targetDay)
+            current.setDate(1)
+            current.setMonth(
+              current.getMonth() + intervalsToSkip * safeInterval
+            )
+
+            const daysInMonth = new Date(
+              current.getFullYear(),
+              current.getMonth() + 1,
+              0
+            ).getDate()
+            const targetDay = Math.min(startDay, daysInMonth)
+            current.setDate(targetDay)
           }
         }
       } else if (rule.frequency === RecurringFrequency.Weekly) {
-         const oneWeekMs = 7 * 24 * 60 * 60 * 1000
-         const intervalMs = oneWeekMs * safeInterval
-         const diffMs = windowStart.getTime() - current.getTime()
-         if (diffMs > 0) {
-           const skips = Math.floor(diffMs / intervalMs)
-           if (skips > 0) {
-              current = new Date(current.getTime() + (skips * intervalMs))
-           }
-         }
+        const oneWeekMs = 7 * 24 * 60 * 60 * 1000
+        const intervalMs = oneWeekMs * safeInterval
+        const diffMs = windowStart.getTime() - current.getTime()
+        if (diffMs > 0) {
+          const skips = Math.floor(diffMs / intervalMs)
+          if (skips > 0) {
+            current = new Date(current.getTime() + skips * intervalMs)
+          }
+        }
       } else if (rule.frequency === RecurringFrequency.Yearly) {
-         const diffYears = windowStart.getFullYear() - current.getFullYear()
-         if (diffYears > 0) {
-            const skips = Math.floor(diffYears / safeInterval)
-            if (skips > 0) {
-               current.setFullYear(current.getFullYear() + (skips * safeInterval))
-            }
-         }
+        const diffYears = windowStart.getFullYear() - current.getFullYear()
+        if (diffYears > 0) {
+          const skips = Math.floor(diffYears / safeInterval)
+          if (skips > 0) {
+            current.setFullYear(current.getFullYear() + skips * safeInterval)
+          }
+        }
       }
     }
 
@@ -541,7 +559,7 @@ export class RecurringService {
     let safety = 0
     while (current <= windowEnd && safety < 2000) {
       if (rule.endDate && current > rule.endDate) break
-      
+
       if (current >= windowStart) {
         dates.push(new Date(current))
       }
@@ -554,20 +572,25 @@ export class RecurringService {
       } else if (rule.frequency === RecurringFrequency.Monthly) {
         current.setDate(1)
         current.setMonth(current.getMonth() + safeInterval)
-        
-        const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
+
+        const daysInMonth = new Date(
+          current.getFullYear(),
+          current.getMonth() + 1,
+          0
+        ).getDate()
         const targetDay = Math.min(startDay, daysInMonth)
         current.setDate(targetDay)
-
       } else if (rule.frequency === RecurringFrequency.Yearly) {
         current.setFullYear(current.getFullYear() + safeInterval)
       } else {
-         break
+        break
       }
 
       // Infinite loop guard
       if (current.getTime() === prevTime) {
-        console.error(`[RecurringService] Infinite loop detected for rule ${rule.ruleId}`)
+        console.error(
+          `[RecurringService] Infinite loop detected for rule ${rule.ruleId}`
+        )
         break
       }
 
