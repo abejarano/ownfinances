@@ -5,6 +5,7 @@ import "package:ownfinances/core/presentation/components/money_input.dart";
 import "package:ownfinances/core/presentation/components/pickers.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/utils/currency_utils.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
@@ -34,6 +35,7 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
   late final TextEditingController _initialBalanceController;
 
   late String _type;
+  String? _selectedCurrency;
   late bool _isActive;
   String? _linkedAccountId;
   String? _paymentAccountId;
@@ -65,6 +67,17 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
     );
 
     _type = item?.type ?? "credit_card";
+    final currentCurrency = _currencyController.text.trim().toUpperCase();
+    if (currentCurrency.isEmpty) {
+      _selectedCurrency = "BRL";
+      _currencyController.text = "BRL";
+    } else if (CurrencyUtils.commonCurrencies.contains(currentCurrency)) {
+      _selectedCurrency = currentCurrency;
+      _currencyController.text = currentCurrency;
+    } else {
+      _selectedCurrency = "OTHER";
+      _currencyController.text = currentCurrency;
+    }
     _isActive = item?.isActive ?? true;
     _linkedAccountId = item?.linkedAccountId;
     _paymentAccountId = item?.paymentAccountId;
@@ -79,6 +92,20 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
     _interestController.dispose();
     _initialBalanceController.dispose();
     super.dispose();
+  }
+
+  void _applyCurrencySelection(String? code) {
+    if (code == null) return;
+    setState(() {
+      _selectedCurrency = code;
+      if (code != "OTHER") {
+        _currencyController.text = code;
+      } else if (CurrencyUtils.commonCurrencies.contains(
+        _currencyController.text,
+      )) {
+        _currencyController.clear();
+      }
+    });
   }
 
   Future<void> _createQuickAccount(
@@ -213,19 +240,23 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
         .map((a) => PickerItem(id: a.id, label: a.name))
         .toList();
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.md,
-        right: AppSpacing.md,
-        top: AppSpacing.md,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            top: AppSpacing.md,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             Text(
               widget.item == null ? l10n.debtsNew : l10n.debtsEdit,
               style: Theme.of(context).textTheme.titleMedium,
@@ -364,11 +395,10 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
-                    controller: _currencyController,
-                    decoration: InputDecoration(
-                      labelText: l10n.accountsLabelCurrency,
-                    ),
+                  child: CurrencyPickerField(
+                    label: l10n.accountsLabelCurrency,
+                    value: _selectedCurrency,
+                    onSelected: _applyCurrencySelection,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -397,6 +427,28 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
                 ),
               ],
             ),
+            if (_selectedCurrency == "OTHER") ...[
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                controller: _currencyController,
+                textCapitalization: TextCapitalization.characters,
+                maxLength: 5,
+                decoration: InputDecoration(
+                  labelText: l10n.currencyCustomLabel,
+                  hintText: l10n.currencyCustomHint,
+                ),
+                onChanged: (value) {
+                  final normalized = value.trim().toUpperCase();
+                  if (normalized != value) {
+                    _currencyController
+                      ..text = normalized
+                      ..selection = TextSelection.fromPosition(
+                        TextPosition(offset: normalized.length),
+                      );
+                  }
+                },
+              ),
+            ],
             const SizedBox(height: AppSpacing.md),
             ExpansionTile(
               title: Text(l10n.debtsAdvanced),
@@ -427,14 +479,17 @@ class _DebtFormSheetState extends State<DebtFormSheet> {
               onChanged: (value) => setState(() => _isActive = value),
             ),
             const SizedBox(height: AppSpacing.lg),
-            PrimaryButton(
-              label: l10n.commonSave,
-              isLoading: _isSubmitting,
-              onPressed: _isSubmitting ? null : () => _submit(context),
+                  PrimaryButton(
+                    label: l10n.commonSave,
+                    isLoading: _isSubmitting,
+                    onPressed: _isSubmitting ? null : () => _submit(context),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

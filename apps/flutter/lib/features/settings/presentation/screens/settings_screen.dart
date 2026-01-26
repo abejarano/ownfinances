@@ -183,13 +183,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          CurrencyUtils.formatCurrencyLabel(
-                            settings.primaryCurrency,
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 140),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: 4,
                           ),
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface2,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderSoft),
+                          ),
+                          child: Text(
+                            _shortCurrencyLabel(settings.primaryCurrency),
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -588,6 +600,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (country.code == code) return country;
     }
     return null;
+  }
+
+  String _shortCurrencyLabel(String code) {
+    switch (code) {
+      case "BRL":
+        return "R\$ · BRL";
+      case "USD":
+        return "\$ · USD";
+      case "EUR":
+        return "€ · EUR";
+      case "GBP":
+        return "£ · GBP";
+      case "COP":
+        return "COP";
+      case "ARS":
+        return "ARS";
+      case "PYG":
+        return "PYG";
+      case "UYU":
+        return "UYU";
+      case "VES":
+        return "VES";
+      case "USDT":
+        return "USDT";
+      default:
+        return code;
+    }
   }
 
   void _showCountryPicker(

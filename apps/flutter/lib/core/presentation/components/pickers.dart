@@ -1,5 +1,9 @@
 import "package:flutter/material.dart";
+import "package:flutter/cupertino.dart";
+import "package:flutter/foundation.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/utils/currency_utils.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class PickerItem {
   final String id;
@@ -55,6 +59,146 @@ class AccountPicker extends StatelessWidget {
       items: items,
       onSelected: onSelected,
     );
+  }
+}
+
+class CurrencyPickerField extends StatelessWidget {
+  final String label;
+  final String? value;
+  final ValueChanged<String?> onSelected;
+  final bool allowCustom;
+
+  const CurrencyPickerField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onSelected,
+    this.allowCustom = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return InkWell(
+      onTap: () => _openPicker(context),
+      child: InputDecorator(
+        decoration: InputDecoration(labelText: label),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _displayValue(l10n),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(
+              Icons.expand_more,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openPicker(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final options = [
+      ...CurrencyUtils.commonCurrencies,
+      if (allowCustom) "OTHER",
+    ];
+    final isCupertino =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS);
+
+    if (isCupertino) {
+      final selected = await showCupertinoModalPopup<String>(
+        context: context,
+        builder: (context) {
+          return CupertinoActionSheet(
+            title: Text(label),
+            actions: [
+              for (final code in options)
+                CupertinoActionSheetAction(
+                  onPressed: () => Navigator.pop(context, code),
+                  child: Text(
+                    code == "OTHER"
+                        ? l10n.currencyOther
+                        : CurrencyUtils.formatCurrencyLabel(code),
+                  ),
+                ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.commonCancel),
+            ),
+          );
+        },
+      );
+      onSelected(selected);
+      return;
+    }
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final code in options)
+                ListTile(
+                  title: Text(
+                    code == "OTHER"
+                        ? l10n.currencyOther
+                        : CurrencyUtils.formatCurrencyLabel(code),
+                  ),
+                  trailing: value == code
+                      ? const Icon(Icons.check, color: AppColors.primary)
+                      : null,
+                  onTap: () => Navigator.pop(context, code),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    onSelected(selected);
+  }
+
+  String _displayValue(AppLocalizations l10n) {
+    if (value == null) return "";
+    if (value == "OTHER") return l10n.currencyOther;
+    return _shortCurrencyLabel(value!, l10n);
+  }
+
+  String _shortCurrencyLabel(String code, AppLocalizations l10n) {
+    switch (code) {
+      case "BRL":
+        return "R\$ · BRL";
+      case "USD":
+        return "\$ · USD";
+      case "EUR":
+        return "€ · EUR";
+      case "GBP":
+        return "£ · GBP";
+      case "COP":
+        return "COP";
+      case "ARS":
+        return "ARS";
+      case "PYG":
+        return "PYG";
+      case "UYU":
+        return "UYU";
+      case "VES":
+        return "VES";
+      case "USDT":
+        return "USDT";
+      default:
+        return code;
+    }
   }
 }
 

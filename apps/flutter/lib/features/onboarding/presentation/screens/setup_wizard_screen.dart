@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
+import "package:ownfinances/core/presentation/components/pickers.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/routing/onboarding_controller.dart";
@@ -624,21 +625,10 @@ class _PreferencesStep extends StatelessWidget {
             onChanged: isLoadingCountries ? null : onCountryChanged,
           ),
           const SizedBox(height: AppSpacing.md),
-          DropdownButtonFormField<String>(
+          CurrencyPickerField(
+            label: l10n.onboardingFieldCurrency,
             value: selectedCurrency,
-            decoration: InputDecoration(
-              labelText: l10n.onboardingFieldCurrency,
-            ),
-            items: [
-              ...CurrencyUtils.commonCurrencies.map(
-                (c) => DropdownMenuItem(
-                  value: c,
-                  child: Text(CurrencyUtils.formatCurrencyLabel(c)),
-                ),
-              ),
-              DropdownMenuItem(value: "OTHER", child: Text(l10n.currencyOther)),
-            ],
-            onChanged: onCurrencyChanged,
+            onSelected: onCurrencyChanged,
           ),
           if (selectedCurrency == "OTHER") ...[
             const SizedBox(height: AppSpacing.md),

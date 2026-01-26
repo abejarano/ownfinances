@@ -354,20 +354,23 @@ class AccountsScreen extends StatelessWidget {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: AppSpacing.md,
-                right: AppSpacing.md,
-                top: AppSpacing.md,
-                bottom:
-                    MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          alignment: Alignment.bottomCenter,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  top: AppSpacing.md,
+                  bottom:
+                      MediaQuery.of(context).viewInsets.bottom + AppSpacing.md,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   Text(
                     item == null
                         ? AppLocalizations.of(context)!.accountsNew
@@ -394,33 +397,34 @@ class AccountsScreen extends StatelessWidget {
                     initialBalanceController: balanceController,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  PrimaryButton(
-                    label: AppLocalizations.of(context)!.commonSave,
-                    onPressed: () {
-                      final cleanCurrency = currencyController.text
-                          .trim()
-                          .toUpperCase();
-                      if (!CurrencyUtils.isValidCurrency(cleanCurrency)) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.accountsErrorCurrencyInvalid,
+                    PrimaryButton(
+                      label: AppLocalizations.of(context)!.commonSave,
+                      onPressed: () {
+                        final cleanCurrency = currencyController.text
+                            .trim()
+                            .toUpperCase();
+                        if (!CurrencyUtils.isValidCurrency(cleanCurrency)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.accountsErrorCurrencyInvalid,
+                              ),
+                              backgroundColor: AppColors.danger,
                             ),
-                            backgroundColor: AppColors.danger,
-                          ),
-                        );
-                        return;
-                      }
-                      currencyController.text = cleanCurrency;
-                      Navigator.of(context).pop(true);
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
+                          );
+                          return;
+                        }
+                        currencyController.text = cleanCurrency;
+                        Navigator.of(context).pop(true);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );

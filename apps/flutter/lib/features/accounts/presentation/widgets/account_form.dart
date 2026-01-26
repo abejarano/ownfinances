@@ -6,6 +6,7 @@ import 'package:ownfinances/features/banks/domain/entities/bank.dart';
 import 'package:ownfinances/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:ownfinances/core/presentation/components/money_input.dart';
+import "package:ownfinances/core/presentation/components/pickers.dart";
 
 class AccountForm extends StatefulWidget {
   final TextEditingController nameController;
@@ -42,6 +43,8 @@ class AccountForm extends StatefulWidget {
 }
 
 class _AccountFormState extends State<AccountForm> {
+  String? _selectedCurrency;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +53,31 @@ class _AccountFormState extends State<AccountForm> {
     // Parent might have criteria (country).
     // Let's assume parent manages loading if specific criteria needed.
     // But for AccountsScreen it loads all?
+    _syncSelectedCurrency();
+  }
+
+  @override
+  void didUpdateWidget(covariant AccountForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currencyController != widget.currencyController) {
+      setState(_syncSelectedCurrency);
+    }
+  }
+
+  void _syncSelectedCurrency() {
+    final controller = widget.currencyController;
+    if (controller == null) return;
+    final normalized = controller.text.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      _selectedCurrency = "BRL";
+      controller.text = "BRL";
+    } else if (CurrencyUtils.commonCurrencies.contains(normalized)) {
+      _selectedCurrency = normalized;
+      controller.text = normalized;
+    } else {
+      _selectedCurrency = "OTHER";
+      controller.text = normalized;
+    }
   }
 
   @override
@@ -152,39 +180,25 @@ class _AccountFormState extends State<AccountForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DropdownButtonFormField<String>(
-          value: CurrencyUtils.isValidCurrency(controller.text)
-              ? (CurrencyUtils.commonCurrencies.contains(controller.text)
-                    ? controller.text
-                    : "OTHER")
-              : "OTHER",
-          decoration: InputDecoration(labelText: l10n.accountsLabelCurrency),
-          items: [
-            ...CurrencyUtils.commonCurrencies.map(
-              (c) => DropdownMenuItem(
-                value: c,
-                child: Text(CurrencyUtils.formatCurrencyLabel(c)),
-              ),
-            ),
-            DropdownMenuItem(value: "OTHER", child: Text(l10n.currencyOther)),
-          ],
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
+        CurrencyPickerField(
+          label: l10n.accountsLabelCurrency,
+          value: _selectedCurrency,
+          onSelected: (value) {
+            setState(() {
+              _selectedCurrency = value;
+              if (value != null) {
                 if (value != "OTHER") {
                   controller.text = value;
-                } else {
-                  if (CurrencyUtils.commonCurrencies.contains(
-                    controller.text,
-                  )) {
-                    controller.text = "";
-                  }
+                } else if (CurrencyUtils.commonCurrencies.contains(
+                  controller.text,
+                )) {
+                  controller.text = "";
                 }
-              });
-            }
+              }
+            });
           },
         ),
-        if (!CurrencyUtils.commonCurrencies.contains(controller.text)) ...[
+        if (_selectedCurrency == "OTHER") ...[
           const SizedBox(height: AppSpacing.md),
           TextField(
             controller: controller,
@@ -194,7 +208,17 @@ class _AccountFormState extends State<AccountForm> {
               hintText: l10n.accountsHintCurrencyCode,
               helperText: l10n.accountsHelperCurrencyCode,
             ),
-            onChanged: (_) => setState(() {}),
+            onChanged: (value) {
+              final normalized = value.trim().toUpperCase();
+              if (normalized != value) {
+                controller
+                  ..text = normalized
+                  ..selection = TextSelection.fromPosition(
+                    TextPosition(offset: normalized.length),
+                  );
+              }
+              setState(() {});
+            },
           ),
         ],
       ],
