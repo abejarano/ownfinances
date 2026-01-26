@@ -10,8 +10,9 @@ import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/goals/application/controllers/goals_controller.dart";
 import "package:ownfinances/features/goals/domain/entities/goal.dart";
-import "package:ownfinances/l10n/app_localizations.dart";
 import "package:ownfinances/features/goals/domain/entities/goal_projection.dart";
+import "package:ownfinances/features/goals/presentation/widgets/goals_empty_state.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class GoalsScreen extends StatelessWidget {
   const GoalsScreen({super.key});
@@ -32,7 +33,11 @@ class GoalsScreen extends StatelessWidget {
 class GoalsView extends StatelessWidget {
   const GoalsView({super.key});
 
-  static Future<void> openWizard(BuildContext context) async {
+  static Future<void> openWizard(
+    BuildContext context, {
+    String? prefillName,
+    DateTime? prefillTargetDate,
+  }) async {
     // Find the instance to call the method?
     // Actually _openGoalWizard needs the controller.
     // We can make a static helper or just instantiate a temporary GoalsView to access private methods?
@@ -44,7 +49,12 @@ class GoalsView extends StatelessWidget {
     final controller = context.read<GoalsController>();
     // We need to move _openGoalWizard to be a static method or mixin or just accessible.
     // Since I am editing the file, I will change _openGoalWizard to be static or public.
-    await _openGoalWizard(context, controller);
+    await _openGoalWizard(
+      context,
+      controller,
+      prefillName: prefillName,
+      prefillTargetDate: prefillTargetDate,
+    );
   }
 
   @override
@@ -54,58 +64,87 @@ class GoalsView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context)!.goalsMyGoals,
-                  style: Theme.of(context).textTheme.titleMedium,
+      child: state.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : state.items.isEmpty
+              ? LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Center(
+                          child: GoalsEmptyState(
+                            onCreate: () => _openGoalWizard(context, controller),
+                            onExampleSelected: (label, targetDate) =>
+                                _openGoalWizard(
+                                  context,
+                                  controller,
+                                  prefillName: label,
+                                  prefillTargetDate: targetDate,
+                                ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            AppLocalizations.of(context)!.goalsMyGoals,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: controller.load,
+                        ),
+                        const SizedBox(width: 8),
+                        PrimaryButton(
+                          label: AppLocalizations.of(context)!.goalsNew,
+                          fullWidth: false,
+                          onPressed: () => _openGoalWizard(context, controller),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    const GoalsInlineHelp(),
+                    const SizedBox(height: AppSpacing.sm),
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: state.items.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final goal = state.items[index];
+                          final projection = state.projections[goal.id];
+                          return _GoalCard(
+                            goal: goal,
+                            projection: projection,
+                            onAdd: () => _openContributionForm(context, goal),
+                            onQuickAdd: () =>
+                                _quickContribution(context, goal, projection),
+                            onEdit: () => _openGoalWizard(
+                              context,
+                              controller,
+                              goal: goal,
+                            ),
+                            onDelete: () async {
+                              final error = await controller.remove(goal.id);
+                              if (error != null && context.mounted) {
+                                showStandardSnackbar(context, error);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: controller.load,
-              ),
-              const SizedBox(width: 8),
-              PrimaryButton(
-                label: AppLocalizations.of(context)!.goalsNew,
-                fullWidth: false,
-                onPressed: () => _openGoalWizard(context, controller),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          if (state.isLoading) const Center(child: CircularProgressIndicator()),
-          if (!state.isLoading)
-            Expanded(
-              child: ListView.separated(
-                itemCount: state.items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final goal = state.items[index];
-                  final projection = state.projections[goal.id];
-                  return _GoalCard(
-                    goal: goal,
-                    projection: projection,
-                    onAdd: () => _openContributionForm(context, goal),
-                    onQuickAdd: () =>
-                        _quickContribution(context, goal, projection),
-                    onEdit: () =>
-                        _openGoalWizard(context, controller, goal: goal),
-                    onDelete: () async {
-                      final error = await controller.remove(goal.id);
-                      if (error != null && context.mounted) {
-                        showStandardSnackbar(context, error);
-                      }
-                    },
-                  );
-                },
-              ),
-            ),
-        ],
-      ),
     );
   }
 
@@ -113,8 +152,12 @@ class GoalsView extends StatelessWidget {
     BuildContext context,
     GoalsController controller, {
     Goal? goal,
+    String? prefillName,
+    DateTime? prefillTargetDate,
   }) async {
-    final nameController = TextEditingController(text: goal?.name ?? "");
+    final nameController = TextEditingController(
+      text: goal?.name ?? prefillName ?? "",
+    );
     final targetController = TextEditingController(
       text: goal?.targetAmount != null ? formatMoney(goal!.targetAmount) : "",
     );
@@ -124,7 +167,7 @@ class GoalsView extends StatelessWidget {
           : "",
     );
     DateTime startDate = goal?.startDate ?? DateTime.now();
-    DateTime? targetDate = goal?.targetDate;
+    DateTime? targetDate = goal?.targetDate ?? prefillTargetDate;
     String? accountId = goal?.linkedAccountId;
 
     final accounts = context.read<AccountsController>().state.items;

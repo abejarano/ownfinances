@@ -1946,6 +1946,84 @@ abstract class AppLocalizations {
   /// **'Ver detalhes'**
   String get goalsViewDetails;
 
+  /// No description provided for @goalsEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas metas começam aqui'**
+  String get goalsEmptyTitle;
+
+  /// No description provided for @goalsEmptyDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta é um “alvo” pra separar dinheiro aos poucos. Você escolhe o valor e o prazo. Dá pra mudar depois.'**
+  String get goalsEmptyDescription;
+
+  /// No description provided for @goalsEmptyBullet1.
+  ///
+  /// In pt, this message translates to:
+  /// **'• Veja quanto falta pra chegar lá'**
+  String get goalsEmptyBullet1;
+
+  /// No description provided for @goalsEmptyBullet2.
+  ///
+  /// In pt, this message translates to:
+  /// **'• Acompanhe sem contas complicadas'**
+  String get goalsEmptyBullet2;
+
+  /// No description provided for @goalsEmptyBullet3.
+  ///
+  /// In pt, this message translates to:
+  /// **'• Mantenha foco no que importa'**
+  String get goalsEmptyBullet3;
+
+  /// No description provided for @goalsEmptyExamplesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ideias prontas (toque para usar)'**
+  String get goalsEmptyExamplesTitle;
+
+  /// No description provided for @goalsEmptyExampleEmergency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fundo de emergência'**
+  String get goalsEmptyExampleEmergency;
+
+  /// No description provided for @goalsEmptyExampleTrip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Viagem'**
+  String get goalsEmptyExampleTrip;
+
+  /// No description provided for @goalsEmptyExampleBigPurchase.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar algo grande'**
+  String get goalsEmptyExampleBigPurchase;
+
+  /// No description provided for @goalsEmptyExampleBillsBuffer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reserva para contas fixas'**
+  String get goalsEmptyExampleBillsBuffer;
+
+  /// No description provided for @goalsEmptyCta.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar minha primeira meta'**
+  String get goalsEmptyCta;
+
+  /// No description provided for @goalsEmptyMicrocopy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode editar ou apagar depois.'**
+  String get goalsEmptyMicrocopy;
+
+  /// No description provided for @goalsHelpToggle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que é isso?'**
+  String get goalsHelpToggle;
+
   /// No description provided for @debtsTitle.
   ///
   /// In pt, this message translates to:

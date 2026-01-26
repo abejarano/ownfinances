@@ -1026,6 +1026,46 @@ class AppLocalizationsPt extends AppLocalizations {
   String get goalsViewDetails => 'Ver detalhes';
 
   @override
+  String get goalsEmptyTitle => 'Suas metas começam aqui';
+
+  @override
+  String get goalsEmptyDescription =>
+      'Meta é um “alvo” pra separar dinheiro aos poucos. Você escolhe o valor e o prazo. Dá pra mudar depois.';
+
+  @override
+  String get goalsEmptyBullet1 => '• Veja quanto falta pra chegar lá';
+
+  @override
+  String get goalsEmptyBullet2 => '• Acompanhe sem contas complicadas';
+
+  @override
+  String get goalsEmptyBullet3 => '• Mantenha foco no que importa';
+
+  @override
+  String get goalsEmptyExamplesTitle => 'Ideias prontas (toque para usar)';
+
+  @override
+  String get goalsEmptyExampleEmergency => 'Fundo de emergência';
+
+  @override
+  String get goalsEmptyExampleTrip => 'Viagem';
+
+  @override
+  String get goalsEmptyExampleBigPurchase => 'Comprar algo grande';
+
+  @override
+  String get goalsEmptyExampleBillsBuffer => 'Reserva para contas fixas';
+
+  @override
+  String get goalsEmptyCta => 'Criar minha primeira meta';
+
+  @override
+  String get goalsEmptyMicrocopy => 'Você pode editar ou apagar depois.';
+
+  @override
+  String get goalsHelpToggle => 'O que é isso?';
+
+  @override
   String get debtsTitle => 'Dívidas';
 
   @override

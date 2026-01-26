@@ -1024,6 +1024,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goalsViewDetails => 'View Details';
 
   @override
+  String get goalsEmptyTitle => 'Your goals start here';
+
+  @override
+  String get goalsEmptyDescription =>
+      'A goal is a simple target to set money aside little by little. You choose the amount and the date. You can change it later.';
+
+  @override
+  String get goalsEmptyBullet1 => '• See what’s left to reach it';
+
+  @override
+  String get goalsEmptyBullet2 => '• Track it without complicated math';
+
+  @override
+  String get goalsEmptyBullet3 => '• Stay focused on what matters';
+
+  @override
+  String get goalsEmptyExamplesTitle => 'Ready ideas (tap to use)';
+
+  @override
+  String get goalsEmptyExampleEmergency => 'Emergency buffer';
+
+  @override
+  String get goalsEmptyExampleTrip => 'Trip';
+
+  @override
+  String get goalsEmptyExampleBigPurchase => 'Big purchase';
+
+  @override
+  String get goalsEmptyExampleBillsBuffer => 'Bills buffer';
+
+  @override
+  String get goalsEmptyCta => 'Create my first goal';
+
+  @override
+  String get goalsEmptyMicrocopy => 'You can edit or delete it later.';
+
+  @override
+  String get goalsHelpToggle => 'What is this?';
+
+  @override
   String get debtsTitle => 'Debts';
 
   @override
