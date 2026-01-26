@@ -23,7 +23,15 @@ class DebtsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.debtsTitle),
-        leading: const BackButton(),
+        leading: BackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go("/dashboard");
+            }
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),

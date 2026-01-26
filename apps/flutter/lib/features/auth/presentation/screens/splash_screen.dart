@@ -40,11 +40,6 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     if (!mounted) return;
 
-    if (onboarding.completed) {
-      context.go("/dashboard");
-      return;
-    }
-
     try {
       final accounts = await accountRepository.list(
         isActive: true,
@@ -57,10 +52,15 @@ class _SplashScreenState extends State<SplashScreen> {
       final hasSetup =
           accounts.results.isNotEmpty || categories.results.isNotEmpty;
       if (hasSetup) {
-        await onboarding.complete();
+        if (!onboarding.completed) {
+          await onboarding.complete();
+        }
         if (!mounted) return;
         context.go("/dashboard");
         return;
+      }
+      if (onboarding.completed) {
+        await onboarding.reset();
       }
     } catch (_) {
       // If API fails, fall back to explicit onboarding.

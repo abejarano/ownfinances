@@ -17,6 +17,8 @@ import 'package:ownfinances/features/settings/application/controllers/settings_c
 import "package:ownfinances/core/presentation/components/money_input.dart";
 import "package:ownfinances/features/banks/application/controllers/banks_controller.dart";
 import "package:ownfinances/features/banks/domain/entities/bank.dart";
+import "package:ownfinances/features/countries/application/controllers/countries_controller.dart";
+import "package:ownfinances/features/countries/domain/entities/country.dart";
 import "package:ownfinances/features/accounts/presentation/widgets/account_form.dart";
 
 class SetupWizardScreen extends StatefulWidget {
@@ -39,6 +41,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   bool _checkingExisting = true;
   String? _selectedLanguage;
   String? _selectedCurrency; // "OTHER" or standard code
+  String? _selectedCountry;
   String? _selectedBankId;
 
   // Step 2: Account
@@ -51,6 +54,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   void initState() {
     super.initState();
     _checkExistingData();
+    context.read<CountriesController>().load();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final settings = context.read<SettingsController>();
       if (mounted) {
@@ -64,6 +68,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             // It's a custom one (or empty/default)
             _selectedCurrency = "OTHER";
             _customCurrencyController.text = current;
+          }
+          _selectedCountry =
+              settings.countryCode ?? _getCountryCode(current);
+          if (_selectedCountry != null && settings.countryCode == null) {
+            settings.setCountryCode(_selectedCountry!);
           }
         });
       }
@@ -108,8 +117,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     switch (currency) {
       case "BRL":
         return "BR";
-      case "USD":
-        return "US";
       case "VES":
         return "VE";
       case "COP":
@@ -122,8 +129,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   }
 
   Future<void> _fetchBanks() async {
-    final currency = _getEffectiveCurrency();
-    final country = _getCountryCode(currency);
+    final country = _selectedCountry;
     await context.read<BanksController>().load(country: country);
   }
 
@@ -138,7 +144,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
     _updateCategorySeeds(l10n);
 
-    // Watch banks to rebuild when they load
+    // Watch countries/banks to rebuild when they load
+    final countriesController = context.watch<CountriesController>();
     final banksController = context.watch<BanksController>();
 
     final totalSteps = 3;
@@ -176,6 +183,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           _PreferencesStep(
             selectedLanguage: _selectedLanguage,
             selectedCurrency: _selectedCurrency,
+            selectedCountry: _selectedCountry,
+            countries: countriesController.countries,
+            isLoadingCountries: countriesController.isLoading,
             customCurrencyController: _customCurrencyController,
             onLanguageChanged: (val) {
               setState(() => _selectedLanguage = val);
@@ -198,6 +208,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               } else if (val != null) {
                 settings.setPrimaryCurrency(val);
                 _customCurrencyController.clear();
+              }
+            },
+            onCountryChanged: (val) {
+              setState(() => _selectedCountry = val);
+              if (val != null) {
+                context.read<SettingsController>().setCountryCode(val);
               }
             },
             onCustomCurrencyChanged: (val) {
@@ -386,6 +402,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     if (_step == 0) {
       // Logic for Step 1
       if (_selectedLanguage == null) return false;
+      if (_selectedCountry == null) return false;
       if (_selectedCurrency == "OTHER") {
         // Validate custom input
         final custom = _customCurrencyController.text.trim();
@@ -536,17 +553,25 @@ class _CategorySeed {
 class _PreferencesStep extends StatelessWidget {
   final String? selectedLanguage;
   final String? selectedCurrency;
+  final String? selectedCountry;
+  final List<Country> countries;
+  final bool isLoadingCountries;
   final TextEditingController customCurrencyController;
   final ValueChanged<String?> onLanguageChanged;
   final ValueChanged<String?> onCurrencyChanged;
+  final ValueChanged<String?> onCountryChanged;
   final ValueChanged<String> onCustomCurrencyChanged;
 
   const _PreferencesStep({
     required this.selectedLanguage,
     required this.selectedCurrency,
+    required this.selectedCountry,
+    required this.countries,
+    required this.isLoadingCountries,
     required this.customCurrencyController,
     required this.onLanguageChanged,
     required this.onCurrencyChanged,
+    required this.onCountryChanged,
     required this.onCustomCurrencyChanged,
   });
 
@@ -581,6 +606,22 @@ class _PreferencesStep extends StatelessWidget {
               DropdownMenuItem(value: "en", child: Text("English")),
             ],
             onChanged: onLanguageChanged,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          DropdownButtonFormField<String>(
+            value: selectedCountry,
+            decoration: InputDecoration(
+              labelText: l10n.onboardingFieldCountry,
+            ),
+            items: [
+              ...countries.map(
+                (c) => DropdownMenuItem(
+                  value: c.code,
+                  child: Text(c.name),
+                ),
+              ),
+            ],
+            onChanged: isLoadingCountries ? null : onCountryChanged,
           ),
           const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(

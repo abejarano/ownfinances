@@ -1,6 +1,7 @@
 import { AccountMongoRepository } from "../repositories/account_repository"
 import { BudgetMongoRepository } from "../repositories/budget_repository"
 import { CategoryMongoRepository } from "../repositories/category_repository"
+import { CountryMongoRepository } from "../repositories/country_repository"
 import { DebtMongoRepository } from "../repositories/debt_repository"
 import { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository"
 import { GeneratedInstanceMongoRepository } from "../repositories/generated_instance_repository"
@@ -18,6 +19,7 @@ import { AuthService } from "../services/auth_service"
 import { BanksService } from "../services/banks_service"
 import { BudgetsService } from "../services/budgets_service"
 import { CategoriesService } from "../services/categories_service"
+import { CountriesService } from "../services/countries_service"
 import { DebtTransactionsService } from "../services/debt_transactions_service"
 import { DebtsService } from "../services/debts_service"
 import { GoalContributionsService } from "../services/goal_contributions_service"
@@ -32,10 +34,12 @@ import { BankMongoRepository } from "../repositories/bank_repository"
 
 export type AppDeps = {
   readonly categoryRepo: CategoryMongoRepository
+  readonly countryRepo: CountryMongoRepository
   readonly accountRepo: AccountMongoRepository
   readonly transactionRepo: TransactionMongoRepository
   readonly transactionsService: TransactionsService
   readonly categoriesService: CategoriesService
+  readonly countriesService: CountriesService
   readonly accountsService: AccountsService
   readonly userRepo: UserMongoRepository
   readonly refreshTokenRepo: RefreshTokenMongoRepository
@@ -76,6 +80,7 @@ export class Deps {
   private static build(): AppDeps {
     let transactionsService: TransactionsService | null = null
     let categoriesService: CategoriesService | null = null
+    let countriesService: CountriesService | null = null
     let accountsService: AccountsService | null = null
     let authService: AuthService | null = null
     let budgetsService: BudgetsService | null = null
@@ -92,6 +97,9 @@ export class Deps {
     return {
       get categoryRepo() {
         return CategoryMongoRepository.getInstance()
+      },
+      get countryRepo() {
+        return CountryMongoRepository.getInstance()
       },
       get accountRepo() {
         return AccountMongoRepository.getInstance()
@@ -124,6 +132,12 @@ export class Deps {
           )
         }
         return categoriesService
+      },
+      get countriesService() {
+        if (!countriesService) {
+          countriesService = new CountriesService(this.countryRepo)
+        }
+        return countriesService
       },
       get accountsService() {
         if (!accountsService) {

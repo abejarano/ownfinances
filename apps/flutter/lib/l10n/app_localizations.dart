@@ -232,6 +232,24 @@ abstract class AppLocalizations {
   /// **'O Resumo do mês usa apenas esta moeda. Outras moedas aparecem nas contas (sem conversão).'**
   String get settingsMainCurrencyDesc;
 
+  /// No description provided for @settingsCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País'**
+  String get settingsCountry;
+
+  /// No description provided for @settingsCountryDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usamos seu país para mostrar bancos relevantes.'**
+  String get settingsCountryDesc;
+
+  /// No description provided for @settingsCountryPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione seu país'**
+  String get settingsCountryPlaceholder;
+
   /// No description provided for @settingsAutomation.
   ///
   /// In pt, this message translates to:
@@ -2935,6 +2953,12 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Idioma'**
   String get onboardingFieldLanguage;
+
+  /// No description provided for @onboardingFieldCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País'**
+  String get onboardingFieldCountry;
 
   /// No description provided for @onboardingFieldCurrency.
   ///

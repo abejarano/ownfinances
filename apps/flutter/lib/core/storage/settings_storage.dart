@@ -9,4 +9,7 @@ abstract class SettingsStorage {
 
   Future<String?> readLocale();
   Future<void> saveLocale(String locale);
+
+  Future<String?> readCountry();
+  Future<void> saveCountry(String countryCode);
 }

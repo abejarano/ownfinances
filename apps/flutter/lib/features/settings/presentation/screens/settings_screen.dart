@@ -6,6 +6,8 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:ownfinances/core/utils/currency_utils.dart";
+import "package:ownfinances/features/countries/application/controllers/countries_controller.dart";
+import "package:ownfinances/features/countries/domain/entities/country.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
 
 class SettingsScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadSettings();
+    context.read<CountriesController>().load();
   }
 
   Future<void> _loadSettings() async {
@@ -197,6 +200,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                     onTap: () => _showCurrencyPicker(context, settings),
+                  );
+                },
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              Consumer2<SettingsController, CountriesController>(
+                builder: (context, settings, countriesController, child) {
+                  final selectedCountry = _resolveCountry(
+                    countriesController.countries,
+                    settings.countryCode,
+                  );
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.flag_outlined,
+                      color: AppColors.textTertiary,
+                    ),
+                    title: Text(
+                      AppLocalizations.of(context)!.settingsCountry,
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.settingsCountryDesc,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          selectedCountry?.name ??
+                              AppLocalizations.of(
+                                context,
+                              )!.settingsCountryPlaceholder,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textTertiary,
+                        ),
+                      ],
+                    ),
+                    onTap: () => _showCountryPicker(
+                      context,
+                      settings,
+                      countriesController,
+                    ),
                   );
                 },
               ),
@@ -525,6 +578,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onTap: () {
         settings.setLocale(Locale(code));
         Navigator.pop(context);
+      },
+    );
+  }
+
+  Country? _resolveCountry(List<Country> countries, String? code) {
+    if (code == null) return null;
+    for (final country in countries) {
+      if (country.code == code) return country;
+    }
+    return null;
+  }
+
+  void _showCountryPicker(
+    BuildContext context,
+    SettingsController settings,
+    CountriesController countriesController,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface1,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.settingsCountry,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 16),
+              if (countriesController.isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                )
+              else
+                ...countriesController.countries.map((country) {
+                  final isSelected = settings.countryCode == country.code;
+                  return ListTile(
+                    title: Text(
+                      country.name,
+                      style: TextStyle(
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        color:
+                            isSelected ? AppColors.primary : AppColors.textPrimary,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check, color: AppColors.primary)
+                        : null,
+                    onTap: () {
+                      settings.setCountryCode(country.code);
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
       },
     );
   }

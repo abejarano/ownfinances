@@ -52,6 +52,9 @@ import "package:ownfinances/features/month_summary/application/controllers/month
 import "package:ownfinances/features/banks/data/datasources/bank_remote_data_source.dart";
 import "package:ownfinances/features/banks/data/repositories/bank_repository.dart";
 import "package:ownfinances/features/banks/application/controllers/banks_controller.dart";
+import "package:ownfinances/features/countries/data/datasources/country_remote_data_source.dart";
+import "package:ownfinances/features/countries/data/repositories/country_repository.dart";
+import "package:ownfinances/features/countries/application/controllers/countries_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -227,12 +230,22 @@ class AppProviders extends StatelessWidget {
         ChangeNotifierProvider<BanksController>(
           create: (context) => BanksController(context.read<BankRepository>()),
         ),
+        Provider<CountryRepository>(
+          create: (context) => CountryRepository(
+            CountryRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
+        ChangeNotifierProvider<CountriesController>(
+          create: (context) =>
+              CountriesController(context.read<CountryRepository>()),
+        ),
 
         ChangeNotifierProvider<OnboardingController>(
           create: (context) {
             final controller = OnboardingController(
               context.read<OnboardingStorage>(),
               context.read<AccountRepository>(),
+              context.read<CategoryRepository>(),
             );
             controller.load();
             return controller;

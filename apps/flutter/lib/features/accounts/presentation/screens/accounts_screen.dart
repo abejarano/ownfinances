@@ -15,6 +15,7 @@ import "package:ownfinances/features/debts/domain/entities/debt.dart";
 import "package:ownfinances/features/accounts/presentation/widgets/account_management_card.dart";
 import "package:ownfinances/features/accounts/presentation/widgets/credit_card_account_card.dart";
 import "package:ownfinances/features/banks/application/controllers/banks_controller.dart";
+import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:ownfinances/features/accounts/presentation/widgets/account_form.dart";
 import "package:ownfinances/features/transactions/data/repositories/transaction_repository.dart";
 import 'package:ownfinances/l10n/app_localizations.dart';
@@ -334,7 +335,8 @@ class AccountsScreen extends StatelessWidget {
     // Load banks proactively (all or default)
     // We assume backend handles filtering or we load all.
     // For now, load default (e.g. BRL/empty) to ensure we have something
-    context.read<BanksController>().load();
+    final countryCode = context.read<SettingsController>().countryCode;
+    context.read<BanksController>().load(country: countryCode);
 
     final nameController = TextEditingController(text: item?.name ?? "");
     final currencyController = TextEditingController(

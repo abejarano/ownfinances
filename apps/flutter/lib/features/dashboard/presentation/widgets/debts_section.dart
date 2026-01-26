@@ -51,7 +51,7 @@ class DebtsSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: () => context.go("/debts"),
+                    onPressed: () => context.push("/debts"),
                     icon: const Icon(Icons.add),
                     label: Text(AppLocalizations.of(context)!.debtsActionAdd),
                   ),

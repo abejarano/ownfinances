@@ -76,6 +76,16 @@ class AppLocalizationsEs extends AppLocalizations {
       'El Resumen del mes usa solo esta moneda. Otras monedas aparecen en las cuentas (sin conversión).';
 
   @override
+  String get settingsCountry => 'País';
+
+  @override
+  String get settingsCountryDesc =>
+      'Usamos tu país para mostrar bancos relevantes.';
+
+  @override
+  String get settingsCountryPlaceholder => 'Selecciona tu país';
+
+  @override
   String get settingsAutomation => 'Automatización';
 
   @override
@@ -1571,6 +1581,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingFieldLanguage => 'Idioma';
+
+  @override
+  String get onboardingFieldCountry => 'País';
 
   @override
   String get onboardingFieldCurrency => 'Moneda principal';
