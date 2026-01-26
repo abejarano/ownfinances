@@ -18,6 +18,11 @@ class MonthSummaryController extends ChangeNotifier {
   MonthSummaryState _state = MonthSummaryState.initial();
   MonthSummaryState get state => _state;
 
+  void reset() {
+    _state = MonthSummaryState.initial();
+    notifyListeners();
+  }
+
   MonthSummaryController({
     required this.transactionsRepository,
     required this.accountRepository,

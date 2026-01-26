@@ -48,6 +48,8 @@ import "package:ownfinances/features/csv_import/application/controllers/csv_impo
 import "package:ownfinances/core/infrastructure/websocket/websocket_client.dart";
 import "package:ownfinances/core/storage/settings_storage.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
+import "package:ownfinances/features/settings/data/datasources/settings_remote_data_source.dart";
+import "package:ownfinances/features/settings/data/repositories/settings_repository.dart";
 import "package:ownfinances/features/month_summary/application/controllers/month_summary_controller.dart";
 import "package:ownfinances/features/banks/data/datasources/bank_remote_data_source.dart";
 import "package:ownfinances/features/banks/data/repositories/bank_repository.dart";
@@ -55,6 +57,7 @@ import "package:ownfinances/features/banks/application/controllers/banks_control
 import "package:ownfinances/features/countries/data/datasources/country_remote_data_source.dart";
 import "package:ownfinances/features/countries/data/repositories/country_repository.dart";
 import "package:ownfinances/features/countries/application/controllers/countries_controller.dart";
+import "package:ownfinances/features/auth/application/controllers/session_controller.dart";
 
 class AppProviders extends StatelessWidget {
   final Widget child;
@@ -70,10 +73,6 @@ class AppProviders extends StatelessWidget {
 
         // Settings (Must be early)
         Provider<SettingsStorage>(create: (_) => SettingsStorage()),
-        ChangeNotifierProvider<SettingsController>(
-          create: (context) =>
-              SettingsController(context.read<SettingsStorage>())..load(),
-        ),
         Provider<ApiClient>(
           create: (context) => ApiClient(
             baseUrl: kReleaseMode
@@ -82,12 +81,25 @@ class AppProviders extends StatelessWidget {
             storage: context.read<TokenStorage>(),
           ),
         ),
-        // Provider<WebSocketClient>(
-        //   create: (context) => WebSocketClient(
-        //     baseUrl: "http://localhost:3000",
-        //     tokenStorage: context.read<TokenStorage>(),
-        //   ),
-        // ),
+        Provider<SettingsRepository>(
+          create: (context) => SettingsRepository(
+            SettingsRemoteDataSource(context.read<ApiClient>()),
+          ),
+        ),
+        ChangeNotifierProvider<SettingsController>(
+          create: (context) => SettingsController(
+            context.read<SettingsStorage>(),
+            context.read<SettingsRepository>(),
+          )..load(),
+        ),
+        Provider<WebSocketClient>(
+          create: (context) => WebSocketClient(
+            baseUrl: kReleaseMode
+                ? "https://desquadra.jaspesoft.com"
+                : "http://localhost:3000",
+            tokenStorage: context.read<TokenStorage>(),
+          ),
+        ),
         Provider<AuthRepository>(
           create: (context) => AuthRepository(
             remote: AuthRemoteDataSource(context.read<ApiClient>()),
@@ -96,7 +108,10 @@ class AppProviders extends StatelessWidget {
         ),
         ChangeNotifierProvider<AuthController>(
           create: (context) {
-            final controller = AuthController(context.read<AuthRepository>());
+            final controller = AuthController(
+              context.read<AuthRepository>(),
+              settingsController: context.read<SettingsController>(),
+            );
             controller.restoreSession();
             return controller;
           },
@@ -258,6 +273,29 @@ class AppProviders extends StatelessWidget {
               onboardingController: context.read<OnboardingController>(),
             );
           },
+        ),
+        Provider<SessionController>(
+          create: (context) => SessionController(
+            authController: context.read<AuthController>(),
+            settingsController: context.read<SettingsController>(),
+            onboardingController: context.read<OnboardingController>(),
+            categoriesController: context.read<CategoriesController>(),
+            accountsController: context.read<AccountsController>(),
+            transactionsController: context.read<TransactionsController>(),
+            pendingTransactionsController:
+                context.read<PendingTransactionsController>(),
+            reportsController: context.read<ReportsController>(),
+            dashboardController: context.read<DashboardController>(),
+            budgetController: context.read<BudgetController>(),
+            recurringController: context.read<RecurringController>(),
+            templatesController: context.read<TemplatesController>(),
+            debtsController: context.read<DebtsController>(),
+            goalsController: context.read<GoalsController>(),
+            csvImportController: context.read<CsvImportController>(),
+            monthSummaryController: context.read<MonthSummaryController>(),
+            banksController: context.read<BanksController>(),
+            countriesController: context.read<CountriesController>(),
+          ),
         ),
       ],
       child: child,

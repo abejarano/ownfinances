@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
-import "package:ownfinances/features/auth/application/controllers/auth_controller.dart";
+import "package:ownfinances/features/auth/application/controllers/session_controller.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
@@ -388,7 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: const TextStyle(color: AppColors.danger),
                 ),
                 onTap: () async {
-                  await context.read<AuthController>().logout();
+                  await context.read<SessionController>().logout();
                   if (context.mounted) {
                     context.go("/login");
                   }

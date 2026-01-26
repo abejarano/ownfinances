@@ -31,6 +31,11 @@ class TemplatesController extends ChangeNotifier {
 
   TemplatesState get state => _state;
 
+  void reset() {
+    _state = TemplatesState();
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();

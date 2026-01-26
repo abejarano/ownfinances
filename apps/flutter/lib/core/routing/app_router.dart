@@ -8,6 +8,7 @@ import "package:ownfinances/features/auth/presentation/screens/splash_screen.dar
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
 import "package:ownfinances/features/onboarding/presentation/screens/setup_wizard_screen.dart";
 import "package:ownfinances/features/dashboard/presentation/screens/dashboard_screen.dart";
+import "package:ownfinances/features/voice_capture/voice_capture_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transactions_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/transaction_form_screen.dart";
 import "package:ownfinances/features/transactions/presentation/screens/pending_transactions_screen.dart";
@@ -41,6 +42,8 @@ GoRouter createRouter({
     refreshListenable: Listenable.merge([authController, onboardingController]),
     redirect: (context, state) {
       final location = state.uri.path;
+      final isVoiceDeepLink =
+          state.uri.scheme == "desquadra" && state.uri.host == "voice";
       final isOnboarding = location == "/onboarding";
       final isAuthRoute = location == "/login" || location == "/register";
       final authStatus = authController.state.status;
@@ -84,6 +87,12 @@ GoRouter createRouter({
       if (isAuthed && completed && location == "/splash") {
         return "/dashboard";
       }
+      if (isAuthed && completed && isVoiceDeepLink) {
+        final params = Map<String, String>.from(state.uri.queryParameters);
+        params.putIfAbsent("source", () => "assistant");
+        final uri = Uri(path: "/voice-capture", queryParameters: params);
+        return uri.toString();
+      }
       return null;
     },
     routes: [
@@ -99,6 +108,13 @@ GoRouter createRouter({
       GoRoute(
         path: "/register",
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: "/voice-capture",
+        builder: (context, state) => VoiceCaptureScreen(
+          intent: state.uri.queryParameters["intent"],
+          source: state.uri.queryParameters["source"],
+        ),
       ),
       GoRoute(
         path: "/transactions/new",

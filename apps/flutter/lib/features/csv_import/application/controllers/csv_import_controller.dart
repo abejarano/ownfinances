@@ -118,6 +118,7 @@ class CsvImportController extends ChangeNotifier {
 
   void reset() {
     _state = CsvImportState.initial();
+    _context = null;
     notifyListeners();
   }
 

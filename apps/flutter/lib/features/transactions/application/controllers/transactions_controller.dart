@@ -15,6 +15,11 @@ class TransactionsController extends ChangeNotifier {
 
   TransactionsState get state => _state;
 
+  void reset() {
+    _state = TransactionsState.initial();
+    notifyListeners();
+  }
+
   Future<void> load({bool clearNextPage = false}) async {
     _state = _state.copyWith(
       isLoading: true,

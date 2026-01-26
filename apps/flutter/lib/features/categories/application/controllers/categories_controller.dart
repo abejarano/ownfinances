@@ -11,6 +11,11 @@ class CategoriesController extends ChangeNotifier {
 
   CategoriesState get state => _state;
 
+  void reset() {
+    _state = CategoriesState.initial;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();

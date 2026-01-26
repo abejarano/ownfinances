@@ -19,6 +19,13 @@ class AccountsController extends ChangeNotifier {
 
   AccountsState get state => _state;
 
+  void reset() {
+    _state = AccountsState.initial;
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
   Future<void> load() async {
     if (_isDisposed) return;
     _state = _state.copyWith(isLoading: true, error: null);

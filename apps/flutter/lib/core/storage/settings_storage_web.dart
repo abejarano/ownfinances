@@ -38,4 +38,11 @@ class SettingsStorageImpl implements SettingsStorage {
   Future<void> saveCountry(String countryCode) async {
     html.window.localStorage[_countryKey] = countryCode;
   }
+
+  @override
+  Future<void> clear() async {
+    html.window.localStorage.remove(_primaryCurrencyKey);
+    html.window.localStorage.remove(_localeKey);
+    html.window.localStorage.remove(_countryKey);
+  }
 }

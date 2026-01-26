@@ -14,6 +14,12 @@ class BudgetController extends ChangeNotifier {
 
   DateTime? _loadingDate; // Guard for race conditions
 
+  void reset() {
+    _loadingDate = null;
+    _state = BudgetState.initial;
+    notifyListeners();
+  }
+
   Future<void> load({required String period, required DateTime date}) async {
     _loadingDate = date;
 

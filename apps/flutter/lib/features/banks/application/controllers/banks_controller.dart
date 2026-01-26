@@ -11,6 +11,13 @@ class BanksController extends ChangeNotifier {
 
   BanksController(this.repository);
 
+  void reset() {
+    banks = [];
+    isLoading = false;
+    error = null;
+    notifyListeners();
+  }
+
   Future<void> load({String? country}) async {
     isLoading = true;
     error = null;

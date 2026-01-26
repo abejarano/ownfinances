@@ -12,4 +12,6 @@ abstract class SettingsStorage {
 
   Future<String?> readCountry();
   Future<void> saveCountry(String countryCode);
+
+  Future<void> clear();
 }

@@ -3,13 +3,15 @@ import "package:google_sign_in/google_sign_in.dart";
 import "package:sign_in_with_apple/sign_in_with_apple.dart";
 import "package:ownfinances/features/auth/application/state/auth_state.dart";
 import "package:ownfinances/features/auth/data/repositories/auth_repository.dart";
+import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:flutter/foundation.dart";
 
 class AuthController extends ChangeNotifier {
   final AuthRepository repository;
+  final SettingsController? settingsController;
   AuthState _state = AuthState.initial;
 
-  AuthController(this.repository);
+  AuthController(this.repository, {this.settingsController});
 
   AuthState get state => _state;
   bool get isAuthenticated => _state.session != null;
@@ -31,6 +33,9 @@ class AuthController extends ChangeNotifier {
       );
     }
     notifyListeners();
+    if (session != null) {
+      await settingsController?.syncFromRemote();
+    }
   }
 
   Future<String?> login(String email, String password) async {
@@ -43,6 +48,7 @@ class AuthController extends ChangeNotifier {
         session: result.data,
       );
       notifyListeners();
+      await settingsController?.syncFromRemote();
       return null;
     }
     _state = _state.copyWith(
@@ -67,6 +73,7 @@ class AuthController extends ChangeNotifier {
         session: result.data,
       );
       notifyListeners();
+      await settingsController?.syncFromRemote();
       return null;
     }
     _state = _state.copyWith(
@@ -132,6 +139,7 @@ class AuthController extends ChangeNotifier {
           session: result.data,
         );
         notifyListeners();
+        await settingsController?.syncFromRemote();
         return null;
       }
 
@@ -186,6 +194,7 @@ class AuthController extends ChangeNotifier {
           session: result.data,
         );
         notifyListeners();
+        await settingsController?.syncFromRemote();
         return null;
       }
 

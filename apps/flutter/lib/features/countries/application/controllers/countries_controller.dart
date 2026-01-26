@@ -11,6 +11,13 @@ class CountriesController extends ChangeNotifier {
 
   CountriesController(this.repository);
 
+  void reset() {
+    countries = [];
+    isLoading = false;
+    error = null;
+    notifyListeners();
+  }
+
   Future<void> load() async {
     isLoading = true;
     error = null;

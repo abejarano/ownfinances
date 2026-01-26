@@ -39,4 +39,11 @@ class SettingsStorageImpl implements SettingsStorage {
   Future<void> saveCountry(String countryCode) async {
     await _storage.write(key: _countryKey, value: countryCode);
   }
+
+  @override
+  Future<void> clear() async {
+    await _storage.delete(key: _primaryCurrencyKey);
+    await _storage.delete(key: _localeKey);
+    await _storage.delete(key: _countryKey);
+  }
 }

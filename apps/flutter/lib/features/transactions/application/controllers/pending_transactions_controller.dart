@@ -13,6 +13,11 @@ class PendingTransactionsController extends ChangeNotifier {
 
   PendingTransactionsState get state => _state;
 
+  void reset() {
+    _state = PendingTransactionsState.initial();
+    notifyListeners();
+  }
+
   Future<void> loadPending({
     String? month,
     String? categoryId,

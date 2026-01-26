@@ -13,6 +13,11 @@ class RecurringController extends ChangeNotifier {
 
   RecurringState get state => _state;
 
+  void reset() {
+    _state = RecurringState.initial();
+    notifyListeners();
+  }
+
   Future<void> load() async {
     _state = _state.copyWith(isLoading: true, error: null);
     notifyListeners();

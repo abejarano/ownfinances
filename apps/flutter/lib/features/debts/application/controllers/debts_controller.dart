@@ -23,6 +23,12 @@ class DebtsController extends ChangeNotifier {
 
   DebtsState get state => _state;
 
+  void reset() {
+    if (_isDisposed) return;
+    _state = DebtsState.initial();
+    notifyListeners();
+  }
+
   Future<void> loadOverview() async {
     if (_isDisposed) return;
     _state = _state.copyWith(isLoadingOverview: true);

@@ -41,7 +41,13 @@ export class SettingsController {
   @Put("/")
   @Use([AuthMiddleware])
   async update(
-    @Body() body: { autoGenerateRecurring?: boolean },
+    @Body()
+    body: {
+      autoGenerateRecurring?: boolean
+      primaryCurrency?: string | null
+      countryCode?: string | null
+      locale?: string | null
+    },
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
@@ -54,6 +60,15 @@ export class SettingsController {
 
     if (body.autoGenerateRecurring !== undefined) {
       settings.setAutoGenerateRecurring(body.autoGenerateRecurring)
+    }
+    if (body.primaryCurrency !== undefined) {
+      settings.setPrimaryCurrency(body.primaryCurrency)
+    }
+    if (body.countryCode !== undefined) {
+      settings.setCountryCode(body.countryCode)
+    }
+    if (body.locale !== undefined) {
+      settings.setLocale(body.locale)
     }
 
     await this.repo.upsertSettings(settings)

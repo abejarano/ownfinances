@@ -13,6 +13,11 @@ class ReportsController extends ChangeNotifier {
 
   ReportsState get state => _state;
 
+  void reset() {
+    _state = ReportsState.initial();
+    notifyListeners();
+  }
+
   void applyImpactFromJson(Map<String, dynamic> impact) {
     var summaryRaw = impact["summary"];
     if (summaryRaw is Map<String, dynamic> && summaryRaw.containsKey("value")) {

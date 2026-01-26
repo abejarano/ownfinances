@@ -23,6 +23,7 @@ class DashboardController extends ChangeNotifier {
 
   DashboardState _state = DashboardState.initial();
   bool _isDisposed = false;
+  bool _isListeningToSettings = true;
 
   DashboardController(
     this.transactionRepository,
@@ -42,10 +43,25 @@ class DashboardController extends ChangeNotifier {
   }
 
   void _onSettingsChanged() {
+    if (!_isListeningToSettings) return;
     load();
   }
 
   DashboardState get state => _state;
+
+  void reset() {
+    if (_isDisposed) return;
+    _state = DashboardState.initial();
+    notifyListeners();
+  }
+
+  void pauseSettingsListener() {
+    _isListeningToSettings = false;
+  }
+
+  void resumeSettingsListener() {
+    _isListeningToSettings = true;
+  }
 
   Future<void> load() async {
     if (_isDisposed) return;
