@@ -27,17 +27,23 @@ export class User extends AggregateRoot {
     appleId?: string | null
   }): User {
     const now = new Date()
-
-    return new User({
+    const data: UserPrimitives = {
       userId: createMongoId(),
       email: props.email,
       name: props.name ?? null,
       passwordHash: props.passwordHash,
-      googleId: props.googleId ?? null,
-      appleId: props.appleId ?? null,
       createdAt: now,
       updatedAt: now,
-    })
+    }
+
+    if (props.googleId != null) {
+      data.googleId = props.googleId
+    }
+    if (props.appleId != null) {
+      data.appleId = props.appleId
+    }
+
+    return new User(data)
   }
 
   getId(): string {

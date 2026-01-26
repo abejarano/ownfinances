@@ -1,4 +1,5 @@
 import "package:ownfinances/core/error/failure.dart";
+import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/core/result/result.dart";
 import "package:ownfinances/features/auth/data/datasources/auth_remote_data_source.dart";
 import "package:ownfinances/features/auth/data/datasources/token_storage.dart";
@@ -29,8 +30,10 @@ class AuthRepository {
       final session = await remote.register(email, password, name: name);
       await storage.save(session);
       return Result.success(session);
+    } on ApiException catch (error) {
+      return Result.error(ValidationFailure(error.message));
     } catch (_) {
-      return Result.error(const ValidationFailure("Email já registrado"));
+      return Result.error(const UnknownFailure("Erro ao registrar"));
     }
   }
 
