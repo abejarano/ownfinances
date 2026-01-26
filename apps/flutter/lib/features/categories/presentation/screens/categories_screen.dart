@@ -19,6 +19,7 @@ class CategoriesScreen extends StatelessWidget {
     final controller = context.read<CategoriesController>();
     final state = context.watch<CategoriesController>().state;
     final l10n = AppLocalizations.of(context)!;
+    final isEmptyState = !state.isLoading && state.items.isEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -35,27 +36,32 @@ class CategoriesScreen extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.categoriesActive,
-                    style: Theme.of(context).textTheme.titleMedium,
+            if (!state.isLoading && state.items.isNotEmpty) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.categoriesActive,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: controller.load,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: controller.load,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             if (state.isLoading)
               const Center(child: CircularProgressIndicator()),
             if (!state.isLoading)
               if (state.items.isEmpty)
                 Expanded(
-                  child: _DefaultCategoriesEmptyView(controller: controller),
+                  child: _DefaultCategoriesEmptyView(
+                    controller: controller,
+                    onCreateCategory: () => _openForm(context, controller),
+                  ),
                 )
               else
                 Expanded(
@@ -129,10 +135,12 @@ class CategoriesScreen extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openForm(context, controller),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: isEmptyState
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _openForm(context, controller),
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -391,8 +399,12 @@ class CategoriesScreen extends StatelessWidget {
 
 class _DefaultCategoriesEmptyView extends StatefulWidget {
   final CategoriesController controller;
+  final VoidCallback onCreateCategory;
 
-  const _DefaultCategoriesEmptyView({required this.controller});
+  const _DefaultCategoriesEmptyView({
+    required this.controller,
+    required this.onCreateCategory,
+  });
 
   @override
   State<_DefaultCategoriesEmptyView> createState() =>
@@ -417,16 +429,21 @@ class _DefaultCategoriesEmptyViewState
     final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.surface1,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderSoft),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 l10n.onboardingCategoriesTitle,
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 l10n.onboardingCategoriesDesc,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -434,44 +451,74 @@ class _DefaultCategoriesEmptyViewState
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              Row(
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
                 children: [
-                  TextButton(
+                  _ActionPill(
+                    icon: Icons.done_all,
+                    label: l10n.onboardingActionSelectAll,
                     onPressed: _selectAll,
-                    child: Text(l10n.onboardingActionSelectAll),
                   ),
-                  TextButton(
+                  _ActionPill(
+                    icon: Icons.remove_done,
+                    label: l10n.onboardingActionDeselectAll,
                     onPressed: _deselectAll,
-                    child: Text(l10n.onboardingActionDeselectAll),
+                  ),
+                  _ActionPill(
+                    icon: Icons.add,
+                    label: l10n.categoriesNew,
+                    onPressed: widget.onCreateCategory,
                   ),
                 ],
               ),
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
         Expanded(
-          child: ListView.builder(
+          child: ListView.separated(
             itemCount: _seeds.length,
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
               final item = _seeds[index];
-              return CheckboxListTile(
-                title: Text(item.name),
-                secondary: Icon(
-                  defaultCategoryIcon(item.icon),
-                  color: item.selected ? AppColors.primary : Colors.grey,
+              return Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface1,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderSoft),
                 ),
-                value: item.selected,
-                onChanged: (_) => _toggle(index),
+                child: CheckboxListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
+                  ),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  title: Text(item.name),
+                  secondary: Icon(
+                    defaultCategoryIcon(item.icon),
+                    color:
+                        item.selected ? AppColors.primary : AppColors.muted,
+                  ),
+                  value: item.selected,
+                  onChanged: (_) => _toggle(index),
+                ),
               );
             },
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: PrimaryButton(
-            label: l10n.commonSave,
-            isLoading: _isSaving,
-            onPressed: _isSaving ? null : _saveDefaults,
+        SafeArea(
+          top: false,
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.borderSoft)),
+            ),
+            child: PrimaryButton(
+              label: l10n.commonSave,
+              isLoading: _isSaving,
+              onPressed: _isSaving ? null : _saveDefaults,
+            ),
           ),
         ),
       ],
@@ -523,5 +570,39 @@ class _DefaultCategoriesEmptyViewState
       return;
     }
     await context.read<ReportsController>().load();
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.textSecondary,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        side: const BorderSide(color: AppColors.borderSoft),
+        textStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        visualDensity: VisualDensity.compact,
+      ),
+    );
   }
 }
