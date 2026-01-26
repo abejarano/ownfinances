@@ -1,14 +1,13 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
-import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/budgets/application/controllers/budget_controller.dart";
-import "package:ownfinances/features/budgets/presentation/widgets/budget_category_card.dart";
-import "package:ownfinances/features/budgets/presentation/widgets/budget_debt_planned_card.dart";
-import "package:ownfinances/features/budgets/presentation/widgets/budget_empty_state.dart";
-import "package:ownfinances/features/budgets/presentation/widgets/budget_month_summary_card.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_categories_tab.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_debts_tab.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_segments_control.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_summary_tab.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
@@ -190,9 +189,7 @@ class _BudgetViewState extends State<BudgetView> {
       plannedDebtTotals[debt.currency] =
           (plannedDebtTotals[debt.currency] ?? 0) + planned;
     }
-    final plannedCategoryTotal = summary?.totals.plannedExpense ?? 0;
     final plannedDebtPrimary = plannedDebtTotals[primaryCurrency] ?? 0;
-    final totalOutflowPrimary = plannedCategoryTotal + plannedDebtPrimary;
     final period = reportsState.period;
     final date = reportsState.date;
     final otherCurrenciesText =
@@ -206,146 +203,176 @@ class _BudgetViewState extends State<BudgetView> {
         .where((category) => budgetCategoryIds.contains(category.id))
         .toList();
 
-    return Stack(
-      children: [
-        ListView(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            showSave ? 96 : AppSpacing.md,
-          ),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.budgetsMonthTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
+    final plannedExpenseTotal = budgetState.plannedByCategory.entries
+        .where((entry) => summaryMap[entry.key]?.kind == "expense")
+        .fold(0.0, (sum, entry) => sum + entry.value);
+    final actualExpenseTotalPrimary = budgetState.plannedByCategory.entries
+        .where((entry) => summaryMap[entry.key]?.kind == "expense")
+        .fold(0.0, (sum, entry) {
+      final actualByCurrency =
+          summaryMap[entry.key]?.actualByCurrency ?? {};
+      return sum + (actualByCurrency[primaryCurrency] ?? 0.0);
+    });
+    final overspentCount = budgetState.plannedByCategory.entries
+        .where((entry) => summaryMap[entry.key]?.kind == "expense")
+        .where((entry) {
+      final actualByCurrency =
+          summaryMap[entry.key]?.actualByCurrency ?? {};
+      return (actualByCurrency[primaryCurrency] ?? 0.0) > entry.value;
+    }).length;
+    final dueDays = activeDebts
+        .map((debt) => debt.dueDay)
+        .whereType<int>()
+        .toList()
+      ..sort();
+    final nextDueDay = dueDays.isEmpty ? null : dueDays.first;
 
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _pickMonth(context, date),
-                  icon: const Icon(Icons.calendar_today),
-                  label: Text(formatMonth(date)),
+    Future<void> saveCategories() async {
+      for (final entry in _controllers.entries) {
+        context.read<BudgetController>().updatePlanned(
+              entry.key,
+              parseMoney(entry.value.text),
+            );
+      }
+      final error = await context.read<BudgetController>().save(period);
+      if (error != null && context.mounted) {
+        showStandardSnackbar(context, error);
+        return;
+      }
+      await context.read<ReportsController>().load();
+      if (context.mounted) {
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(context)!.budgetsSuccessSaved,
+        );
+      }
+    }
+
+    Future<void> saveDebts() async {
+      for (final entry in _debtControllers.entries) {
+        context.read<BudgetController>().updatePlannedDebt(
+              entry.key,
+              parseMoney(entry.value.text),
+            );
+      }
+      final error = await context.read<BudgetController>().save(period);
+      if (error != null && context.mounted) {
+        showStandardSnackbar(context, error);
+        return;
+      }
+      await context.read<ReportsController>().load();
+      if (context.mounted) {
+        showStandardSnackbar(
+          context,
+          AppLocalizations.of(context)!.budgetsSuccessSaved,
+        );
+      }
+    }
+
+    return DefaultTabController(
+      length: 3,
+      child: Builder(
+        builder: (context) {
+          final tabController = DefaultTabController.of(context)!;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  0,
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            BudgetMonthSummaryCard(
-              plannedCategoryTotal: plannedCategoryTotal,
-              plannedDebtPrimary: plannedDebtPrimary,
-              totalOutflowPrimary: totalOutflowPrimary,
-              primaryCurrency: primaryCurrency,
-              otherCurrenciesText: otherCurrenciesText,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            if (budgetState.isLoading) const LinearProgressIndicator(),
-            const SizedBox(height: AppSpacing.sm),
-            if (budgetState.budget == null && !budgetState.isLoading)
-              BudgetEmptyState(
-                month: formatMonth(date),
-                onCreate: () => _createBudget(context, period, date),
-              )
-            else ...[
-              BudgetDebtPlannedCard(
-                debts: activeDebts,
-                plannedByDebt: budgetState.plannedByDebt,
-                summaries: debtsState.summaries,
-                controllers: _debtControllers,
-                plannedDebtPrimary: plannedDebtPrimary,
-                primaryCurrency: primaryCurrency,
-                otherCurrenciesText: otherCurrenciesText,
-                onAddDebt: () => context.push("/debts"),
-                onUpdatePlanned: (debtId, amount) {
-                  context
-                      .read<BudgetController>()
-                      .updatePlannedDebt(debtId, amount);
-                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.budgetsTitle,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () => _pickMonth(context, date),
+                      icon: const Icon(Icons.calendar_today),
+                      label: Text(formatMonth(date)),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
-              Text(
-                l10n.budgetsCategoriesTitle,
-                style: Theme.of(context).textTheme.titleMedium,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: BudgetSegmentsControl(),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              ...budgetCategories.map((category) {
-                final planned =
-                    budgetState.plannedByCategory[category.id] ?? 0.0;
-                final controller = _controllers.putIfAbsent(
-                  category.id,
-                  () => TextEditingController(),
-                );
-                final actualByCurrency =
-                    summaryMap[category.id]?.actualByCurrency ?? {};
-                final actualPrimary =
-                    actualByCurrency[primaryCurrency] ?? 0.0;
-                final otherCurrencyTotals = Map<String, double>.fromEntries(
-                  actualByCurrency.entries.where(
-                    (entry) =>
-                        entry.key != primaryCurrency && entry.value != 0,
-                  ),
-                );
-                return BudgetCategoryCard(
-                  category: category,
-                  controller: controller,
-                  planned: planned,
-                  actual: actualPrimary,
-                  otherCurrencyTotals: otherCurrencyTotals,
-                  onRemove: () => _removeCategory(
-                    context,
-                    period,
-                    date,
-                    category.id,
-                  ),
-                );
-              }),
+              const SizedBox(height: AppSpacing.md),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    BudgetCategoriesTab(
+                      isLoading: budgetState.isLoading,
+                      hasBudget: budgetState.budget != null,
+                      categories: budgetCategories,
+                      controllers: _controllers,
+                      summaryMap: summaryMap,
+                      plannedByCategory: budgetState.plannedByCategory,
+                      primaryCurrency: primaryCurrency,
+                      onCreateBudget: () => _createBudget(
+                        context,
+                        period,
+                        date,
+                      ),
+                      onRemoveCategory: (categoryId) => _removeCategory(
+                        context,
+                        period,
+                        date,
+                        categoryId,
+                      ),
+                      onSave: saveCategories,
+                      showSave: showSave,
+                    ),
+                    BudgetDebtsTab(
+                      isLoading: budgetState.isLoading,
+                      hasBudget: budgetState.budget != null,
+                      debts: activeDebts,
+                      plannedByDebt: budgetState.plannedByDebt,
+                      summaries: debtsState.summaries,
+                      controllers: _debtControllers,
+                      plannedDebtPrimary: plannedDebtPrimary,
+                      primaryCurrency: primaryCurrency,
+                      otherCurrenciesText: otherCurrenciesText,
+                      onAddDebt: () => context.push("/debts"),
+                      onUpdatePlanned: (debtId, amount) {
+                        context
+                            .read<BudgetController>()
+                            .updatePlannedDebt(debtId, amount);
+                      },
+                      onCreateBudget: () => _createBudget(
+                        context,
+                        period,
+                        date,
+                      ),
+                      onSave: saveDebts,
+                      showSave: showSave,
+                    ),
+                    BudgetSummaryTab(
+                      plannedExpense: plannedExpenseTotal,
+                      actualExpense: actualExpenseTotalPrimary,
+                      overspentCount: overspentCount,
+                      plannedDebt: plannedDebtPrimary,
+                      nextDueDay: nextDueDay,
+                      primaryCurrency: primaryCurrency,
+                      onViewCategories: () => tabController.animateTo(0),
+                      onViewDebts: () => tabController.animateTo(1),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ],
-        ),
-        if (showSave)
-          Positioned(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            bottom: 0,
-            child: SafeArea(
-              top: false,
-              child: PrimaryButton(
-                label: AppLocalizations.of(context)!.budgetsSaveButton,
-                onPressed: () async {
-                  for (final entry in _controllers.entries) {
-                    context.read<BudgetController>().updatePlanned(
-                      entry.key,
-                      parseMoney(entry.value.text),
-                    );
-                  }
-                  for (final entry in _debtControllers.entries) {
-                    context.read<BudgetController>().updatePlannedDebt(
-                      entry.key,
-                      parseMoney(entry.value.text),
-                    );
-                  }
-                  final error =
-                      await context.read<BudgetController>().save(period);
-                  if (error != null && context.mounted) {
-                    showStandardSnackbar(context, error);
-                    return;
-                  }
-                  await context.read<ReportsController>().load();
-                  if (context.mounted) {
-                    showStandardSnackbar(
-                      context,
-                      AppLocalizations.of(context)!.budgetsSuccessSaved,
-                    );
-                  }
-                },
-              ),
-            ),
-          ),
-      ],
+          );
+        },
+      ),
     );
   }
 

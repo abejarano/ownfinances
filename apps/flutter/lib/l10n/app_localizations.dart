@@ -1370,6 +1370,24 @@ abstract class AppLocalizations {
   /// **'Plano do período'**
   String get budgetsPlanPeriod;
 
+  /// No description provided for @budgetsSegmentCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categorias'**
+  String get budgetsSegmentCategories;
+
+  /// No description provided for @budgetsSegmentDebts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dívidas'**
+  String get budgetsSegmentDebts;
+
+  /// No description provided for @budgetsSegmentSummary.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo'**
+  String get budgetsSegmentSummary;
+
   /// No description provided for @budgetsLabelPlanned.
   ///
   /// In pt, this message translates to:
@@ -1409,8 +1427,8 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsCategoryStatusAtLimit.
   ///
   /// In pt, this message translates to:
-  /// **'Limite atingido · Falta {value}'**
-  String budgetsCategoryStatusAtLimit(Object value);
+  /// **'Limite atingido'**
+  String get budgetsCategoryStatusAtLimit;
 
   /// No description provided for @budgetsCategoryIncomeStatusAtLimit.
   ///
@@ -1421,19 +1439,19 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsCategoryStatusNearLimit.
   ///
   /// In pt, this message translates to:
-  /// **'Perto do limite · Falta {value}'**
+  /// **'Perto do limite — Falta {value}'**
   String budgetsCategoryStatusNearLimit(Object value);
 
   /// No description provided for @budgetsCategoryIncomeStatusNearLimit.
   ///
   /// In pt, this message translates to:
-  /// **'Perto da meta · Faltam {value}'**
+  /// **'Perto da meta — Faltam {value}'**
   String budgetsCategoryIncomeStatusNearLimit(Object value);
 
   /// No description provided for @budgetsCategoryStatusOver.
   ///
   /// In pt, this message translates to:
-  /// **'Você passou {value}'**
+  /// **'Estourou — Passou {value}'**
   String budgetsCategoryStatusOver(Object value);
 
   /// No description provided for @budgetsCategoryIncomeStatusOver.
@@ -1469,19 +1487,19 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsEmptyTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Sem orçamento para este mês'**
+  /// **'Você ainda não configurou orçamentos.'**
   String get budgetsEmptyTitle;
 
   /// No description provided for @budgetsEmptyDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Crie um orçamento para planejar seus gastos por categoria.'**
+  /// **'Comece pelas suas categorias principais.'**
   String get budgetsEmptyDesc;
 
   /// No description provided for @budgetsCreateButton.
   ///
   /// In pt, this message translates to:
-  /// **'Criar orçamento deste mês'**
+  /// **'Configurar orçamentos'**
   String get budgetsCreateButton;
 
   /// No description provided for @budgetsActionRemove.
@@ -1507,6 +1525,18 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Salvar orçamento'**
   String get budgetsSaveButton;
+
+  /// No description provided for @budgetsSaveCategoriesButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar orçamento'**
+  String get budgetsSaveCategoriesButton;
+
+  /// No description provided for @budgetsSaveDebtsButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar pagamentos'**
+  String get budgetsSaveDebtsButton;
 
   /// No description provided for @budgetsSuccessSaved.
   ///
@@ -1547,7 +1577,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtPlannedTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Dívidas (pagos planejados)'**
+  /// **'Pagamentos planejados'**
   String get budgetsDebtPlannedTitle;
 
   /// No description provided for @budgetsDebtPlannedSubtitle.
@@ -1559,7 +1589,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtPaymentNote.
   ///
   /// In pt, this message translates to:
-  /// **'Pagar dívida não é um gasto novo. É pagar algo que você já deve.'**
+  /// **'Pagar dívida não é gasto novo. É pagar o que você já deve.'**
   String get budgetsDebtPaymentNote;
 
   /// No description provided for @budgetsDebtPayLabel.
@@ -1573,6 +1603,24 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Devo'**
   String get budgetsDebtOweLabel;
+
+  /// No description provided for @budgetsDebtQuickMin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo'**
+  String get budgetsDebtQuickMin;
+
+  /// No description provided for @budgetsDebtQuickTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total'**
+  String get budgetsDebtQuickTotal;
+
+  /// No description provided for @budgetsDebtOverpayWarning.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está pagando mais do que deve. Tem certeza?'**
+  String get budgetsDebtOverpayWarning;
 
   /// No description provided for @budgetsDebtPaidPlanned.
   ///
@@ -1607,7 +1655,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtEmptyState.
   ///
   /// In pt, this message translates to:
-  /// **'Você não tem dívidas ativas.'**
+  /// **'Você não tem dívidas registradas.'**
   String get budgetsDebtEmptyState;
 
   /// No description provided for @budgetsDebtMinimumWarning.
@@ -1619,8 +1667,56 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtTotalPlannedLabel.
   ///
   /// In pt, this message translates to:
-  /// **'Total pagamentos planejados ({currency})'**
+  /// **'Total planejado ({currency})'**
   String budgetsDebtTotalPlannedLabel(Object currency);
+
+  /// No description provided for @budgetsSummaryCategoriesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gastos por categoria'**
+  String get budgetsSummaryCategoriesTitle;
+
+  /// No description provided for @budgetsSummaryDebtsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamentos planejados de dívidas'**
+  String get budgetsSummaryDebtsTitle;
+
+  /// No description provided for @budgetsSummaryTotalPlanned.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total planejado'**
+  String get budgetsSummaryTotalPlanned;
+
+  /// No description provided for @budgetsSummaryTotalSpent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total gasto'**
+  String get budgetsSummaryTotalSpent;
+
+  /// No description provided for @budgetsSummaryOverspentCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categorias estouradas: {count}'**
+  String budgetsSummaryOverspentCount(Object count);
+
+  /// No description provided for @budgetsSummaryViewCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver categorias'**
+  String get budgetsSummaryViewCategories;
+
+  /// No description provided for @budgetsSummaryViewDebts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver dívidas'**
+  String get budgetsSummaryViewDebts;
+
+  /// No description provided for @budgetsSummaryNextDueDay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próximo vencimento: dia {day}'**
+  String budgetsSummaryNextDueDay(Object day);
 
   /// No description provided for @budgetsCategoriesTitle.
   ///

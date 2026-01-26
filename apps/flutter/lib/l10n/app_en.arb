@@ -213,6 +213,9 @@
     "budgetsTabFixed": "Fixed Expenses",
     "budgetsMonthTitle": "Monthly Budget",
     "budgetsPlanPeriod": "Period Plan",
+    "budgetsSegmentCategories": "Categories",
+    "budgetsSegmentDebts": "Debts",
+    "budgetsSegmentSummary": "Summary",
     "budgetsLabelPlanned": "Budget",
     "budgetsLabelActual": "Spent",
     "budgetsLabelActualIncome": "Received",
@@ -223,32 +226,27 @@
         "value": {}
       }
     },
+    "budgetsCategoryStatusAtLimit": "Limit reached",
     "budgetsCategoryIncomeStatusRemaining": "{value} to reach your goal",
     "@budgetsCategoryIncomeStatusRemaining": {
       "placeholders": {
         "value": {}
       }
     },
-    "budgetsCategoryStatusAtLimit": "Limit reached · {value} left",
-    "@budgetsCategoryStatusAtLimit": {
-      "placeholders": {
-        "value": {}
-      }
-    },
     "budgetsCategoryIncomeStatusAtLimit": "Goal reached",
-    "budgetsCategoryStatusNearLimit": "Near the limit · {value} left",
+    "budgetsCategoryStatusNearLimit": "Near the limit — {value} left",
     "@budgetsCategoryStatusNearLimit": {
       "placeholders": {
         "value": {}
       }
     },
-    "budgetsCategoryIncomeStatusNearLimit": "Near the goal · {value} to go",
+    "budgetsCategoryIncomeStatusNearLimit": "Near the goal — {value} to go",
     "@budgetsCategoryIncomeStatusNearLimit": {
       "placeholders": {
         "value": {}
       }
     },
-    "budgetsCategoryStatusOver": "Over by {value}",
+    "budgetsCategoryStatusOver": "Over — You went {value} over",
     "@budgetsCategoryStatusOver": {
       "placeholders": {
         "value": {}
@@ -264,24 +262,29 @@
     "budgetsHeaderIncome": "Planned Income",
     "budgetsHeaderExpense": "Planned Expenses",
     "budgetsHeaderBalance": "Planned Balance",
-    "budgetsEmptyTitle": "No budget for this month",
-    "budgetsEmptyDesc": "Create a budget to plan your expenses by category.",
-    "budgetsCreateButton": "Create budget for this month",
+    "budgetsEmptyTitle": "You haven't set any budgets yet.",
+    "budgetsEmptyDesc": "Start with your main categories.",
+    "budgetsCreateButton": "Set budgets",
     "budgetsActionRemove": "Remove from month",
     "budgetsSuccessRemoved": "Category removed from this month's budget",
     "budgetsRemoveCategory": "Remove from month",
     "budgetsSaveButton": "Save Budget",
+    "budgetsSaveCategoriesButton": "Save budget",
+    "budgetsSaveDebtsButton": "Save payments",
     "budgetsSuccessSaved": "Budget saved!",
     "budgetsMonthSummaryTitle": "Month summary",
     "budgetsMonthSummaryPlannedCategories": "Planned spending (categories)",
     "budgetsMonthSummaryPlannedDebts": "Planned debt payments",
     "budgetsMonthSummaryTotalOutflow": "Total planned outflow",
     "budgetsMonthSummaryOtherCurrencies": "Other currencies (no conversion)",
-    "budgetsDebtPlannedTitle": "Debts (planned payments)",
+    "budgetsDebtPlannedTitle": "Planned payments",
     "budgetsDebtPlannedSubtitle": "Set aside what you'll pay this month. It's not a new expense.",
-    "budgetsDebtPaymentNote": "Paying debt is not a new expense. It's paying something you already owe.",
-    "budgetsDebtPayLabel": "I'll pay",
+    "budgetsDebtPaymentNote": "Paying debt isn’t a new expense. It’s paying what you already owe.",
+    "budgetsDebtPayLabel": "I will pay",
     "budgetsDebtOweLabel": "I owe",
+    "budgetsDebtQuickMin": "Minimum",
+    "budgetsDebtQuickTotal": "Total",
+    "budgetsDebtOverpayWarning": "You're paying more than you owe. Are you sure?",
     "budgetsDebtPaidPlanned": "Paid: {paid} / {planned} planned",
     "@budgetsDebtPaidPlanned": {
       "placeholders": {
@@ -303,12 +306,30 @@
         "amount": {}
       }
     },
-    "budgetsDebtEmptyState": "You have no active debts.",
+    "budgetsDebtEmptyState": "You have no debts registered.",
     "budgetsDebtMinimumWarning": "Your plan is below the minimum.",
-    "budgetsDebtTotalPlannedLabel": "Total planned payments ({currency})",
+    "budgetsDebtTotalPlannedLabel": "Total planned ({currency})",
     "@budgetsDebtTotalPlannedLabel": {
       "placeholders": {
         "currency": {}
+      }
+    },
+    "budgetsSummaryCategoriesTitle": "Spending by category",
+    "budgetsSummaryDebtsTitle": "Planned debt payments",
+    "budgetsSummaryTotalPlanned": "Total planned",
+    "budgetsSummaryTotalSpent": "Total spent",
+    "budgetsSummaryOverspentCount": "Over budget categories: {count}",
+    "@budgetsSummaryOverspentCount": {
+      "placeholders": {
+        "count": {}
+      }
+    },
+    "budgetsSummaryViewCategories": "View categories",
+    "budgetsSummaryViewDebts": "View debts",
+    "budgetsSummaryNextDueDay": "Next due day: {day}",
+    "@budgetsSummaryNextDueDay": {
+      "placeholders": {
+        "day": {}
       }
     },
     "budgetsCategoriesTitle": "Spending by category",

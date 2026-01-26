@@ -4,12 +4,10 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
 
 class BudgetEmptyState extends StatelessWidget {
-  final String month;
   final VoidCallback onCreate;
 
   const BudgetEmptyState({
     super.key,
-    required this.month,
     required this.onCreate,
   });
 

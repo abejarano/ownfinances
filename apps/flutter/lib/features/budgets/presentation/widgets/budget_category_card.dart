@@ -43,7 +43,7 @@ class BudgetCategoryCard extends StatelessWidget {
     final isNearLimit = !isOver &&
         !isExactLimit &&
         plannedValue > 0 &&
-        actualValue >= plannedValue * 0.75;
+        actualValue >= plannedValue * 0.8;
     final statusColor = isOver
         ? (isIncome ? AppColors.success : AppColors.danger)
         : isExactLimit
@@ -70,9 +70,7 @@ class BudgetCategoryCard extends StatelessWidget {
                 formatMoney(overAmount),
               )
             : isExactLimit
-                ? l10n.budgetsCategoryStatusAtLimit(
-                    formatMoney(remainingValue),
-                  )
+                ? l10n.budgetsCategoryStatusAtLimit
                 : isNearLimit
                     ? l10n.budgetsCategoryStatusNearLimit(
                         formatMoney(remainingValue),

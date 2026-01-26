@@ -292,6 +292,9 @@
     "budgetsTabFixed": "Contas fixas",
     "budgetsMonthTitle": "Orçamento do mês",
     "budgetsPlanPeriod": "Plano do período",
+    "budgetsSegmentCategories": "Categorias",
+    "budgetsSegmentDebts": "Dívidas",
+    "budgetsSegmentSummary": "Resumo",
     "budgetsLabelPlanned": "Orçamento",
     "budgetsLabelActual": "Gasto",
     "budgetsLabelActualIncome": "Recebido",
@@ -308,26 +311,21 @@
         "value": {}
       }
     },
-    "budgetsCategoryStatusAtLimit": "Limite atingido · Falta {value}",
-    "@budgetsCategoryStatusAtLimit": {
-      "placeholders": {
-        "value": {}
-      }
-    },
+    "budgetsCategoryStatusAtLimit": "Limite atingido",
     "budgetsCategoryIncomeStatusAtLimit": "Meta atingida",
-    "budgetsCategoryStatusNearLimit": "Perto do limite · Falta {value}",
+    "budgetsCategoryStatusNearLimit": "Perto do limite — Falta {value}",
     "@budgetsCategoryStatusNearLimit": {
       "placeholders": {
         "value": {}
       }
     },
-    "budgetsCategoryIncomeStatusNearLimit": "Perto da meta · Faltam {value}",
+    "budgetsCategoryIncomeStatusNearLimit": "Perto da meta — Faltam {value}",
     "@budgetsCategoryIncomeStatusNearLimit": {
       "placeholders": {
         "value": {}
       }
     },
-    "budgetsCategoryStatusOver": "Você passou {value}",
+    "budgetsCategoryStatusOver": "Estourou — Passou {value}",
     "@budgetsCategoryStatusOver": {
       "placeholders": {
         "value": {}
@@ -343,24 +341,29 @@
     "budgetsHeaderIncome": "Receitas planejadas",
     "budgetsHeaderExpense": "Gastos planejados",
     "budgetsHeaderBalance": "Saldo planejado",
-    "budgetsEmptyTitle": "Sem orçamento para este mês",
-    "budgetsEmptyDesc": "Crie um orçamento para planejar seus gastos por categoria.",
-    "budgetsCreateButton": "Criar orçamento deste mês",
+    "budgetsEmptyTitle": "Você ainda não configurou orçamentos.",
+    "budgetsEmptyDesc": "Comece pelas suas categorias principais.",
+    "budgetsCreateButton": "Configurar orçamentos",
     "budgetsActionRemove": "Remover do mês",
     "budgetsSuccessRemoved": "Categoria removida do orçamento deste mês",
     "budgetsRemoveCategory": "Remover do mês",
     "budgetsSaveButton": "Salvar orçamento",
+    "budgetsSaveCategoriesButton": "Salvar orçamento",
+    "budgetsSaveDebtsButton": "Salvar pagamentos",
     "budgetsSuccessSaved": "Orçamento salvo!",
     "budgetsMonthSummaryTitle": "Resumo do mês",
     "budgetsMonthSummaryPlannedCategories": "Gastos planejados (categorias)",
     "budgetsMonthSummaryPlannedDebts": "Pagamentos de dívidas planejados",
     "budgetsMonthSummaryTotalOutflow": "Total de saídas planejadas",
     "budgetsMonthSummaryOtherCurrencies": "Outras moedas (sem conversão)",
-    "budgetsDebtPlannedTitle": "Dívidas (pagos planejados)",
+    "budgetsDebtPlannedTitle": "Pagamentos planejados",
     "budgetsDebtPlannedSubtitle": "Reserve quanto você vai pagar este mês. Não é um gasto novo.",
-    "budgetsDebtPaymentNote": "Pagar dívida não é um gasto novo. É pagar algo que você já deve.",
+    "budgetsDebtPaymentNote": "Pagar dívida não é gasto novo. É pagar o que você já deve.",
     "budgetsDebtPayLabel": "Vou pagar",
     "budgetsDebtOweLabel": "Devo",
+    "budgetsDebtQuickMin": "Mínimo",
+    "budgetsDebtQuickTotal": "Total",
+    "budgetsDebtOverpayWarning": "Você está pagando mais do que deve. Tem certeza?",
     "budgetsDebtPaidPlanned": "Pago: {paid} / {planned} planejado",
     "@budgetsDebtPaidPlanned": {
       "placeholders": {
@@ -382,12 +385,30 @@
         "amount": {}
       }
     },
-    "budgetsDebtEmptyState": "Você não tem dívidas ativas.",
+    "budgetsDebtEmptyState": "Você não tem dívidas registradas.",
     "budgetsDebtMinimumWarning": "Seu plano está abaixo do mínimo.",
-    "budgetsDebtTotalPlannedLabel": "Total pagamentos planejados ({currency})",
+    "budgetsDebtTotalPlannedLabel": "Total planejado ({currency})",
     "@budgetsDebtTotalPlannedLabel": {
       "placeholders": {
         "currency": {}
+      }
+    },
+    "budgetsSummaryCategoriesTitle": "Gastos por categoria",
+    "budgetsSummaryDebtsTitle": "Pagamentos planejados de dívidas",
+    "budgetsSummaryTotalPlanned": "Total planejado",
+    "budgetsSummaryTotalSpent": "Total gasto",
+    "budgetsSummaryOverspentCount": "Categorias estouradas: {count}",
+    "@budgetsSummaryOverspentCount": {
+      "placeholders": {
+        "count": {}
+      }
+    },
+    "budgetsSummaryViewCategories": "Ver categorias",
+    "budgetsSummaryViewDebts": "Ver dívidas",
+    "budgetsSummaryNextDueDay": "Próximo vencimento: dia {day}",
+    "@budgetsSummaryNextDueDay": {
+      "placeholders": {
+        "day": {}
       }
     },
     "budgetsCategoriesTitle": "Gastos por categoria",
