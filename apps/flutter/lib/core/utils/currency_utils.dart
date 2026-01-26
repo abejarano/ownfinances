@@ -11,6 +11,12 @@ class CurrencyUtils {
     "VES",
     "USDT",
   ];
+  static const Map<String, String> currencyToCountry = {
+    "BRL": "BR",
+    "VES": "VE",
+    "COP": "CO",
+    "ARS": "AR",
+  };
 
   static bool isValidCurrency(String code) {
     if (commonCurrencies.contains(code)) return true;
@@ -50,5 +56,9 @@ class CurrencyUtils {
     // For lists chips etc
     // This is just a label helper
     return formatCurrencyLabel(code);
+  }
+
+  static String? countryCodeForCurrency(String currency) {
+    return currencyToCountry[currency];
   }
 }

@@ -7,6 +7,7 @@ import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/categories/domain/entities/category.dart";
+import "package:ownfinances/features/categories/presentation/widgets/default_categories.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import 'package:ownfinances/l10n/app_localizations.dart';
 
@@ -52,71 +53,79 @@ class CategoriesScreen extends StatelessWidget {
             if (state.isLoading)
               const Center(child: CircularProgressIndicator()),
             if (!state.isLoading)
-              Expanded(
-                child: ListView.separated(
-                  itemCount: state.items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final item = state.items[index];
-                    final color = _parseColor(item.color);
-                    final iconData = _iconFor(item.icon);
-                    final iconLabel = item.name.trim().isNotEmpty
-                        ? item.name.trim()[0].toUpperCase()
-                        : "?";
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: color ?? Colors.black12,
-                        child: iconData != null
-                            ? Icon(
-                                iconData,
-                                color: color == null
-                                    ? Colors.black87
-                                    : Colors.white,
-                              )
-                            : Text(
-                                iconLabel,
-                                style: TextStyle(
+              if (state.items.isEmpty)
+                Expanded(
+                  child: _DefaultCategoriesEmptyView(controller: controller),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: state.items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = state.items[index];
+                      final color = _parseColor(item.color);
+                      final iconData = _iconFor(item.icon);
+                      final iconLabel = item.name.trim().isNotEmpty
+                          ? item.name.trim()[0].toUpperCase()
+                          : "?";
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: color ?? Colors.black12,
+                          child: iconData != null
+                              ? Icon(
+                                  iconData,
                                   color: color == null
                                       ? Colors.black87
                                       : Colors.white,
-                                  fontWeight: FontWeight.w600,
+                                )
+                              : Text(
+                                  iconLabel,
+                                  style: TextStyle(
+                                    color: color == null
+                                        ? Colors.black87
+                                        : Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                      ),
-                      title: Text(item.name),
-                      subtitle: Text(
-                        item.kind == "income"
-                            ? l10n.transactionTypeIncome
-                            : l10n.transactionTypeExpense,
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () =>
-                            _openForm(context, controller, item: item),
-                      ),
-                      onLongPress: () async {
-                        final confirmed = await _confirmDelete(
-                          context,
-                          title: l10n.categoriesDeleteTitle,
-                          description: l10n.categoriesDeleteDesc,
-                        );
-                        if (!confirmed || !context.mounted) return;
+                        ),
+                        title: Text(item.name),
+                        subtitle: Text(
+                          item.kind == "income"
+                              ? l10n.transactionTypeIncome
+                              : l10n.transactionTypeExpense,
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () =>
+                              _openForm(context, controller, item: item),
+                        ),
+                        onLongPress: () async {
+                          final confirmed = await _confirmDelete(
+                            context,
+                            title: l10n.categoriesDeleteTitle,
+                            description: l10n.categoriesDeleteDesc,
+                          );
+                          if (!confirmed || !context.mounted) return;
 
-                        final error = await controller.remove(item.id);
-                        if (!context.mounted) return;
-                        if (error != null) {
-                          showStandardSnackbar(context, error);
-                          return;
-                        }
-                        await context.read<ReportsController>().load();
-                        if (context.mounted) {
-                          showStandardSnackbar(context, l10n.categoriesDeleted);
-                        }
-                      },
-                    );
-                  },
+                          final error = await controller.remove(item.id);
+                          if (!context.mounted) return;
+                          if (error != null) {
+                            showStandardSnackbar(context, error);
+                            return;
+                          }
+                          await context.read<ReportsController>().load();
+                          if (context.mounted) {
+                            showStandardSnackbar(
+                              context,
+                              l10n.categoriesDeleted,
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
           ],
         ),
       ),
@@ -377,5 +386,142 @@ class CategoriesScreen extends StatelessWidget {
       if (option.id == value) return option.icon;
     }
     return null;
+  }
+}
+
+class _DefaultCategoriesEmptyView extends StatefulWidget {
+  final CategoriesController controller;
+
+  const _DefaultCategoriesEmptyView({required this.controller});
+
+  @override
+  State<_DefaultCategoriesEmptyView> createState() =>
+      _DefaultCategoriesEmptyViewState();
+}
+
+class _DefaultCategoriesEmptyViewState
+    extends State<_DefaultCategoriesEmptyView> {
+  List<DefaultCategorySeed> _seeds = [];
+  bool _isSaving = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context)!;
+    final selectionMap = {for (var s in _seeds) s.id: s.selected};
+    _seeds = buildDefaultCategorySeeds(l10n, selectionMap: selectionMap);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.onboardingCategoriesTitle,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                l10n.onboardingCategoriesDesc,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: _selectAll,
+                    child: Text(l10n.onboardingActionSelectAll),
+                  ),
+                  TextButton(
+                    onPressed: _deselectAll,
+                    child: Text(l10n.onboardingActionDeselectAll),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _seeds.length,
+            itemBuilder: (context, index) {
+              final item = _seeds[index];
+              return CheckboxListTile(
+                title: Text(item.name),
+                secondary: Icon(
+                  defaultCategoryIcon(item.icon),
+                  color: item.selected ? AppColors.primary : Colors.grey,
+                ),
+                value: item.selected,
+                onChanged: (_) => _toggle(index),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: PrimaryButton(
+            label: l10n.commonSave,
+            isLoading: _isSaving,
+            onPressed: _isSaving ? null : _saveDefaults,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _toggle(int index) {
+    setState(() {
+      _seeds[index].selected = !_seeds[index].selected;
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      for (final s in _seeds) {
+        s.selected = true;
+      }
+    });
+  }
+
+  void _deselectAll() {
+    setState(() {
+      for (final s in _seeds) {
+        s.selected = false;
+      }
+    });
+  }
+
+  Future<void> _saveDefaults() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    String? error;
+
+    for (final seed in _seeds.where((s) => s.selected)) {
+      error = await widget.controller.create(
+        name: seed.name,
+        kind: seed.kind,
+        icon: seed.icon,
+        color: seed.color,
+        isActive: true,
+      );
+      if (error != null) break;
+    }
+
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    if (error != null) {
+      showStandardSnackbar(context, error);
+      return;
+    }
+    await context.read<ReportsController>().load();
   }
 }

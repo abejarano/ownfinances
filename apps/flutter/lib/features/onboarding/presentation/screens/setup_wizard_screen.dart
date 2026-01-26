@@ -21,6 +21,7 @@ import "package:ownfinances/features/banks/domain/entities/bank.dart";
 import "package:ownfinances/features/countries/application/controllers/countries_controller.dart";
 import "package:ownfinances/features/countries/domain/entities/country.dart";
 import "package:ownfinances/features/accounts/presentation/widgets/account_form.dart";
+import "package:ownfinances/features/categories/presentation/widgets/default_categories.dart";
 
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
@@ -49,7 +50,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   String _accountType = "bank";
 
   // Step 3: Categories
-  List<_CategorySeed> _categorySeeds = [];
+  List<DefaultCategorySeed> _categorySeeds = [];
 
   @override
   void initState() {
@@ -71,7 +72,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             _customCurrencyController.text = current;
           }
           _selectedCountry =
-              settings.countryCode ?? _getCountryCode(current);
+              settings.countryCode ??
+              CurrencyUtils.countryCodeForCurrency(current);
           if (_selectedCountry != null && settings.countryCode == null) {
             settings.setCountryCode(_selectedCountry!);
           }
@@ -112,21 +114,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     final digits = text.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return null;
     return double.parse(digits) / 100;
-  }
-
-  String? _getCountryCode(String currency) {
-    switch (currency) {
-      case "BRL":
-        return "BR";
-      case "VES":
-        return "VE";
-      case "COP":
-        return "CO";
-      case "ARS":
-        return "AR";
-      default:
-        return null;
-    }
   }
 
   Future<void> _fetchBanks() async {
@@ -277,125 +264,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   void _updateCategorySeeds(AppLocalizations l10n) {
     final selectionMap = {for (var s in _categorySeeds) s.id: s.selected};
-
-    final rawList = [
-      _CategorySeed(
-        id: 'housing',
-        name: l10n.catHousing,
-        icon: 'home',
-        kind: 'expense',
-        color: '#DB2777', // Pink
-      ),
-      _CategorySeed(
-        id: 'utilities',
-        name: l10n.catUtilities,
-        icon: 'bolt',
-        kind: 'expense',
-        color: '#F59E0B', // Amber
-      ),
-      _CategorySeed(
-        id: 'internet',
-        name: l10n.catInternet,
-        icon: 'wifi',
-        kind: 'expense',
-        color: '#3B82F6', // Blue
-      ),
-      _CategorySeed(
-        id: 'groceries',
-        name: l10n.catGroceries,
-        icon: 'shopping_cart',
-        kind: 'expense',
-        color: '#EA580C', // Orange
-      ),
-      _CategorySeed(
-        id: 'restaurants',
-        name: l10n.catRestaurants,
-        icon: 'restaurant',
-        kind: 'expense',
-        color: '#EF4444', // Red
-      ),
-      _CategorySeed(
-        id: 'transport',
-        name: l10n.catTransport, // Updated to "Transporte y Combustible"
-        icon: 'directions_car',
-        kind: 'expense',
-        color: '#64748B', // Slate
-      ),
-      // fuel removed (merged into transport)
-      _CategorySeed(
-        id: 'car_maint',
-        name: l10n.catCarMaintenance,
-        icon: 'build',
-        kind: 'expense',
-        color: '#475569', // Slate Dark
-      ),
-      _CategorySeed(
-        id: 'health',
-        name: l10n.catHealth, // Updated to "Salud y Farmacia"
-        icon: 'favorite',
-        kind: 'expense',
-        color: '#06B6D4', // Cyan
-      ),
-      // pharmacy removed (merged into health)
-      _CategorySeed(
-        id: 'education',
-        name: l10n.catEducation,
-        icon: 'school',
-        kind: 'expense',
-        color: '#7C3AED', // Violet
-      ),
-      // credit_card removed
-      _CategorySeed(
-        id: 'debts',
-        name: l10n.catDebts, // Updated to "Préstamos"
-        icon: 'attach_money',
-        kind: 'expense',
-        color: '#E11D48', // Rose
-      ),
-      // fees removed
-      _CategorySeed(
-        id: 'subscriptions',
-        name: l10n.catSubscriptions,
-        icon: 'subscriptions',
-        kind: 'expense',
-        color: '#8B5CF6', // Purple
-      ),
-      _CategorySeed(
-        id: 'personal',
-        name: l10n.catPersonal,
-        icon: 'face',
-        kind: 'expense',
-        color: '#EC4899', // Pink
-      ),
-      _CategorySeed(
-        id: 'clothing',
-        name: l10n.catClothing,
-        icon: 'checkroom',
-        kind: 'expense',
-        color: '#14B8A6', // Teal
-      ),
-      _CategorySeed(
-        id: 'work',
-        name: l10n.catWork,
-        icon: 'work',
-        kind: 'expense',
-        color: '#374151', // Gray
-      ),
-      _CategorySeed(
-        id: 'taxes',
-        name: l10n.catTaxes,
-        icon: 'account_balance',
-        kind: 'expense',
-        color: '#94A3B8', // Gray Light
-      ),
-    ];
-
-    for (var item in rawList) {
-      if (selectionMap.containsKey(item.id)) {
-        item.selected = selectionMap[item.id]!;
-      }
-    }
-    _categorySeeds = rawList;
+    _categorySeeds =
+        buildDefaultCategorySeeds(l10n, selectionMap: selectionMap);
   }
 
   bool _canProceed() {
@@ -531,24 +401,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       if (mounted) setState(() => _isSaving = false);
     }
   }
-}
-
-class _CategorySeed {
-  final String id;
-  String name;
-  final String kind;
-  final String? icon;
-  final String color;
-  bool selected;
-
-  _CategorySeed({
-    required this.id,
-    required this.name,
-    required this.kind,
-    this.icon,
-    required this.color,
-    this.selected = true,
-  });
 }
 
 class _PreferencesStep extends StatelessWidget {
@@ -711,7 +563,7 @@ class _AccountStep extends StatelessWidget {
 }
 
 class _CategoriesStep extends StatelessWidget {
-  final List<_CategorySeed> categories;
+  final List<DefaultCategorySeed> categories;
   final ValueChanged<int> onToggle;
   final VoidCallback onSelectAll;
   final VoidCallback onDeselectAll;
@@ -768,7 +620,7 @@ class _CategoriesStep extends StatelessWidget {
               return CheckboxListTile(
                 title: Text(item.name),
                 secondary: Icon(
-                  _getIconData(item.icon),
+                  defaultCategoryIcon(item.icon),
                   color: item.selected ? AppColors.primary : Colors.grey,
                 ),
                 value: item.selected,
@@ -779,50 +631,5 @@ class _CategoriesStep extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  IconData _getIconData(String? name) {
-    switch (name) {
-      case 'home':
-        return Icons.home;
-      case 'bolt':
-        return Icons.bolt;
-      case 'wifi':
-        return Icons.wifi;
-      case 'shopping_cart':
-        return Icons.shopping_cart;
-      case 'restaurant':
-        return Icons.restaurant;
-      case 'directions_car':
-        return Icons.directions_car;
-      case 'local_gas_station':
-        return Icons.local_gas_station;
-      case 'build':
-        return Icons.build;
-      case 'favorite':
-        return Icons.favorite;
-      case 'local_pharmacy':
-        return Icons.local_pharmacy;
-      case 'school':
-        return Icons.school;
-      case 'credit_card':
-        return Icons.credit_card;
-      case 'attach_money':
-        return Icons.attach_money;
-      case 'percent':
-        return Icons.percent;
-      case 'subscriptions':
-        return Icons.subscriptions;
-      case 'face':
-        return Icons.face;
-      case 'checkroom':
-        return Icons.checkroom;
-      case 'work':
-        return Icons.work;
-      case 'account_balance':
-        return Icons.account_balance;
-      default:
-        return Icons.category;
-    }
   }
 }
