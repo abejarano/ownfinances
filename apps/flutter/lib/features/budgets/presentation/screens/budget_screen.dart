@@ -1,17 +1,19 @@
 import "package:flutter/material.dart";
 import "package:provider/provider.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
-import "package:ownfinances/core/presentation/components/money_input.dart";
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/budgets/application/controllers/budget_controller.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_category_card.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_debt_planned_card.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_empty_state.dart";
+import "package:ownfinances/features/budgets/presentation/widgets/budget_month_summary_card.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
 import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
-import "package:ownfinances/core/presentation/components/money_text.dart";
 import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:go_router/go_router.dart";
 import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
@@ -164,28 +166,6 @@ class _BudgetViewState extends State<BudgetView> {
         .join(" · ");
   }
 
-  Widget _summaryRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(label, style: const TextStyle(color: AppColors.muted)),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final reportsState = context.watch<ReportsController>().state;
@@ -218,6 +198,13 @@ class _BudgetViewState extends State<BudgetView> {
     final otherCurrenciesText =
         _formatOtherCurrencies(plannedDebtTotals, primaryCurrency);
     final showSave = budgetState.budget != null;
+    final budgetCategoryIds = budgetState.budget?.lines
+            .map((line) => line.categoryId)
+            .toSet() ??
+        <String>{};
+    final budgetCategories = categoriesState.items
+        .where((category) => budgetCategoryIds.contains(category.id))
+        .toList();
 
     return Stack(
       children: [
@@ -248,309 +235,36 @@ class _BudgetViewState extends State<BudgetView> {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.black12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.budgetsMonthSummaryTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _summaryRow(
-                    l10n.budgetsMonthSummaryPlannedCategories,
-                    formatCurrency(plannedCategoryTotal, primaryCurrency),
-                  ),
-                  _summaryRow(
-                    l10n.budgetsMonthSummaryPlannedDebts,
-                    formatCurrency(plannedDebtPrimary, primaryCurrency),
-                  ),
-                  _summaryRow(
-                    l10n.budgetsMonthSummaryTotalOutflow,
-                    formatCurrency(totalOutflowPrimary, primaryCurrency),
-                  ),
-                  if (otherCurrenciesText != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      "${l10n.budgetsMonthSummaryOtherCurrencies}: $otherCurrenciesText",
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    l10n.budgetsDebtPaymentNote,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+            BudgetMonthSummaryCard(
+              plannedCategoryTotal: plannedCategoryTotal,
+              plannedDebtPrimary: plannedDebtPrimary,
+              totalOutflowPrimary: totalOutflowPrimary,
+              primaryCurrency: primaryCurrency,
+              otherCurrenciesText: otherCurrenciesText,
             ),
             const SizedBox(height: AppSpacing.lg),
             if (budgetState.isLoading) const LinearProgressIndicator(),
             const SizedBox(height: AppSpacing.sm),
             if (budgetState.budget == null && !budgetState.isLoading)
-              _EmptyBudgetState(
+              BudgetEmptyState(
                 month: formatMonth(date),
                 onCreate: () => _createBudget(context, period, date),
               )
             else ...[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.budgetsDebtPlannedTitle,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        l10n.budgetsDebtPlannedSubtitle,
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.budgetsDebtPaymentNote,
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      if (activeDebts.isEmpty) ...[
-                        Text(
-                          l10n.budgetsDebtEmptyState,
-                          style: const TextStyle(color: AppColors.muted),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        OutlinedButton.icon(
-                          onPressed: () => context.push("/debts"),
-                          icon: const Icon(Icons.add),
-                          label: Text(l10n.debtsActionAdd),
-                        ),
-                      ] else ...[
-                        for (final debt in activeDebts) ...[
-                          Builder(
-                            builder: (context) {
-                              final planned =
-                                  budgetState.plannedByDebt[debt.id] ?? 0;
-                              final controller = _debtControllers.putIfAbsent(
-                                debt.id,
-                                () => TextEditingController(
-                                  text: planned > 0
-                                      ? formatMoney(
-                                          planned,
-                                          symbol: debt.currency,
-                                        )
-                                      : "",
-                                ),
-                              );
-                              if (planned != parseMoney(controller.text)) {
-                                controller.text = planned > 0
-                                    ? formatMoney(
-                                        planned,
-                                        symbol: debt.currency,
-                                      )
-                                    : "";
-                              }
-
-                              final summary = debtsState.summaries[debt.id];
-                              final paid = summary?.paymentsThisMonth ?? 0;
-                              String? progressText;
-                              String? progressHelper;
-                              if (planned > 0 || paid > 0) {
-                                progressText = l10n.budgetsDebtPaidPlanned(
-                                  formatCurrency(paid, debt.currency),
-                                  formatCurrency(planned, debt.currency),
-                                );
-                                if (paid > planned) {
-                                  progressHelper = l10n.budgetsDebtOverpaid(
-                                    formatCurrency(
-                                      paid - planned,
-                                      debt.currency,
-                                    ),
-                                  );
-                                } else if (paid < planned) {
-                                  progressHelper = l10n.budgetsDebtRemaining(
-                                    formatCurrency(
-                                      planned - paid,
-                                      debt.currency,
-                                    ),
-                                  );
-                                }
-                              }
-
-                              String? minWarning;
-                              if (debt.minimumPayment != null &&
-                                  debt.minimumPayment! > 0 &&
-                                  planned < debt.minimumPayment!) {
-                                minWarning = l10n.budgetsDebtMinimumWarning;
-                              }
-
-                              final dueLabel = debt.dueDay != null
-                                  ? l10n.debtsDueDayLabel(debt.dueDay!)
-                                  : null;
-
-                              return Container(
-                                margin: const EdgeInsets.only(
-                                  bottom: AppSpacing.sm,
-                                ),
-                                padding: const EdgeInsets.all(AppSpacing.sm),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.black12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            debt.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                        if (dueLabel != null)
-                                          Text(
-                                            dueLabel,
-                                            style: const TextStyle(
-                                              color: AppColors.muted,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "${l10n.budgetsDebtOweLabel}: ${formatCurrency(debt.amountDue, debt.currency)}",
-                                      style: const TextStyle(
-                                        color: AppColors.muted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppSpacing.sm),
-                                    MoneyInput(
-                                      label: l10n.budgetsDebtPayLabel,
-                                      controller: controller,
-                                      helperText: minWarning,
-                                      currencySymbol: debt.currency,
-                                    ),
-                                    if (progressText != null) ...[
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        progressText,
-                                        style: const TextStyle(
-                                          color: AppColors.muted,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                    if (progressHelper != null) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        progressHelper,
-                                        style: const TextStyle(
-                                          color: AppColors.muted,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                        const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                for (final debt in activeDebts) {
-                                  context
-                                      .read<BudgetController>()
-                                      .updatePlannedDebt(debt.id, 0.0);
-                                  final controller =
-                                      _debtControllers[debt.id];
-                                  if (controller != null) {
-                                    controller.text = "";
-                                  }
-                                }
-                              },
-                              child: Text(l10n.budgetsDebtActionZeroAll),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            TextButton(
-                              onPressed: () {
-                                for (final debt in activeDebts) {
-                                  final suggested =
-                                      debt.minimumPayment != null &&
-                                              debt.minimumPayment! > 0
-                                          ? debt.minimumPayment!
-                                          : (debt.amountDue > 0
-                                              ? debt.amountDue
-                                              : 0.0);
-                                  context
-                                      .read<BudgetController>()
-                                      .updatePlannedDebt(debt.id, suggested);
-                                  final controller =
-                                      _debtControllers[debt.id];
-                                  if (controller != null) {
-                                    controller.text = suggested > 0
-                                        ? formatMoney(
-                                            suggested,
-                                            symbol: debt.currency,
-                                          )
-                                        : "";
-                                  }
-                                }
-                              },
-                              child: Text(l10n.budgetsDebtActionSuggest),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: AppSpacing.lg),
-                        _summaryRow(
-                          l10n.budgetsDebtTotalPlannedLabel(primaryCurrency),
-                          formatCurrency(plannedDebtPrimary, primaryCurrency),
-                        ),
-                        if (otherCurrenciesText != null)
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(top: AppSpacing.xs),
-                            child: Text(
-                              "${l10n.budgetsMonthSummaryOtherCurrencies}: $otherCurrenciesText",
-                              style: const TextStyle(
-                                color: AppColors.muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
+              BudgetDebtPlannedCard(
+                debts: activeDebts,
+                plannedByDebt: budgetState.plannedByDebt,
+                summaries: debtsState.summaries,
+                controllers: _debtControllers,
+                plannedDebtPrimary: plannedDebtPrimary,
+                primaryCurrency: primaryCurrency,
+                otherCurrenciesText: otherCurrenciesText,
+                onAddDebt: () => context.push("/debts"),
+                onUpdatePlanned: (debtId, amount) {
+                  context
+                      .read<BudgetController>()
+                      .updatePlannedDebt(debtId, amount);
+                },
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
@@ -558,111 +272,34 @@ class _BudgetViewState extends State<BudgetView> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: AppSpacing.sm),
-              ...categoriesState.items.map((category) {
-                final planned = budgetState.plannedByCategory[category.id];
-                final double safePlanned = planned ?? 0.0;
-
-                final controller = _controllers.putIfAbsent(category.id, () {
-                  return TextEditingController(
-                    text: safePlanned > 0 ? formatMoney(safePlanned) : "",
-                  );
-                });
-                // Update controller if value changed externally (e.g. reload)
-                if (safePlanned != parseMoney(controller.text)) {
-                  controller.text =
-                      safePlanned > 0 ? formatMoney(safePlanned) : "";
-                }
-
-                final line = summaryMap[category.id];
-                final actual = line?.actual ?? 0;
-                final remaining = line?.remaining ?? 0;
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.sm),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(category.name),
-                            PopupMenuButton<String>(
-                              onSelected: (value) {
-                                if (value == 'remove') {
-                                  _removeCategory(
-                                    context,
-                                    period,
-                                    date,
-                                    category.id,
-                                  );
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: 'remove',
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.budgetsRemoveCategory,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: MoneyInput(
-                                label: AppLocalizations.of(
-                                  context,
-                                )!.budgetsLabelPlanned,
-                                controller: controller,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.budgetsLabelActual,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.muted,
-                                  ),
-                                ),
-                                MoneyText(
-                                  value: actual,
-                                  variant:
-                                      MoneyTextVariant.l, // Primary amount
-                                  color: AppColors.textPrimary,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.budgetsLabelRemaining,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.muted,
-                                  ),
-                                ),
-                                MoneyText(
-                                  value: remaining,
-                                  variant: MoneyTextVariant.m,
-                                  color: remaining < 0
-                                      ? AppColors.danger
-                                      : AppColors.textTertiary,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+              ...budgetCategories.map((category) {
+                final planned =
+                    budgetState.plannedByCategory[category.id] ?? 0.0;
+                final controller = _controllers.putIfAbsent(
+                  category.id,
+                  () => TextEditingController(),
+                );
+                final actualByCurrency =
+                    summaryMap[category.id]?.actualByCurrency ?? {};
+                final actualPrimary =
+                    actualByCurrency[primaryCurrency] ?? 0.0;
+                final otherCurrencyTotals = Map<String, double>.fromEntries(
+                  actualByCurrency.entries.where(
+                    (entry) =>
+                        entry.key != primaryCurrency && entry.value != 0,
+                  ),
+                );
+                return BudgetCategoryCard(
+                  category: category,
+                  controller: controller,
+                  planned: planned,
+                  actual: actualPrimary,
+                  otherCurrencyTotals: otherCurrencyTotals,
+                  onRemove: () => _removeCategory(
+                    context,
+                    period,
+                    date,
+                    category.id,
                   ),
                 );
               }),
@@ -765,49 +402,5 @@ class _BudgetViewState extends State<BudgetView> {
         AppLocalizations.of(context)!.budgetsSuccessRemoved,
       );
     }
-  }
-}
-
-class _EmptyBudgetState extends StatelessWidget {
-  final String month;
-  final VoidCallback onCreate;
-
-  const _EmptyBudgetState({
-    super.key,
-    required this.month,
-    required this.onCreate,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.xl,
-          horizontal: AppSpacing.md,
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.money_off, size: 64, color: AppColors.muted),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              AppLocalizations.of(context)!.budgetsEmptyTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              AppLocalizations.of(context)!.budgetsEmptyDesc,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.muted),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            PrimaryButton(
-              label: AppLocalizations.of(context)!.budgetsCreateButton,
-              onPressed: onCreate,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

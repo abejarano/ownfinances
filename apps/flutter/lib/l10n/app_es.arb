@@ -213,9 +213,54 @@
     "budgetsTabFixed": "Gastos Fijos",
     "budgetsMonthTitle": "Presupuesto del mes",
     "budgetsPlanPeriod": "Plan del período",
-    "budgetsLabelPlanned": "Planeado",
-    "budgetsLabelActual": "Actual",
+    "budgetsLabelPlanned": "Presupuesto",
+    "budgetsLabelActual": "Gastado",
+    "budgetsLabelActualIncome": "Recibido",
     "budgetsLabelRemaining": "Restante",
+    "budgetsCategoryStatusRemaining": "Te queda {value}",
+    "@budgetsCategoryStatusRemaining": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusRemaining": "Te faltan {value} para tu meta",
+    "@budgetsCategoryIncomeStatusRemaining": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryStatusAtLimit": "Límite alcanzado · Te queda {value}",
+    "@budgetsCategoryStatusAtLimit": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusAtLimit": "Meta alcanzada",
+    "budgetsCategoryStatusNearLimit": "Cerca del límite · Te queda {value}",
+    "@budgetsCategoryStatusNearLimit": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusNearLimit": "Cerca de la meta · Te faltan {value}",
+    "@budgetsCategoryIncomeStatusNearLimit": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryStatusOver": "Te pasaste {value}",
+    "@budgetsCategoryStatusOver": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusOver": "Superaste la meta por {value}",
+    "@budgetsCategoryIncomeStatusOver": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryStatusOverHelper": "Puedes ajustar el presupuesto o reducir gastos en esta categoría.",
     "budgetsHeaderIncome": "Ingresos planeados",
     "budgetsHeaderExpense": "Gastos planeados",
     "budgetsHeaderBalance": "Saldo planeado",

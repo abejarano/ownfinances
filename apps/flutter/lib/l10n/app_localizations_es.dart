@@ -687,13 +687,58 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsPlanPeriod => 'Plan del período';
 
   @override
-  String get budgetsLabelPlanned => 'Planeado';
+  String get budgetsLabelPlanned => 'Presupuesto';
 
   @override
-  String get budgetsLabelActual => 'Actual';
+  String get budgetsLabelActual => 'Gastado';
+
+  @override
+  String get budgetsLabelActualIncome => 'Recibido';
 
   @override
   String get budgetsLabelRemaining => 'Restante';
+
+  @override
+  String budgetsCategoryStatusRemaining(Object value) {
+    return 'Te queda $value';
+  }
+
+  @override
+  String budgetsCategoryIncomeStatusRemaining(Object value) {
+    return 'Te faltan $value para tu meta';
+  }
+
+  @override
+  String budgetsCategoryStatusAtLimit(Object value) {
+    return 'Límite alcanzado · Te queda $value';
+  }
+
+  @override
+  String get budgetsCategoryIncomeStatusAtLimit => 'Meta alcanzada';
+
+  @override
+  String budgetsCategoryStatusNearLimit(Object value) {
+    return 'Cerca del límite · Te queda $value';
+  }
+
+  @override
+  String budgetsCategoryIncomeStatusNearLimit(Object value) {
+    return 'Cerca de la meta · Te faltan $value';
+  }
+
+  @override
+  String budgetsCategoryStatusOver(Object value) {
+    return 'Te pasaste $value';
+  }
+
+  @override
+  String budgetsCategoryIncomeStatusOver(Object value) {
+    return 'Superaste la meta por $value';
+  }
+
+  @override
+  String get budgetsCategoryStatusOverHelper =>
+      'Puedes ajustar el presupuesto o reducir gastos en esta categoría.';
 
   @override
   String get budgetsHeaderIncome => 'Ingresos planeados';

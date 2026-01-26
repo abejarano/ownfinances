@@ -24,6 +24,7 @@ export type Summary = {
     kind: "income" | "expense"
     planned: number
     actual: number
+    actualByCurrency: Record<string, number>
     remaining: number
     progressPct: number
   }>
@@ -73,11 +74,19 @@ export class ReportsService {
     }
 
     const actualByCategory = new Map<string, number>()
+    const actualByCategoryCurrency = new Map<string, Map<string, number>>()
     for (const row of sums) {
       actualByCategory.set(
         row.categoryId,
         (actualByCategory.get(row.categoryId) ?? 0) + row.total
       )
+      const categoryCurrencies =
+        actualByCategoryCurrency.get(row.categoryId) ?? new Map()
+      categoryCurrencies.set(
+        row.currency,
+        (categoryCurrencies.get(row.currency) ?? 0) + row.total
+      )
+      actualByCategoryCurrency.set(row.categoryId, categoryCurrencies)
     }
 
     const byCategory = categories.map((category) => {
@@ -85,11 +94,16 @@ export class ReportsService {
       const actual = actualByCategory.get(category.categoryId) ?? 0
       const remaining = planned - actual
       const progressPct = planned > 0 ? (actual / planned) * 100 : 0
+      const currencyTotals = actualByCategoryCurrency.get(category.categoryId)
+      const actualByCurrency = currencyTotals
+        ? Object.fromEntries(currencyTotals.entries())
+        : {}
       return {
         categoryId: category.categoryId,
         kind: category.kind,
         planned,
         actual,
+        actualByCurrency,
         remaining,
         progressPct,
       }

@@ -687,13 +687,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetsPlanPeriod => 'Period Plan';
 
   @override
-  String get budgetsLabelPlanned => 'Planned';
+  String get budgetsLabelPlanned => 'Budget';
 
   @override
-  String get budgetsLabelActual => 'Actual';
+  String get budgetsLabelActual => 'Spent';
+
+  @override
+  String get budgetsLabelActualIncome => 'Received';
 
   @override
   String get budgetsLabelRemaining => 'Remaining';
+
+  @override
+  String budgetsCategoryStatusRemaining(Object value) {
+    return '$value left';
+  }
+
+  @override
+  String budgetsCategoryIncomeStatusRemaining(Object value) {
+    return '$value to reach your goal';
+  }
+
+  @override
+  String budgetsCategoryStatusAtLimit(Object value) {
+    return 'Limit reached · $value left';
+  }
+
+  @override
+  String get budgetsCategoryIncomeStatusAtLimit => 'Goal reached';
+
+  @override
+  String budgetsCategoryStatusNearLimit(Object value) {
+    return 'Near the limit · $value left';
+  }
+
+  @override
+  String budgetsCategoryIncomeStatusNearLimit(Object value) {
+    return 'Near the goal · $value to go';
+  }
+
+  @override
+  String budgetsCategoryStatusOver(Object value) {
+    return 'Over by $value';
+  }
+
+  @override
+  String budgetsCategoryIncomeStatusOver(Object value) {
+    return 'Above the goal by $value';
+  }
+
+  @override
+  String get budgetsCategoryStatusOverHelper =>
+      'You can adjust the budget or reduce spending in this category.';
 
   @override
   String get budgetsHeaderIncome => 'Planned Income';

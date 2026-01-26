@@ -55,6 +55,7 @@ class CategorySummary {
   final String kind;
   final double planned;
   final double actual;
+  final Map<String, double> actualByCurrency;
   final double remaining;
   final double progressPct;
 
@@ -63,16 +64,23 @@ class CategorySummary {
     required this.kind,
     required this.planned,
     required this.actual,
+    required this.actualByCurrency,
     required this.remaining,
     required this.progressPct,
   });
 
   factory CategorySummary.fromJson(Map<String, dynamic> json) {
+    final actualByCurrencyRaw =
+        json["actualByCurrency"] as Map<String, dynamic>? ?? {};
     return CategorySummary(
       categoryId: json["categoryId"] as String,
       kind: json["kind"] as String,
       planned: (json["planned"] as num?)?.toDouble() ?? 0,
       actual: (json["actual"] as num?)?.toDouble() ?? 0,
+      actualByCurrency: actualByCurrencyRaw.map(
+        (key, value) =>
+            MapEntry(key, (value as num?)?.toDouble() ?? 0.0),
+      ),
       remaining: (json["remaining"] as num?)?.toDouble() ?? 0,
       progressPct: (json["progressPct"] as num?)?.toDouble() ?? 0,
     );

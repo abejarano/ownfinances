@@ -213,9 +213,54 @@
     "budgetsTabFixed": "Fixed Expenses",
     "budgetsMonthTitle": "Monthly Budget",
     "budgetsPlanPeriod": "Period Plan",
-    "budgetsLabelPlanned": "Planned",
-    "budgetsLabelActual": "Actual",
+    "budgetsLabelPlanned": "Budget",
+    "budgetsLabelActual": "Spent",
+    "budgetsLabelActualIncome": "Received",
     "budgetsLabelRemaining": "Remaining",
+    "budgetsCategoryStatusRemaining": "{value} left",
+    "@budgetsCategoryStatusRemaining": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusRemaining": "{value} to reach your goal",
+    "@budgetsCategoryIncomeStatusRemaining": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryStatusAtLimit": "Limit reached · {value} left",
+    "@budgetsCategoryStatusAtLimit": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusAtLimit": "Goal reached",
+    "budgetsCategoryStatusNearLimit": "Near the limit · {value} left",
+    "@budgetsCategoryStatusNearLimit": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusNearLimit": "Near the goal · {value} to go",
+    "@budgetsCategoryIncomeStatusNearLimit": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryStatusOver": "Over by {value}",
+    "@budgetsCategoryStatusOver": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryIncomeStatusOver": "Above the goal by {value}",
+    "@budgetsCategoryIncomeStatusOver": {
+      "placeholders": {
+        "value": {}
+      }
+    },
+    "budgetsCategoryStatusOverHelper": "You can adjust the budget or reduce spending in this category.",
     "budgetsHeaderIncome": "Planned Income",
     "budgetsHeaderExpense": "Planned Expenses",
     "budgetsHeaderBalance": "Planned Balance",

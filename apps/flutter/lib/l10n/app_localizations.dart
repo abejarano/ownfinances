@@ -1373,20 +1373,80 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsLabelPlanned.
   ///
   /// In pt, this message translates to:
-  /// **'Planejado'**
+  /// **'Orçamento'**
   String get budgetsLabelPlanned;
 
   /// No description provided for @budgetsLabelActual.
   ///
   /// In pt, this message translates to:
-  /// **'Atual'**
+  /// **'Gasto'**
   String get budgetsLabelActual;
+
+  /// No description provided for @budgetsLabelActualIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebido'**
+  String get budgetsLabelActualIncome;
 
   /// No description provided for @budgetsLabelRemaining.
   ///
   /// In pt, this message translates to:
   /// **'Restante'**
   String get budgetsLabelRemaining;
+
+  /// No description provided for @budgetsCategoryStatusRemaining.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta {value}'**
+  String budgetsCategoryStatusRemaining(Object value);
+
+  /// No description provided for @budgetsCategoryIncomeStatusRemaining.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {value} para sua meta'**
+  String budgetsCategoryIncomeStatusRemaining(Object value);
+
+  /// No description provided for @budgetsCategoryStatusAtLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limite atingido · Falta {value}'**
+  String budgetsCategoryStatusAtLimit(Object value);
+
+  /// No description provided for @budgetsCategoryIncomeStatusAtLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta atingida'**
+  String get budgetsCategoryIncomeStatusAtLimit;
+
+  /// No description provided for @budgetsCategoryStatusNearLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perto do limite · Falta {value}'**
+  String budgetsCategoryStatusNearLimit(Object value);
+
+  /// No description provided for @budgetsCategoryIncomeStatusNearLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perto da meta · Faltam {value}'**
+  String budgetsCategoryIncomeStatusNearLimit(Object value);
+
+  /// No description provided for @budgetsCategoryStatusOver.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você passou {value}'**
+  String budgetsCategoryStatusOver(Object value);
+
+  /// No description provided for @budgetsCategoryIncomeStatusOver.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você passou da meta em {value}'**
+  String budgetsCategoryIncomeStatusOver(Object value);
+
+  /// No description provided for @budgetsCategoryStatusOverHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode ajustar o orçamento ou reduzir gastos nesta categoria.'**
+  String get budgetsCategoryStatusOverHelper;
 
   /// No description provided for @budgetsHeaderIncome.
   ///

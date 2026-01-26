@@ -94,7 +94,12 @@ export class TransactionMongoRepository
     start: Date,
     end: Date
   ): Promise<
-    Array<{ categoryId: string; type: TransactionType; total: number }>
+    Array<{
+      categoryId: string
+      type: TransactionType
+      currency: string
+      total: number
+    }>
   > {
     const collection = await this.collection()
     const results = await collection
@@ -111,7 +116,7 @@ export class TransactionMongoRepository
         },
         {
           $group: {
-            _id: { categoryId: "$categoryId", type: "$type" },
+            _id: { categoryId: "$categoryId", type: "$type", currency: "$currency" },
             total: { $sum: "$amount" },
           },
         },
@@ -120,6 +125,7 @@ export class TransactionMongoRepository
             _id: 0,
             categoryId: "$_id.categoryId",
             type: "$_id.type",
+            currency: "$_id.currency",
             total: 1,
           },
         },
@@ -129,6 +135,7 @@ export class TransactionMongoRepository
     return results as Array<{
       categoryId: string
       type: TransactionType
+      currency: string
       total: number
     }>
   }
