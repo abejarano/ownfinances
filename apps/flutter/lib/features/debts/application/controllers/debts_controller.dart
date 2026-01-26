@@ -59,6 +59,27 @@ class DebtsController extends ChangeNotifier {
     if (!_isDisposed) notifyListeners();
   }
 
+  Future<void> loadSummaries(
+    Iterable<String> debtIds, {
+    DateTime? month,
+  }) async {
+    if (_isDisposed) return;
+    final next = Map<String, DebtSummary>.from(_state.summaries);
+    await Future.wait(
+      debtIds.map((id) async {
+        try {
+          final summary = await debtRepository.summary(id, month: month);
+          next[id] = summary;
+        } catch (_) {
+          // Ignore summary errors for individual debts.
+        }
+      }),
+    );
+    if (_isDisposed) return;
+    _state = _state.copyWith(summaries: next);
+    notifyListeners();
+  }
+
   Future<String?> create({
     required String name,
     required String type,

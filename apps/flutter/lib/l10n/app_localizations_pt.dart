@@ -731,6 +731,76 @@ class AppLocalizationsPt extends AppLocalizations {
   String get budgetsSuccessSaved => 'Orçamento salvo!';
 
   @override
+  String get budgetsMonthSummaryTitle => 'Resumo do mês';
+
+  @override
+  String get budgetsMonthSummaryPlannedCategories =>
+      'Gastos planejados (categorias)';
+
+  @override
+  String get budgetsMonthSummaryPlannedDebts =>
+      'Pagamentos de dívidas planejados';
+
+  @override
+  String get budgetsMonthSummaryTotalOutflow => 'Total de saídas planejadas';
+
+  @override
+  String get budgetsMonthSummaryOtherCurrencies =>
+      'Outras moedas (sem conversão)';
+
+  @override
+  String get budgetsDebtPlannedTitle => 'Dívidas (pagos planejados)';
+
+  @override
+  String get budgetsDebtPlannedSubtitle =>
+      'Reserve quanto você vai pagar este mês. Não é um gasto novo.';
+
+  @override
+  String get budgetsDebtPaymentNote =>
+      'Pagar dívida não é um gasto novo. É pagar algo que você já deve.';
+
+  @override
+  String get budgetsDebtPayLabel => 'Vou pagar';
+
+  @override
+  String get budgetsDebtOweLabel => 'Devo';
+
+  @override
+  String budgetsDebtPaidPlanned(Object paid, Object planned) {
+    return 'Pago: $paid / $planned planejado';
+  }
+
+  @override
+  String get budgetsDebtActionZeroAll => 'Zerar tudo';
+
+  @override
+  String get budgetsDebtActionSuggest => 'Sugerir pagamentos';
+
+  @override
+  String budgetsDebtOverpaid(Object amount) {
+    return 'Você pagou $amount a mais que o planejado.';
+  }
+
+  @override
+  String budgetsDebtRemaining(Object amount) {
+    return 'Faltam $amount para seu plano.';
+  }
+
+  @override
+  String get budgetsDebtEmptyState => 'Você não tem dívidas ativas.';
+
+  @override
+  String get budgetsDebtMinimumWarning => 'Seu plano está abaixo do mínimo.';
+
+  @override
+  String budgetsDebtTotalPlannedLabel(Object currency) {
+    return 'Total pagamentos planejados ($currency)';
+  }
+
+  @override
+  String get budgetsCategoriesTitle => 'Gastos por categoria';
+
+  @override
   String get accountsSuccessCurrencyFixed => 'Moedas corrigidas com sucesso!';
 
   @override

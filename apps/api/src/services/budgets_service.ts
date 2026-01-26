@@ -55,6 +55,7 @@ export class BudgetsService {
       startDate: startRange.start,
       endDate: startRange.end,
       lines: payload.lines ?? [],
+      debtPayments: payload.debtPayments ?? [],
     })
 
     await this.budgets.upsert(budget)

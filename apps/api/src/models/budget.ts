@@ -8,6 +8,11 @@ export type BudgetLine = {
   plannedAmount: number
 }
 
+export type BudgetDebtPayment = {
+  debtId: string
+  plannedAmount: number
+}
+
 export type BudgetPrimitives = {
   id?: string
   budgetId: string
@@ -16,6 +21,7 @@ export type BudgetPrimitives = {
   startDate: Date
   endDate: Date
   lines: BudgetLine[]
+  debtPayments?: BudgetDebtPayment[]
   createdAt: Date
   updatedAt?: Date
 }
@@ -26,6 +32,7 @@ export type BudgetCreateProps = {
   startDate: Date
   endDate: Date
   lines?: BudgetLine[]
+  debtPayments?: BudgetDebtPayment[]
 }
 
 export class Budget extends AggregateRoot {
@@ -43,6 +50,7 @@ export class Budget extends AggregateRoot {
       startDate: props.startDate,
       endDate: props.endDate,
       lines: props.lines ?? [],
+      debtPayments: props.debtPayments ?? [],
       createdAt: now,
       updatedAt: now,
     })
@@ -61,6 +69,9 @@ export class Budget extends AggregateRoot {
   }
 
   static override fromPrimitives(primitives: BudgetPrimitives): Budget {
-    return new Budget(primitives)
+    return new Budget({
+      ...primitives,
+      debtPayments: primitives.debtPayments ?? [],
+    })
   }
 }

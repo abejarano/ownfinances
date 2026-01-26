@@ -27,9 +27,13 @@ class BudgetController extends ChangeNotifier {
       if (_loadingDate != date) return;
 
       final planned = <String, double>{};
+      final plannedDebts = <String, double>{};
       if (current.budget != null) {
         for (final line in current.budget!.lines) {
           planned[line.categoryId] = line.plannedAmount;
+        }
+        for (final payment in current.budget!.debtPayments) {
+          plannedDebts[payment.debtId] = payment.plannedAmount;
         }
       }
       _state = _state.copyWith(
@@ -37,6 +41,7 @@ class BudgetController extends ChangeNotifier {
         budget: current.budget,
         range: current.range,
         plannedByCategory: planned,
+        plannedByDebt: plannedDebts,
       );
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
@@ -51,6 +56,13 @@ class BudgetController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updatePlannedDebt(String debtId, double amount) {
+    final next = Map<String, double>.from(_state.plannedByDebt);
+    next[debtId] = amount;
+    _state = _state.copyWith(plannedByDebt: next);
+    notifyListeners();
+  }
+
   Future<String?> save(String period) async {
     if (_state.range == null) return "Periodo inválido";
     try {
@@ -60,12 +72,21 @@ class BudgetController extends ChangeNotifier {
                 BudgetLine(categoryId: entry.key, plannedAmount: entry.value),
           )
           .toList();
+      final debtPayments = _state.plannedByDebt.entries
+          .map(
+            (entry) => BudgetDebtPayment(
+              debtId: entry.key,
+              plannedAmount: entry.value,
+            ),
+          )
+          .toList();
       final saved = await repository.save(
         id: _state.budget?.id,
         period: period,
         startDate: _state.range!.start,
         endDate: _state.range!.end,
         lines: lines,
+        debtPayments: debtPayments,
       );
       _state = _state.copyWith(budget: saved);
       notifyListeners();
@@ -104,6 +125,7 @@ class BudgetController extends ChangeNotifier {
   Future<String?> createFromPrevious(String period, DateTime date) async {
     try {
       Map<String, double> planned = {};
+      Map<String, double> plannedDebts = {};
 
       // Search backwards up to 12 months for a budget to copy
       for (int i = 1; i <= 12; i++) {
@@ -120,12 +142,20 @@ class BudgetController extends ChangeNotifier {
               planned[line.categoryId] = line.plannedAmount;
             }
           }
+          for (final payment in result.budget!.debtPayments) {
+            if (payment.plannedAmount > 0) {
+              plannedDebts[payment.debtId] = payment.plannedAmount;
+            }
+          }
           break;
         }
       }
 
       // 4. Update state with the copied values (or empty if none found)
-      _state = _state.copyWith(plannedByCategory: planned);
+      _state = _state.copyWith(
+        plannedByCategory: planned,
+        plannedByDebt: plannedDebts,
+      );
 
       // 5. Save purely to persist this new 'copy' as the current month's budget
       return await save(period);

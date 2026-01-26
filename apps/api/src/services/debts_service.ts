@@ -22,7 +22,7 @@ import {
 } from "../models/debt_transaction"
 import type { DebtMongoRepository } from "../repositories/debt_repository"
 import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository"
-import { computePeriodRange } from "../shared/dates"
+import { computePeriodRange, type DateInput } from "../shared/dates"
 
 export class DebtsService {
   constructor(
@@ -155,7 +155,8 @@ export class DebtsService {
 
   async summary(
     userId: string,
-    debtId: string
+    debtId: string,
+    month?: DateInput
   ): Promise<
     Result<{
       balanceComputed: number
@@ -185,7 +186,7 @@ export class DebtsService {
     const now = new Date()
     const { start: monthStart, end: monthEnd } = computePeriodRange(
       "monthly",
-      now
+      month ?? now
     )
     const paymentRows = await this.debtTransactions.sumByDebt(userId, {
       debtId,

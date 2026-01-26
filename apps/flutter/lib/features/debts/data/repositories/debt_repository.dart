@@ -74,8 +74,8 @@ class DebtRepository {
     return remote.delete(id);
   }
 
-  Future<DebtSummary> summary(String id) async {
-    final payload = await remote.summary(id);
+  Future<DebtSummary> summary(String id, {DateTime? month}) async {
+    final payload = await remote.summary(id, month: month);
     return DebtSummary.fromJson(payload);
   }
 

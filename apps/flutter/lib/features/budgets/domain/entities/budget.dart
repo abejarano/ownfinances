@@ -17,12 +17,35 @@ class BudgetLine {
   };
 }
 
+class BudgetDebtPayment {
+  final String debtId;
+  final double plannedAmount;
+
+  const BudgetDebtPayment({
+    required this.debtId,
+    required this.plannedAmount,
+  });
+
+  factory BudgetDebtPayment.fromJson(Map<String, dynamic> json) {
+    return BudgetDebtPayment(
+      debtId: json["debtId"] as String,
+      plannedAmount: (json["plannedAmount"] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "debtId": debtId,
+    "plannedAmount": plannedAmount,
+  };
+}
+
 class Budget {
   final String id;
   final String periodType;
   final DateTime startDate;
   final DateTime endDate;
   final List<BudgetLine> lines;
+  final List<BudgetDebtPayment> debtPayments;
 
   const Budget({
     required this.id,
@@ -30,6 +53,7 @@ class Budget {
     required this.startDate,
     required this.endDate,
     required this.lines,
+    required this.debtPayments,
   });
 
   factory Budget.fromJson(Map<String, dynamic> json) {
@@ -40,6 +64,13 @@ class Budget {
       endDate: DateTime.parse(json["endDate"] as String),
       lines: (json["lines"] as List<dynamic>? ?? [])
           .map((item) => BudgetLine.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      debtPayments: (json["debtPayments"] as List<dynamic>? ?? [])
+          .map(
+            (item) => BudgetDebtPayment.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
           .toList(),
     );
   }

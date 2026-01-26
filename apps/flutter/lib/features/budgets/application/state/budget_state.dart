@@ -6,6 +6,7 @@ class BudgetState {
   final Budget? budget;
   final ReportRange? range;
   final Map<String, double> plannedByCategory;
+  final Map<String, double> plannedByDebt;
   final String? error;
 
   const BudgetState({
@@ -13,6 +14,7 @@ class BudgetState {
     required this.budget,
     required this.range,
     required this.plannedByCategory,
+    required this.plannedByDebt,
     this.error,
   });
 
@@ -21,6 +23,7 @@ class BudgetState {
     Budget? budget,
     ReportRange? range,
     Map<String, double>? plannedByCategory,
+    Map<String, double>? plannedByDebt,
     String? error,
   }) {
     return BudgetState(
@@ -28,6 +31,7 @@ class BudgetState {
       budget: budget ?? this.budget,
       range: range ?? this.range,
       plannedByCategory: plannedByCategory ?? this.plannedByCategory,
+      plannedByDebt: plannedByDebt ?? this.plannedByDebt,
       error: error,
     );
   }
@@ -37,5 +41,6 @@ class BudgetState {
     budget: null,
     range: null,
     plannedByCategory: {},
+    plannedByDebt: {},
   );
 }

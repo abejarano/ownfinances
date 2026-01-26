@@ -225,6 +225,46 @@
     "budgetsActionRemove": "Remover del mes",
     "budgetsSuccessRemoved": "Categoría eliminada del presupuesto de este mes",
     "budgetsSaveButton": "Guardar Presupuesto",
+    "budgetsMonthSummaryTitle": "Resumen del mes",
+    "budgetsMonthSummaryPlannedCategories": "Gastos planificados (categorías)",
+    "budgetsMonthSummaryPlannedDebts": "Pagos de deudas planificados",
+    "budgetsMonthSummaryTotalOutflow": "Total de salidas planificadas",
+    "budgetsMonthSummaryOtherCurrencies": "Otras monedas (sin conversión)",
+    "budgetsDebtPlannedTitle": "Deudas (pagos planificados)",
+    "budgetsDebtPlannedSubtitle": "Reserva cuánto vas a pagar este mes. No es un gasto nuevo.",
+    "budgetsDebtPaymentNote": "Pagar deuda no es un gasto nuevo. Es pagar algo que ya debes.",
+    "budgetsDebtPayLabel": "Voy a pagar",
+    "budgetsDebtOweLabel": "Debo",
+    "budgetsDebtPaidPlanned": "Pagado: {paid} / {planned} planificado",
+    "@budgetsDebtPaidPlanned": {
+      "placeholders": {
+        "paid": {},
+        "planned": {}
+      }
+    },
+    "budgetsDebtActionZeroAll": "Poner todo en 0",
+    "budgetsDebtActionSuggest": "Sugerir pagos",
+    "budgetsDebtOverpaid": "Pagaste {amount} más de lo planificado.",
+    "@budgetsDebtOverpaid": {
+      "placeholders": {
+        "amount": {}
+      }
+    },
+    "budgetsDebtRemaining": "Faltan {amount} para tu plan.",
+    "@budgetsDebtRemaining": {
+      "placeholders": {
+        "amount": {}
+      }
+    },
+    "budgetsDebtEmptyState": "No tienes deudas activas.",
+    "budgetsDebtMinimumWarning": "Tu plan está por debajo del mínimo.",
+    "budgetsDebtTotalPlannedLabel": "Total pagos planificados ({currency})",
+    "@budgetsDebtTotalPlannedLabel": {
+      "placeholders": {
+        "currency": {}
+      }
+    },
+    "budgetsCategoriesTitle": "Gastos por categoría",
     "goalsTitle": "Metas",
     "goalsMyGoals": "Tus metas",
     "goalsNew": "Nueva meta",

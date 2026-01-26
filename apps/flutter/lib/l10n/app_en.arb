@@ -227,6 +227,46 @@
     "budgetsRemoveCategory": "Remove from month",
     "budgetsSaveButton": "Save Budget",
     "budgetsSuccessSaved": "Budget saved!",
+    "budgetsMonthSummaryTitle": "Month summary",
+    "budgetsMonthSummaryPlannedCategories": "Planned spending (categories)",
+    "budgetsMonthSummaryPlannedDebts": "Planned debt payments",
+    "budgetsMonthSummaryTotalOutflow": "Total planned outflow",
+    "budgetsMonthSummaryOtherCurrencies": "Other currencies (no conversion)",
+    "budgetsDebtPlannedTitle": "Debts (planned payments)",
+    "budgetsDebtPlannedSubtitle": "Set aside what you'll pay this month. It's not a new expense.",
+    "budgetsDebtPaymentNote": "Paying debt is not a new expense. It's paying something you already owe.",
+    "budgetsDebtPayLabel": "I'll pay",
+    "budgetsDebtOweLabel": "I owe",
+    "budgetsDebtPaidPlanned": "Paid: {paid} / {planned} planned",
+    "@budgetsDebtPaidPlanned": {
+      "placeholders": {
+        "paid": {},
+        "planned": {}
+      }
+    },
+    "budgetsDebtActionZeroAll": "Set all to 0",
+    "budgetsDebtActionSuggest": "Suggest payments",
+    "budgetsDebtOverpaid": "You paid {amount} more than planned.",
+    "@budgetsDebtOverpaid": {
+      "placeholders": {
+        "amount": {}
+      }
+    },
+    "budgetsDebtRemaining": "{amount} left to reach your plan.",
+    "@budgetsDebtRemaining": {
+      "placeholders": {
+        "amount": {}
+      }
+    },
+    "budgetsDebtEmptyState": "You have no active debts.",
+    "budgetsDebtMinimumWarning": "Your plan is below the minimum.",
+    "budgetsDebtTotalPlannedLabel": "Total planned payments ({currency})",
+    "@budgetsDebtTotalPlannedLabel": {
+      "placeholders": {
+        "currency": {}
+      }
+    },
+    "budgetsCategoriesTitle": "Spending by category",
     "accountsSuccessCurrencyFixed": "Currencies fixed successfully!",
     "goalsTitle": "Goals",
     "goalsMyGoals": "My Goals",

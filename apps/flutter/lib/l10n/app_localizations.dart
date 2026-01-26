@@ -1454,6 +1454,120 @@ abstract class AppLocalizations {
   /// **'Orçamento salvo!'**
   String get budgetsSuccessSaved;
 
+  /// No description provided for @budgetsMonthSummaryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo do mês'**
+  String get budgetsMonthSummaryTitle;
+
+  /// No description provided for @budgetsMonthSummaryPlannedCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gastos planejados (categorias)'**
+  String get budgetsMonthSummaryPlannedCategories;
+
+  /// No description provided for @budgetsMonthSummaryPlannedDebts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamentos de dívidas planejados'**
+  String get budgetsMonthSummaryPlannedDebts;
+
+  /// No description provided for @budgetsMonthSummaryTotalOutflow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total de saídas planejadas'**
+  String get budgetsMonthSummaryTotalOutflow;
+
+  /// No description provided for @budgetsMonthSummaryOtherCurrencies.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outras moedas (sem conversão)'**
+  String get budgetsMonthSummaryOtherCurrencies;
+
+  /// No description provided for @budgetsDebtPlannedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dívidas (pagos planejados)'**
+  String get budgetsDebtPlannedTitle;
+
+  /// No description provided for @budgetsDebtPlannedSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reserve quanto você vai pagar este mês. Não é um gasto novo.'**
+  String get budgetsDebtPlannedSubtitle;
+
+  /// No description provided for @budgetsDebtPaymentNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagar dívida não é um gasto novo. É pagar algo que você já deve.'**
+  String get budgetsDebtPaymentNote;
+
+  /// No description provided for @budgetsDebtPayLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vou pagar'**
+  String get budgetsDebtPayLabel;
+
+  /// No description provided for @budgetsDebtOweLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Devo'**
+  String get budgetsDebtOweLabel;
+
+  /// No description provided for @budgetsDebtPaidPlanned.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pago: {paid} / {planned} planejado'**
+  String budgetsDebtPaidPlanned(Object paid, Object planned);
+
+  /// No description provided for @budgetsDebtActionZeroAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Zerar tudo'**
+  String get budgetsDebtActionZeroAll;
+
+  /// No description provided for @budgetsDebtActionSuggest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugerir pagamentos'**
+  String get budgetsDebtActionSuggest;
+
+  /// No description provided for @budgetsDebtOverpaid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pagou {amount} a mais que o planejado.'**
+  String budgetsDebtOverpaid(Object amount);
+
+  /// No description provided for @budgetsDebtRemaining.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {amount} para seu plano.'**
+  String budgetsDebtRemaining(Object amount);
+
+  /// No description provided for @budgetsDebtEmptyState.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não tem dívidas ativas.'**
+  String get budgetsDebtEmptyState;
+
+  /// No description provided for @budgetsDebtMinimumWarning.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu plano está abaixo do mínimo.'**
+  String get budgetsDebtMinimumWarning;
+
+  /// No description provided for @budgetsDebtTotalPlannedLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total pagamentos planejados ({currency})'**
+  String budgetsDebtTotalPlannedLabel(Object currency);
+
+  /// No description provided for @budgetsCategoriesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gastos por categoria'**
+  String get budgetsCategoriesTitle;
+
   /// No description provided for @accountsSuccessCurrencyFixed.
   ///
   /// In pt, this message translates to:

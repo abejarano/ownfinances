@@ -73,10 +73,15 @@ export class DebtsController {
   @Use([AuthMiddleware])
   async summary(
     @Param("id") id: string,
+    @Query() query: Record<string, string | undefined>,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const result = await this.service.summary(req.userId ?? "", id)
+    const result = await this.service.summary(
+      req.userId ?? "",
+      id,
+      query.month
+    )
     return HttpResponse(res, result)
   }
 

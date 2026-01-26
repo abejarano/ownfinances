@@ -731,6 +731,75 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsSuccessSaved => '¡Presupuesto guardado!';
 
   @override
+  String get budgetsMonthSummaryTitle => 'Resumen del mes';
+
+  @override
+  String get budgetsMonthSummaryPlannedCategories =>
+      'Gastos planificados (categorías)';
+
+  @override
+  String get budgetsMonthSummaryPlannedDebts => 'Pagos de deudas planificados';
+
+  @override
+  String get budgetsMonthSummaryTotalOutflow => 'Total de salidas planificadas';
+
+  @override
+  String get budgetsMonthSummaryOtherCurrencies =>
+      'Otras monedas (sin conversión)';
+
+  @override
+  String get budgetsDebtPlannedTitle => 'Deudas (pagos planificados)';
+
+  @override
+  String get budgetsDebtPlannedSubtitle =>
+      'Reserva cuánto vas a pagar este mes. No es un gasto nuevo.';
+
+  @override
+  String get budgetsDebtPaymentNote =>
+      'Pagar deuda no es un gasto nuevo. Es pagar algo que ya debes.';
+
+  @override
+  String get budgetsDebtPayLabel => 'Voy a pagar';
+
+  @override
+  String get budgetsDebtOweLabel => 'Debo';
+
+  @override
+  String budgetsDebtPaidPlanned(Object paid, Object planned) {
+    return 'Pagado: $paid / $planned planificado';
+  }
+
+  @override
+  String get budgetsDebtActionZeroAll => 'Poner todo en 0';
+
+  @override
+  String get budgetsDebtActionSuggest => 'Sugerir pagos';
+
+  @override
+  String budgetsDebtOverpaid(Object amount) {
+    return 'Pagaste $amount más de lo planificado.';
+  }
+
+  @override
+  String budgetsDebtRemaining(Object amount) {
+    return 'Faltan $amount para tu plan.';
+  }
+
+  @override
+  String get budgetsDebtEmptyState => 'No tienes deudas activas.';
+
+  @override
+  String get budgetsDebtMinimumWarning => 'Tu plan está por debajo del mínimo.';
+
+  @override
+  String budgetsDebtTotalPlannedLabel(Object currency) {
+    return 'Total pagos planificados ($currency)';
+  }
+
+  @override
+  String get budgetsCategoriesTitle => 'Gastos por categoría';
+
+  @override
   String get accountsSuccessCurrencyFixed => '¡Monedas corregidas con éxito!';
 
   @override

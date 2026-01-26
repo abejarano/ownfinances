@@ -731,6 +731,75 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetsSuccessSaved => 'Budget saved!';
 
   @override
+  String get budgetsMonthSummaryTitle => 'Month summary';
+
+  @override
+  String get budgetsMonthSummaryPlannedCategories =>
+      'Planned spending (categories)';
+
+  @override
+  String get budgetsMonthSummaryPlannedDebts => 'Planned debt payments';
+
+  @override
+  String get budgetsMonthSummaryTotalOutflow => 'Total planned outflow';
+
+  @override
+  String get budgetsMonthSummaryOtherCurrencies =>
+      'Other currencies (no conversion)';
+
+  @override
+  String get budgetsDebtPlannedTitle => 'Debts (planned payments)';
+
+  @override
+  String get budgetsDebtPlannedSubtitle =>
+      'Set aside what you\'ll pay this month. It\'s not a new expense.';
+
+  @override
+  String get budgetsDebtPaymentNote =>
+      'Paying debt is not a new expense. It\'s paying something you already owe.';
+
+  @override
+  String get budgetsDebtPayLabel => 'I\'ll pay';
+
+  @override
+  String get budgetsDebtOweLabel => 'I owe';
+
+  @override
+  String budgetsDebtPaidPlanned(Object paid, Object planned) {
+    return 'Paid: $paid / $planned planned';
+  }
+
+  @override
+  String get budgetsDebtActionZeroAll => 'Set all to 0';
+
+  @override
+  String get budgetsDebtActionSuggest => 'Suggest payments';
+
+  @override
+  String budgetsDebtOverpaid(Object amount) {
+    return 'You paid $amount more than planned.';
+  }
+
+  @override
+  String budgetsDebtRemaining(Object amount) {
+    return '$amount left to reach your plan.';
+  }
+
+  @override
+  String get budgetsDebtEmptyState => 'You have no active debts.';
+
+  @override
+  String get budgetsDebtMinimumWarning => 'Your plan is below the minimum.';
+
+  @override
+  String budgetsDebtTotalPlannedLabel(Object currency) {
+    return 'Total planned payments ($currency)';
+  }
+
+  @override
+  String get budgetsCategoriesTitle => 'Spending by category';
+
+  @override
   String get accountsSuccessCurrencyFixed => 'Currencies fixed successfully!';
 
   @override

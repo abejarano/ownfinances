@@ -4,13 +4,18 @@ import type {
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import type { BudgetLine, BudgetPeriodType } from "../../models/budget"
+import type {
+  BudgetDebtPayment,
+  BudgetLine,
+  BudgetPeriodType,
+} from "../../models/budget"
 
 export type BudgetCreatePayload = {
   periodType: BudgetPeriodType
   startDate: string | Date
   endDate: string | Date
   lines?: BudgetLine[]
+  debtPayments?: BudgetDebtPayment[]
 }
 
 export type BudgetUpdatePayload = Partial<BudgetCreatePayload>
@@ -24,11 +29,17 @@ const BudgetLineSchema = v.strictObject({
   plannedAmount: v.pipe(v.number(), v.minValue(0)),
 })
 
+const BudgetDebtPaymentSchema = v.strictObject({
+  debtId: v.pipe(v.string(), v.minLength(1)),
+  plannedAmount: v.pipe(v.number(), v.minValue(0)),
+})
+
 const BudgetBaseSchema = v.strictObject({
   periodType: BudgetPeriodSchema,
   startDate: DateLikeSchema,
   endDate: DateLikeSchema,
   lines: v.optional(v.array(BudgetLineSchema)),
+  debtPayments: v.optional(v.array(BudgetDebtPaymentSchema)),
 })
 
 const BudgetCreateSchema = BudgetBaseSchema
@@ -67,6 +78,10 @@ export function validateBudgetPayload(isUpdate: boolean) {
         return res
           .status(422)
           .send({ error: "Lineas invalidas en el presupuesto" })
+      if (flattened.nested?.debtPayments)
+        return res
+          .status(422)
+          .send({ error: "Pagos de deuda inválidos" })
 
       return res.status(422).send({ error: "Payload invalido" })
     }

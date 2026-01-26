@@ -27,8 +27,11 @@ class DebtRemoteDataSource {
     return apiClient.delete("/debts/$id");
   }
 
-  Future<Map<String, dynamic>> summary(String id) async {
-    final response = await apiClient.get("/debts/$id/summary");
+  Future<Map<String, dynamic>> summary(String id, {DateTime? month}) async {
+    final query = month != null
+        ? {"month": month.toIso8601String()}
+        : <String, String>{};
+    final response = await apiClient.get("/debts/$id/summary", query: query);
     return response as Map<String, dynamic>;
   }
 
