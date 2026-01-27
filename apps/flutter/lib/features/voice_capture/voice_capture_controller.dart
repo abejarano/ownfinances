@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/categories/domain/entities/category.dart";
 import "package:ownfinances/features/voice_capture/models/transaction_draft.dart";
+import "package:ownfinances/features/voice_capture/voice_capture_copy.dart";
 import "package:ownfinances/features/voice_capture/voice_services/stt_service.dart";
 import "package:ownfinances/features/voice_capture/voice_services/tts_service.dart";
 
@@ -14,6 +15,12 @@ enum VoiceStep {
   confirm,
   saving,
   success,
+}
+
+enum _SpeechParseResult {
+  success,
+  retry,
+  handled,
 }
 
 class VoiceCaptureController extends ChangeNotifier {
@@ -39,6 +46,13 @@ class VoiceCaptureController extends ChangeNotifier {
   int _retryCount = 0;
   String _transcript = "";
   String? _lastError;
+  bool _ttsEnabled = true;
+  Locale? _locale;
+  String? _confirmationText;
+  bool _confirmPrompted = false;
+  bool _confirmRequested = false;
+  bool _cancelRequested = false;
+  VoiceCaptureCopy _copy = VoiceCaptureCopy.fallbackPt();
   List<Account> _accounts = [];
   List<Category> _categories = [];
   List<Account> _accountMatches = [];
@@ -55,6 +69,9 @@ class VoiceCaptureController extends ChangeNotifier {
   String? get lastError => _lastError;
   List<Account> get accountMatches => _accountMatches;
   List<Category> get categoryMatches => _categoryMatches;
+  bool get confirmRequested => _confirmRequested;
+  bool get cancelRequested => _cancelRequested;
+  VoiceCaptureCopy get copy => _copy;
 
   String get prompt => _promptForStep(_step);
 
@@ -106,10 +123,7 @@ class VoiceCaptureController extends ChangeNotifier {
         }
       },
       onError: (error) {
-        _lastError = error;
-        _manualMode = true;
-        _isListening = false;
-        notifyListeners();
+        _handleSttError(error);
       },
     );
     _sttAvailable = available;
@@ -128,7 +142,9 @@ class VoiceCaptureController extends ChangeNotifier {
     _transcript = "";
     _lastError = null;
     notifyListeners();
-    await ttsService.speak(nextPrompt);
+    if (_ttsEnabled) {
+      await ttsService.speak(nextPrompt);
+    }
     await _startListening();
   }
 
@@ -145,13 +161,18 @@ class VoiceCaptureController extends ChangeNotifier {
     if (!isFinal) return;
 
     _isListening = false;
-    final success = _applySpeech(text);
-    if (success) {
-      _retryCount = 0;
-      _advance();
-      return;
+    final result = _applySpeech(text);
+    switch (result) {
+      case _SpeechParseResult.success:
+        _retryCount = 0;
+        _advance();
+        return;
+      case _SpeechParseResult.handled:
+        return;
+      case _SpeechParseResult.retry:
+        _handleParseFailure();
+        return;
     }
-    _handleParseFailure();
   }
 
   void _handleParseFailure() {
@@ -162,7 +183,7 @@ class VoiceCaptureController extends ChangeNotifier {
     _retryCount += 1;
     if (_retryCount >= 2) {
       _manualMode = true;
-      _lastError = "Nao entendi. Pode digitar?";
+      _lastError = _copy.errorNotUnderstoodType;
       sttService.stop();
       notifyListeners();
       return;
@@ -170,49 +191,130 @@ class VoiceCaptureController extends ChangeNotifier {
     _askCurrentStep();
   }
 
-  bool _applySpeech(String text) {
+  void _handleSttError(String error) {
+    final normalized = error.toLowerCase();
+    _isListening = false;
+
+    if (normalized.contains("error_no_match") ||
+        normalized.contains("error_speech_timeout") ||
+        normalized.contains("error_no_speech")) {
+      _lastError = _copy.errorRepeat;
+      notifyListeners();
+      _handleParseFailure();
+      return;
+    }
+
+    if (normalized.contains("error_permission")) {
+      _micPermissionGranted = false;
+      _manualMode = true;
+      _lastError = _copy.errorMicPermission;
+      notifyListeners();
+      return;
+    }
+
+    _lastError = error;
+    _manualMode = true;
+    notifyListeners();
+  }
+
+  Future<void> setSessionLocale(Locale locale) async {
+    if (_locale != null) return;
+    _locale = locale;
+    await ttsService.setLanguageFromLocale(locale);
+    await sttService.setLocaleFromLocale(locale);
+  }
+
+  void setCopy(VoiceCaptureCopy copy) {
+    _copy = copy;
+    notifyListeners();
+  }
+
+  void setTtsEnabled(bool enabled) {
+    _ttsEnabled = enabled;
+  }
+
+  _SpeechParseResult _applySpeech(String text) {
     final normalized = _normalize(text);
-    if (normalized.contains("cancelar")) {
-      _lastError = "Cancelar";
-      return false;
+    if (_isCancelAnswer(normalized)) {
+      _cancelRequested = true;
+      _lastError = null;
+      _isListening = false;
+      sttService.stop();
+      notifyListeners();
+      return _SpeechParseResult.handled;
     }
 
     switch (_step) {
       case VoiceStep.askingAmount:
+        if (_maybeHandleHelpIntent(normalized)) {
+          return _SpeechParseResult.handled;
+        }
         final amount = _parseAmount(text);
-        if (amount == null || amount <= 0) return false;
+        if (amount == null || amount <= 0) return _SpeechParseResult.retry;
         _draft = _draft.copyWith(amount: amount);
-        return true;
+        return _SpeechParseResult.success;
       case VoiceStep.askingAccount:
-        return _applyAccount(normalized);
+        if (_maybeHandleHelpIntent(normalized)) {
+          return _SpeechParseResult.handled;
+        }
+        return _applyAccount(normalized)
+            ? _SpeechParseResult.success
+            : _SpeechParseResult.retry;
       case VoiceStep.askingDate:
+        if (_isNegativeAnswer(normalized)) {
+          _manualMode = true;
+          _lastError = _copy.dateSelectPrompt;
+          sttService.stop();
+          notifyListeners();
+          return _SpeechParseResult.handled;
+        }
+        if (_maybeHandleHelpIntent(normalized)) {
+          return _SpeechParseResult.handled;
+        }
         final date = _parseDate(normalized);
-        if (date == null) return false;
+        if (date == null) return _SpeechParseResult.retry;
         _draft = _draft.copyWith(date: date);
-        return true;
+        return _SpeechParseResult.success;
       case VoiceStep.askingCategory:
-        return _applyCategory(normalized);
+        if (_maybeHandleHelpIntent(normalized)) {
+          return _SpeechParseResult.handled;
+        }
+        return _applyCategory(normalized)
+            ? _SpeechParseResult.success
+            : _SpeechParseResult.retry;
+      case VoiceStep.confirm:
+        if (_isConfirmAnswer(normalized)) {
+          _confirmRequested = true;
+          notifyListeners();
+          return _SpeechParseResult.handled;
+        }
+        if (_isNegativeAnswer(normalized) || normalized.contains("editar")) {
+          _manualMode = true;
+          _lastError = _copy.editPrompt;
+          notifyListeners();
+          return _SpeechParseResult.handled;
+        }
+        return _SpeechParseResult.retry;
       default:
-        return false;
+        return _SpeechParseResult.retry;
     }
   }
 
   bool _applyAccount(String normalizedText) {
-    final matches = _accounts.where((account) {
-      final name = _normalize(account.name);
-      return name.contains(normalizedText) || normalizedText.contains(name);
-    }).toList();
+    final matches = _matchByTokens(
+      normalizedText,
+      _accounts.map((account) => (id: account.id, name: account.name)).toList(),
+    );
 
     if (matches.isEmpty) return false;
     if (matches.length > 1) {
-      _accountMatches = matches;
-      _forceManual(
-        "Encontrei mais de uma conta. Toque para escolher.",
-      );
+      _accountMatches =
+          _accounts.where((account) => matches.contains(account.id)).toList();
+      _forceManual(_copy.multipleAccounts);
       return false;
     }
     _accountMatches = [];
-    _draft = _draft.copyWith(fromAccountId: matches.first.id);
+    _draft = _draft.copyWith(fromAccountId: matches.first);
     return true;
   }
 
@@ -220,10 +322,12 @@ class VoiceCaptureController extends ChangeNotifier {
     final expenseCategories =
         _categories.where((category) => category.kind == "expense").toList();
 
-    final matches = expenseCategories.where((category) {
-      final name = _normalize(category.name);
-      return name.contains(normalizedText) || normalizedText.contains(name);
-    }).toList();
+    final matches = _matchByTokens(
+      normalizedText,
+      expenseCategories
+          .map((category) => (id: category.id, name: category.name))
+          .toList(),
+    );
 
     if (matches.isEmpty) {
       final hinted = _categoryHint(normalizedText, expenseCategories);
@@ -234,14 +338,14 @@ class VoiceCaptureController extends ChangeNotifier {
       return false;
     }
     if (matches.length > 1) {
-      _categoryMatches = matches;
-      _forceManual(
-        "Encontrei mais de uma categoria. Toque para escolher.",
-      );
+      _categoryMatches = expenseCategories
+          .where((category) => matches.contains(category.id))
+          .toList();
+      _forceManual(_copy.multipleCategories);
       return false;
     }
     _categoryMatches = [];
-    _draft = _draft.copyWith(categoryId: matches.first.id);
+    _draft = _draft.copyWith(categoryId: matches.first);
     return true;
   }
 
@@ -268,9 +372,15 @@ class VoiceCaptureController extends ChangeNotifier {
     _step = step;
     _retryCount = 0;
     _lastError = null;
+    if (step != VoiceStep.confirm) {
+      _confirmPrompted = false;
+    }
     notifyListeners();
     if (!_manualMode && _step != VoiceStep.confirm) {
       _askCurrentStep();
+    }
+    if (_step == VoiceStep.confirm && !_manualMode) {
+      _askConfirmation();
     }
   }
 
@@ -310,12 +420,37 @@ class VoiceCaptureController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setConfirmationText(String text) {
+    if (_confirmationText == text) return;
+    _confirmationText = text;
+    if (_step == VoiceStep.confirm && !_manualMode) {
+      _confirmPrompted = false;
+      _askConfirmation();
+    }
+  }
+
+  bool consumeConfirmRequested() {
+    if (!_confirmRequested) return false;
+    _confirmRequested = false;
+    return true;
+  }
+
+  bool consumeCancelRequested() {
+    if (!_cancelRequested) return false;
+    _cancelRequested = false;
+    return true;
+  }
+
   void reset() {
     _draft = const TransactionDraft();
     _step = VoiceStep.listening;
     _retryCount = 0;
     _transcript = "";
     _lastError = null;
+    _confirmationText = null;
+    _confirmPrompted = false;
+    _confirmRequested = false;
+    _cancelRequested = false;
     _accountMatches = [];
     _categoryMatches = [];
     _manualMode = !_sttAvailable;
@@ -356,6 +491,9 @@ class VoiceCaptureController extends ChangeNotifier {
     notifyListeners();
     if (_step == VoiceStep.confirm) {
       sttService.stop();
+      if (!_manualMode) {
+        _askConfirmation();
+      }
       return;
     }
     if (!_manualMode) {
@@ -372,14 +510,33 @@ class VoiceCaptureController extends ChangeNotifier {
 
   DateTime? _parseDate(String normalizedText) {
     final now = DateTime.now();
-    if (normalizedText.contains("hoje")) {
+    if (_isPositiveAnswer(normalizedText) ||
+        normalizedText.contains("hoje") ||
+        normalizedText.contains("hoy") ||
+        normalizedText.contains("today")) {
       return DateTime(now.year, now.month, now.day);
     }
-    if (normalizedText.contains("ontem")) {
+    if (normalizedText.contains("ontem") ||
+        normalizedText.contains("ayer") ||
+        normalizedText.contains("yesterday")) {
       final yesterday = now.subtract(const Duration(days: 1));
       return DateTime(yesterday.year, yesterday.month, yesterday.day);
     }
     return null;
+  }
+
+  void _askConfirmation() {
+    if (_confirmPrompted || _confirmationText == null) return;
+    if (_manualMode || !_sttAvailable) return;
+    _confirmPrompted = true;
+    _lastError = null;
+    notifyListeners();
+    final prompt = _copy.confirmPrompt(_confirmationText!);
+    if (_ttsEnabled) {
+      ttsService.speak(prompt).then((_) => _startListening());
+    } else {
+      _startListening();
+    }
   }
 
   Category? _categoryHint(String normalizedText, List<Category> options) {
@@ -396,16 +553,187 @@ class VoiceCaptureController extends ChangeNotifier {
   String _promptForStep(VoiceStep step) {
     switch (step) {
       case VoiceStep.askingAmount:
-        return "Qual foi o valor?";
+        return _copy.promptAmount;
       case VoiceStep.askingAccount:
-        return "De qual conta sai esse gasto?";
+        return _copy.promptAccount;
       case VoiceStep.askingDate:
-        return "Foi hoje?";
+        return _copy.promptDate;
       case VoiceStep.askingCategory:
-        return "Qual categoria?";
+        return _copy.promptCategory;
       default:
         return "";
     }
+  }
+
+  bool _maybeHandleHelpIntent(String normalizedText) {
+    final isAccountStep = _step == VoiceStep.askingAccount;
+    final isCategoryStep = _step == VoiceStep.askingCategory;
+    if (!isAccountStep && !isCategoryStep) return false;
+
+    final triggerWords = [
+      "quais",
+      "qual",
+      "que",
+      "cuantas",
+      "cuantos",
+      "mostrar",
+      "listar",
+      "cuales",
+      "what",
+      "which",
+      "show",
+      "list",
+      "my",
+      "mis",
+      "minhas",
+    ];
+    final accountWords = [
+      "conta",
+      "contas",
+      "banco",
+      "bancos",
+      "account",
+      "accounts",
+      "bank",
+      "banks",
+      "cuenta",
+      "cuentas",
+    ];
+    final categoryWords = [
+      "categoria",
+      "categorias",
+      "category",
+      "categories",
+    ];
+
+    final hasTrigger = triggerWords.any(normalizedText.contains);
+    if (isAccountStep &&
+        hasTrigger &&
+        accountWords.any(normalizedText.contains)) {
+      _respondWithAccounts();
+      return true;
+    }
+    if (isCategoryStep &&
+        hasTrigger &&
+        categoryWords.any(normalizedText.contains)) {
+      _respondWithCategories();
+      return true;
+    }
+    return false;
+  }
+
+  void _respondWithAccounts() {
+    sttService.stop();
+    final names = _accounts.map((account) => account.name).toList();
+    final response = names.isEmpty
+        ? _copy.noAccounts
+        : _copy.accountsList(_joinList(names));
+    _speakThenRepeat(response);
+  }
+
+  void _respondWithCategories() {
+    sttService.stop();
+    final options = _categories
+        .where((category) => category.kind == "expense")
+        .map((category) => category.name)
+        .toList();
+    final response = options.isEmpty
+        ? _copy.noCategories
+        : _copy.categoriesList(_joinList(options));
+    _speakThenRepeat(response);
+  }
+
+  void _speakThenRepeat(String response) {
+    _retryCount = 0;
+    if (_ttsEnabled) {
+      _lastError = null;
+      notifyListeners();
+      ttsService.speak(response).then((_) => _askCurrentStep());
+    } else {
+      _lastError = response;
+      notifyListeners();
+      _askCurrentStep();
+    }
+  }
+
+  List<String> _matchByTokens(
+    String normalizedText,
+    List<({String id, String name})> options,
+  ) {
+    final tokens = _tokenize(normalizedText);
+    if (tokens.isEmpty) return [];
+
+    final scored = <String, int>{};
+    for (final option in options) {
+      final name = _normalizeForMatch(option.name);
+      var score = 0;
+      for (final token in tokens) {
+        if (name.contains(token)) {
+          score += token.length >= 4 ? 2 : 1;
+        }
+      }
+      if (name.contains(normalizedText) || normalizedText.contains(name)) {
+        score += 3;
+      }
+      if (score > 0) {
+        scored[option.id] = score;
+      }
+    }
+
+    if (scored.isEmpty) return [];
+    final maxScore = scored.values.reduce((a, b) => a > b ? a : b);
+    final winners =
+        scored.entries.where((entry) => entry.value == maxScore).toList();
+    return winners.map((entry) => entry.key).toList();
+  }
+
+  List<String> _tokenize(String text) {
+    final cleaned = _normalizeForMatch(text);
+    final rawTokens = cleaned.split(" ").where((t) => t.isNotEmpty).toList();
+    if (rawTokens.isEmpty) return [];
+    const stopwords = {
+      "de",
+      "da",
+      "do",
+      "del",
+      "la",
+      "el",
+      "los",
+      "las",
+      "my",
+      "mis",
+      "minhas",
+      "conta",
+      "contas",
+      "banco",
+      "bancos",
+      "account",
+      "accounts",
+      "bank",
+      "banks",
+      "cuenta",
+      "cuentas",
+      "categoria",
+      "categorias",
+      "category",
+      "categories",
+    };
+    return rawTokens.where((token) => !stopwords.contains(token)).toList();
+  }
+
+  String _normalizeForMatch(String value) {
+    final lowered = _normalize(value);
+    final cleaned = lowered.replaceAll(RegExp(r"[^a-z0-9]+"), " ");
+    return cleaned.trim().replaceAll(RegExp(r"\\s+"), " ");
+  }
+
+  String _joinList(List<String> items) {
+    if (items.isEmpty) return "";
+    final limited = [...items];
+    if (limited.length == 1) return limited.first;
+    final last = limited.removeLast();
+    final conjunction = _copy.conjunction;
+    return "${limited.join(", ")} $conjunction $last";
   }
 
   String _normalize(String value) {
@@ -428,5 +756,46 @@ class VoiceCaptureController extends ChangeNotifier {
       result = result.replaceAll(key, replacement);
     });
     return result;
+  }
+
+  bool _isPositiveAnswer(String normalizedText) {
+    return normalizedText == "sim" ||
+        normalizedText == "si" ||
+        normalizedText == "ok" ||
+        normalizedText == "claro" ||
+        normalizedText == "yes" ||
+        normalizedText == "yeah" ||
+        normalizedText == "yep";
+  }
+
+  bool _isNegativeAnswer(String normalizedText) {
+    return normalizedText == "nao" ||
+        normalizedText == "no" ||
+        normalizedText == "nope" ||
+        normalizedText == "nop" ||
+        normalizedText == "nah";
+  }
+
+  bool _isConfirmAnswer(String normalizedText) {
+    const tokens = [
+      "confirmado",
+      "confirmar",
+      "confirmo",
+      "correto",
+      "certo",
+      "ok",
+      "okay",
+      "vale",
+      "sim",
+      "si",
+      "yes",
+      "yeah",
+      "yep",
+    ];
+    return tokens.any(normalizedText.contains);
+  }
+
+  bool _isCancelAnswer(String normalizedText) {
+    return normalizedText.contains("cancel");
   }
 }

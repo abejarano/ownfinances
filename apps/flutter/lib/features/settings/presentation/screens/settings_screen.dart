@@ -314,6 +314,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                 },
               ),
+              const Divider(indent: 16, endIndent: 16),
+              Consumer<SettingsController>(
+                builder: (context, settings, child) {
+                  return SwitchListTile(
+                    secondary: const Icon(
+                      Icons.record_voice_over_outlined,
+                      color: AppColors.textTertiary,
+                    ),
+                    title: Text(
+                      AppLocalizations.of(context)!.settingsVoiceAssistantTitle,
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(context)!.settingsVoiceAssistantDesc,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    value: settings.voiceAssistantEnabled,
+                    onChanged: settings.setVoiceAssistantEnabled,
+                    activeColor: Colors.white,
+                    activeTrackColor: AppColors.success,
+                    tileColor: Colors.transparent,
+                  );
+                },
+              ),
             ],
           ),
         ),

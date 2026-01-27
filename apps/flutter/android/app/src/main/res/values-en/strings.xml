@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_voice_expense_short">Record expense</string>
+    <string name="shortcut_voice_expense_long">Record expense by voice</string>
+    <string name="shortcut_voice_expense_disabled">Shortcut unavailable</string>
+</resources>

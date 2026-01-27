@@ -3211,6 +3211,377 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Impostos'**
   String get catTaxes;
+
+  /// No description provided for @voiceTitleExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registrar despesa'**
+  String get voiceTitleExpense;
+
+  /// No description provided for @voiceTitleIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registrar receita'**
+  String get voiceTitleIncome;
+
+  /// No description provided for @voiceTitleTransfer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registrar transferência'**
+  String get voiceTitleTransfer;
+
+  /// No description provided for @voiceButtonType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digitar'**
+  String get voiceButtonType;
+
+  /// No description provided for @voiceStatusListening.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ouvindo...'**
+  String get voiceStatusListening;
+
+  /// No description provided for @voiceStatusManual.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo manual'**
+  String get voiceStatusManual;
+
+  /// No description provided for @voiceStatusWaiting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando...'**
+  String get voiceStatusWaiting;
+
+  /// No description provided for @voiceTranscriptPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'A transcrição aparecerá aqui'**
+  String get voiceTranscriptPlaceholder;
+
+  /// No description provided for @voicePermissionButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permitir microfone'**
+  String get voicePermissionButton;
+
+  /// No description provided for @voiceChipAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor'**
+  String get voiceChipAmount;
+
+  /// No description provided for @voiceChipAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta'**
+  String get voiceChipAccount;
+
+  /// No description provided for @voiceChipDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Data'**
+  String get voiceChipDate;
+
+  /// No description provided for @voiceChipCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria'**
+  String get voiceChipCategory;
+
+  /// No description provided for @voicePromptAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga o valor'**
+  String get voicePromptAmount;
+
+  /// No description provided for @voicePromptAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'De qual conta sai esse gasto?'**
+  String get voicePromptAccount;
+
+  /// No description provided for @voicePromptDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foi hoje?'**
+  String get voicePromptDate;
+
+  /// No description provided for @voicePromptCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qual categoria?'**
+  String get voicePromptCategory;
+
+  /// No description provided for @voiceAmountLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite o valor'**
+  String get voiceAmountLabel;
+
+  /// No description provided for @voiceAccountLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha a conta'**
+  String get voiceAccountLabel;
+
+  /// No description provided for @voiceAccountAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver todas'**
+  String get voiceAccountAll;
+
+  /// No description provided for @voiceDateLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando foi?'**
+  String get voiceDateLabel;
+
+  /// No description provided for @voiceDateToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Hoje'**
+  String get voiceDateToday;
+
+  /// No description provided for @voiceDateYesterday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ontem'**
+  String get voiceDateYesterday;
+
+  /// No description provided for @voiceDateOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro dia'**
+  String get voiceDateOther;
+
+  /// No description provided for @voiceCategoryLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha a categoria'**
+  String get voiceCategoryLabel;
+
+  /// No description provided for @voiceCategoryAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver todas'**
+  String get voiceCategoryAll;
+
+  /// No description provided for @voiceCategoryUncategorized.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem categoria (Outros)'**
+  String get voiceCategoryUncategorized;
+
+  /// No description provided for @voiceConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmação'**
+  String get voiceConfirmTitle;
+
+  /// No description provided for @voiceEditButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar'**
+  String get voiceEditButton;
+
+  /// No description provided for @voiceSavingLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvando...'**
+  String get voiceSavingLabel;
+
+  /// No description provided for @voiceSuccessLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registrado'**
+  String get voiceSuccessLabel;
+
+  /// No description provided for @voicePrimaryContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get voicePrimaryContinue;
+
+  /// No description provided for @voicePrimaryConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar'**
+  String get voicePrimaryConfirm;
+
+  /// No description provided for @voicePrimarySaving.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvando'**
+  String get voicePrimarySaving;
+
+  /// No description provided for @voicePrimaryNew.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registrar outro'**
+  String get voicePrimaryNew;
+
+  /// No description provided for @voiceSecondaryCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get voiceSecondaryCancel;
+
+  /// No description provided for @voiceSecondaryClose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get voiceSecondaryClose;
+
+  /// No description provided for @voiceSnackbarMissingAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta escolher conta de saída'**
+  String get voiceSnackbarMissingAccount;
+
+  /// No description provided for @voiceSnackbarMissingDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta escolher a data'**
+  String get voiceSnackbarMissingDate;
+
+  /// No description provided for @voiceSnackbarMissingCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta escolher categoria'**
+  String get voiceSnackbarMissingCategory;
+
+  /// No description provided for @voiceSnackbarInvalidAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'O valor deve ser maior que 0'**
+  String get voiceSnackbarInvalidAmount;
+
+  /// No description provided for @voiceSnackbarSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao salvar'**
+  String get voiceSnackbarSaveError;
+
+  /// No description provided for @voiceSnackbarAmountRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite um valor válido'**
+  String get voiceSnackbarAmountRequired;
+
+  /// No description provided for @voiceSearchAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar conta'**
+  String get voiceSearchAccount;
+
+  /// No description provided for @voiceSearchCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar categoria'**
+  String get voiceSearchCategory;
+
+  /// No description provided for @voiceErrorNotUnderstoodType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não entendi. Pode digitar?'**
+  String get voiceErrorNotUnderstoodType;
+
+  /// No description provided for @voiceErrorRepeat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não entendi. Pode repetir?'**
+  String get voiceErrorRepeat;
+
+  /// No description provided for @voiceErrorMicPermission.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permissão de microfone negada'**
+  String get voiceErrorMicPermission;
+
+  /// No description provided for @voiceMultipleAccounts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrei mais de uma conta. Toque para escolher.'**
+  String get voiceMultipleAccounts;
+
+  /// No description provided for @voiceMultipleCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrei mais de uma categoria. Toque para escolher.'**
+  String get voiceMultipleCategories;
+
+  /// No description provided for @voiceNoAccounts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem contas cadastradas.'**
+  String get voiceNoAccounts;
+
+  /// No description provided for @voiceNoCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem categorias cadastradas.'**
+  String get voiceNoCategories;
+
+  /// No description provided for @voiceAccountsListTemplate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas contas são: {names}.'**
+  String voiceAccountsListTemplate(Object names);
+
+  /// No description provided for @voiceCategoriesListTemplate.
+  ///
+  /// In pt, this message translates to:
+  /// **'As categorias são: {names}.'**
+  String voiceCategoriesListTemplate(Object names);
+
+  /// No description provided for @voiceConfirmPromptTemplate.
+  ///
+  /// In pt, this message translates to:
+  /// **'{summary} Diga confirmado ou cancelar.'**
+  String voiceConfirmPromptTemplate(Object summary);
+
+  /// No description provided for @voiceEditPrompt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ok. Edite os campos abaixo.'**
+  String get voiceEditPrompt;
+
+  /// No description provided for @voiceDateSelectPrompt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ok. Escolha a data abaixo.'**
+  String get voiceDateSelectPrompt;
+
+  /// No description provided for @voiceConjunction.
+  ///
+  /// In pt, this message translates to:
+  /// **'e'**
+  String get voiceConjunction;
+
+  /// No description provided for @voiceSummaryTemplate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vou registrar: {amount} em {category}, da conta {account}, {date}.'**
+  String voiceSummaryTemplate(
+    Object account,
+    Object amount,
+    Object category,
+    Object date,
+  );
+
+  /// No description provided for @settingsVoiceAssistantTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voz do assistente'**
+  String get settingsVoiceAssistantTitle;
+
+  /// No description provided for @settingsVoiceAssistantDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ative para ouvir perguntas por voz durante o registro.'**
+  String get settingsVoiceAssistantDesc;
 }
 
 class _AppLocalizationsDelegate

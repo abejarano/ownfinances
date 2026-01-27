@@ -89,11 +89,7 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
     try {
       print("Event: login_social_started provider=google");
-      final googleSignIn = GoogleSignIn(
-        clientId: kIsWeb
-            ? "247774651903-luc5s66ie9j1433dir0d5jlo2dpns0l0.apps.googleusercontent.com"
-            : null,
-      );
+      final googleSignIn = _googleSignIn();
       var account = await googleSignIn.signIn();
       if (account == null) {
         _state = _state.copyWith(
@@ -223,6 +219,11 @@ class AuthController extends ChangeNotifier {
     if (session != null) {
       await repository.logout(session.refreshToken);
     }
+    try {
+      final googleSignIn = _googleSignIn();
+      await googleSignIn.signOut();
+      await googleSignIn.disconnect();
+    } catch (_) {}
     _state = _state.copyWith(status: AuthStatus.unauthenticated, session: null);
     notifyListeners();
   }
@@ -231,5 +232,13 @@ class AuthController extends ChangeNotifier {
     await repository.setMessage(null);
     _state = _state.copyWith(message: null);
     notifyListeners();
+  }
+
+  GoogleSignIn _googleSignIn() {
+    return GoogleSignIn(
+      clientId: kIsWeb
+          ? "247774651903-luc5s66ie9j1433dir0d5jlo2dpns0l0.apps.googleusercontent.com"
+          : null,
+    );
   }
 }

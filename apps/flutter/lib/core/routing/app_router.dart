@@ -42,8 +42,15 @@ GoRouter createRouter({
     refreshListenable: Listenable.merge([authController, onboardingController]),
     redirect: (context, state) {
       final location = state.uri.path;
+      final hasVoiceQuery =
+          state.uri.queryParameters.containsKey("intent") ||
+          state.uri.queryParameters.containsKey("feature");
+      final isVoicePath =
+          location == "/voice" || location == "/voice-capture";
       final isVoiceDeepLink =
-          state.uri.scheme == "desquadra" && state.uri.host == "voice";
+          (state.uri.scheme == "desquadra" && state.uri.host == "voice") ||
+          (isVoicePath && hasVoiceQuery) ||
+          ((location == "/" || location.isEmpty) && hasVoiceQuery);
       final isOnboarding = location == "/onboarding";
       final isAuthRoute = location == "/login" || location == "/register";
       final authStatus = authController.state.status;
@@ -53,6 +60,7 @@ GoRouter createRouter({
       final onboardingLoaded = onboardingController.loaded;
 
       if (authStatus == AuthStatus.initial) {
+        if (isVoiceDeepLink) return null;
         return "/splash";
       }
 
@@ -89,6 +97,16 @@ GoRouter createRouter({
       }
       if (isAuthed && completed && isVoiceDeepLink) {
         final params = Map<String, String>.from(state.uri.queryParameters);
+        final feature = params["feature"];
+        if (params["intent"] == null && feature != null) {
+          final normalized = feature.toLowerCase();
+          if (normalized.contains("expense") ||
+              normalized.contains("despesa") ||
+              normalized.contains("gasto")) {
+            params["intent"] = "expense";
+          }
+        }
+        params.remove("feature");
         params.putIfAbsent("source", () => "assistant");
         final uri = Uri(path: "/voice-capture", queryParameters: params);
         return uri.toString();
@@ -111,6 +129,13 @@ GoRouter createRouter({
       ),
       GoRoute(
         path: "/voice-capture",
+        builder: (context, state) => VoiceCaptureScreen(
+          intent: state.uri.queryParameters["intent"],
+          source: state.uri.queryParameters["source"],
+        ),
+      ),
+      GoRoute(
+        path: "/voice",
         builder: (context, state) => VoiceCaptureScreen(
           intent: state.uri.queryParameters["intent"],
           source: state.uri.queryParameters["source"],

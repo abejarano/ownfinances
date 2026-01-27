@@ -1715,4 +1715,203 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get catTaxes => 'Impostos';
+
+  @override
+  String get voiceTitleExpense => 'Registrar despesa';
+
+  @override
+  String get voiceTitleIncome => 'Registrar receita';
+
+  @override
+  String get voiceTitleTransfer => 'Registrar transferência';
+
+  @override
+  String get voiceButtonType => 'Digitar';
+
+  @override
+  String get voiceStatusListening => 'Ouvindo...';
+
+  @override
+  String get voiceStatusManual => 'Modo manual';
+
+  @override
+  String get voiceStatusWaiting => 'Aguardando...';
+
+  @override
+  String get voiceTranscriptPlaceholder => 'A transcrição aparecerá aqui';
+
+  @override
+  String get voicePermissionButton => 'Permitir microfone';
+
+  @override
+  String get voiceChipAmount => 'Valor';
+
+  @override
+  String get voiceChipAccount => 'Conta';
+
+  @override
+  String get voiceChipDate => 'Data';
+
+  @override
+  String get voiceChipCategory => 'Categoria';
+
+  @override
+  String get voicePromptAmount => 'Diga o valor';
+
+  @override
+  String get voicePromptAccount => 'De qual conta sai esse gasto?';
+
+  @override
+  String get voicePromptDate => 'Foi hoje?';
+
+  @override
+  String get voicePromptCategory => 'Qual categoria?';
+
+  @override
+  String get voiceAmountLabel => 'Digite o valor';
+
+  @override
+  String get voiceAccountLabel => 'Escolha a conta';
+
+  @override
+  String get voiceAccountAll => 'Ver todas';
+
+  @override
+  String get voiceDateLabel => 'Quando foi?';
+
+  @override
+  String get voiceDateToday => 'Hoje';
+
+  @override
+  String get voiceDateYesterday => 'Ontem';
+
+  @override
+  String get voiceDateOther => 'Outro dia';
+
+  @override
+  String get voiceCategoryLabel => 'Escolha a categoria';
+
+  @override
+  String get voiceCategoryAll => 'Ver todas';
+
+  @override
+  String get voiceCategoryUncategorized => 'Sem categoria (Outros)';
+
+  @override
+  String get voiceConfirmTitle => 'Confirmação';
+
+  @override
+  String get voiceEditButton => 'Editar';
+
+  @override
+  String get voiceSavingLabel => 'Salvando...';
+
+  @override
+  String get voiceSuccessLabel => 'Registrado';
+
+  @override
+  String get voicePrimaryContinue => 'Continuar';
+
+  @override
+  String get voicePrimaryConfirm => 'Confirmar';
+
+  @override
+  String get voicePrimarySaving => 'Salvando';
+
+  @override
+  String get voicePrimaryNew => 'Registrar outro';
+
+  @override
+  String get voiceSecondaryCancel => 'Cancelar';
+
+  @override
+  String get voiceSecondaryClose => 'Fechar';
+
+  @override
+  String get voiceSnackbarMissingAccount => 'Falta escolher conta de saída';
+
+  @override
+  String get voiceSnackbarMissingDate => 'Falta escolher a data';
+
+  @override
+  String get voiceSnackbarMissingCategory => 'Falta escolher categoria';
+
+  @override
+  String get voiceSnackbarInvalidAmount => 'O valor deve ser maior que 0';
+
+  @override
+  String get voiceSnackbarSaveError => 'Erro ao salvar';
+
+  @override
+  String get voiceSnackbarAmountRequired => 'Digite um valor válido';
+
+  @override
+  String get voiceSearchAccount => 'Buscar conta';
+
+  @override
+  String get voiceSearchCategory => 'Buscar categoria';
+
+  @override
+  String get voiceErrorNotUnderstoodType => 'Não entendi. Pode digitar?';
+
+  @override
+  String get voiceErrorRepeat => 'Não entendi. Pode repetir?';
+
+  @override
+  String get voiceErrorMicPermission => 'Permissão de microfone negada';
+
+  @override
+  String get voiceMultipleAccounts =>
+      'Encontrei mais de uma conta. Toque para escolher.';
+
+  @override
+  String get voiceMultipleCategories =>
+      'Encontrei mais de uma categoria. Toque para escolher.';
+
+  @override
+  String get voiceNoAccounts => 'Você ainda não tem contas cadastradas.';
+
+  @override
+  String get voiceNoCategories => 'Você ainda não tem categorias cadastradas.';
+
+  @override
+  String voiceAccountsListTemplate(Object names) {
+    return 'Suas contas são: $names.';
+  }
+
+  @override
+  String voiceCategoriesListTemplate(Object names) {
+    return 'As categorias são: $names.';
+  }
+
+  @override
+  String voiceConfirmPromptTemplate(Object summary) {
+    return '$summary Diga confirmado ou cancelar.';
+  }
+
+  @override
+  String get voiceEditPrompt => 'Ok. Edite os campos abaixo.';
+
+  @override
+  String get voiceDateSelectPrompt => 'Ok. Escolha a data abaixo.';
+
+  @override
+  String get voiceConjunction => 'e';
+
+  @override
+  String voiceSummaryTemplate(
+    Object account,
+    Object amount,
+    Object category,
+    Object date,
+  ) {
+    return 'Vou registrar: $amount em $category, da conta $account, $date.';
+  }
+
+  @override
+  String get settingsVoiceAssistantTitle => 'Voz do assistente';
+
+  @override
+  String get settingsVoiceAssistantDesc =>
+      'Ative para ouvir perguntas por voz durante o registro.';
 }

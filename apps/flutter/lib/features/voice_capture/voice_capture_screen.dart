@@ -8,10 +8,13 @@ import "package:ownfinances/features/accounts/domain/entities/account.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/categories/domain/entities/category.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+import "package:ownfinances/features/settings/application/controllers/settings_controller.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
+import "package:ownfinances/features/voice_capture/voice_capture_copy.dart";
 import "package:ownfinances/features/voice_capture/voice_capture_controller.dart";
 import "package:ownfinances/features/voice_capture/voice_services/stt_service.dart";
 import "package:ownfinances/features/voice_capture/voice_services/tts_service.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class VoiceCaptureScreen extends StatefulWidget {
   final String? intent;
@@ -28,6 +31,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
   late final VoiceCaptureController _controller;
   final TextEditingController _amountController = TextEditingController();
   final FocusNode _amountFocus = FocusNode();
+  Locale? _sessionLocale;
 
   @override
   void initState() {
@@ -42,6 +46,23 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.start();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_sessionLocale != null) return;
+    final settingsController = context.read<SettingsController>();
+    final settingsLocale = settingsController.locale;
+    final deviceLocale = Localizations.localeOf(context);
+    _sessionLocale = _resolveSessionLocale(
+      userLocale: settingsLocale,
+      deviceLocale: deviceLocale,
+    );
+    final l10n = AppLocalizations.of(context)!;
+    _controller.setCopy(VoiceCaptureCopy.fromL10n(l10n));
+    _controller.setSessionLocale(_sessionLocale!);
+    _controller.setTtsEnabled(settingsController.voiceAssistantEnabled);
   }
 
   @override
@@ -62,6 +83,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final accounts = context.watch<AccountsController>().state.items;
     final categories = context.watch<CategoriesController>().state.items;
     _controller.syncData(accounts: accounts, categories: categories);
@@ -85,6 +107,17 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
 
             _syncAmountField(amount);
 
+            if (_controller.consumeConfirmRequested()) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _saveTransaction(account, category, amount, date, l10n);
+              });
+            }
+            if (_controller.consumeCancelRequested()) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.of(context).maybePop();
+              });
+            }
+
             return Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -96,7 +129,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(context),
+                    _buildHeader(context, l10n),
                     const Divider(height: 1),
                     Expanded(
                       child: SingleChildScrollView(
@@ -106,11 +139,10 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                           children: [
                             _buildPrompt(theme, step),
                             const SizedBox(height: AppSpacing.md),
-                            _buildListeningRow(theme),
+                            _buildListeningRow(theme, l10n),
                             const SizedBox(height: AppSpacing.sm),
-                            _buildTranscript(theme),
-                            if (_controller.lastError != null &&
-                                _controller.lastError != "Cancelar")
+                            _buildTranscript(theme, l10n),
+                            if (_controller.lastError != null)
                               Padding(
                                 padding: const EdgeInsets.only(
                                   top: AppSpacing.sm,
@@ -125,6 +157,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                             const SizedBox(height: AppSpacing.md),
                             _buildProgressChips(
                               theme,
+                              l10n,
                               amount: amount,
                               account: account,
                               category: category,
@@ -134,6 +167,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                             const SizedBox(height: AppSpacing.md),
                             _buildStepContent(
                               theme,
+                              l10n,
                               step: step,
                               accounts: accounts,
                               categories: categories,
@@ -154,6 +188,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                       category: category,
                       amount: amount,
                       date: date,
+                      l10n: l10n,
                     ),
                   ],
                 ),
@@ -165,7 +200,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -173,13 +208,13 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
         children: [
           Expanded(
             child: Text(
-              _titleForIntent(_controller.intent),
+              _titleForIntent(_controller.intent, l10n),
               style: theme.textTheme.titleMedium,
             ),
           ),
           TextButton(
             onPressed: () => _controller.setManualMode(true),
-            child: const Text("Digitar"),
+            child: Text(l10n.voiceButtonType),
           ),
           IconButton(
             icon: const Icon(Icons.close),
@@ -199,12 +234,12 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     );
   }
 
-  Widget _buildListeningRow(ThemeData theme) {
+  Widget _buildListeningRow(ThemeData theme, AppLocalizations l10n) {
     final status = _controller.isListening
-        ? "Estou ouvindo..."
+        ? l10n.voiceStatusListening
         : _controller.manualMode
-        ? "Modo manual"
-        : "Aguardando...";
+        ? l10n.voiceStatusManual
+        : l10n.voiceStatusWaiting;
     return Row(
       children: [
         MicPulse(active: _controller.isListening),
@@ -214,13 +249,13 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
         if (!_controller.micPermissionGranted)
           TextButton(
             onPressed: _controller.requestMicPermission,
-            child: const Text("Permitir microfone"),
+            child: Text(l10n.voicePermissionButton),
           ),
       ],
     );
   }
 
-  Widget _buildTranscript(ThemeData theme) {
+  Widget _buildTranscript(ThemeData theme, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -231,7 +266,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
       ),
       child: Text(
         _controller.transcript.isEmpty
-            ? "Transcricao aparecera aqui"
+            ? l10n.voiceTranscriptPlaceholder
             : _controller.transcript,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
@@ -245,7 +280,8 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
   }
 
   Widget _buildProgressChips(
-    ThemeData theme, {
+    ThemeData theme,
+    AppLocalizations l10n, {
     required double? amount,
     required Account? account,
     required Category? category,
@@ -258,7 +294,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
       children: [
         InputChip(
           label: Text(
-            amount == null ? "Valor" : _formatAmount(amount, currency),
+            amount == null ? l10n.voiceChipAmount : _formatAmount(amount, currency),
           ),
           selected: _controller.step == VoiceStep.askingAmount,
           onSelected: (_) {
@@ -267,7 +303,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
           },
         ),
         InputChip(
-          label: Text(account?.name ?? "Conta"),
+          label: Text(account?.name ?? l10n.voiceChipAccount),
           selected: _controller.step == VoiceStep.askingAccount,
           onSelected: (_) {
             _controller.setManualMode(true);
@@ -275,7 +311,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
           },
         ),
         InputChip(
-          label: Text(_formatDateLabel(date)),
+          label: Text(_formatDateLabel(date, l10n)),
           selected: _controller.step == VoiceStep.askingDate,
           onSelected: (_) {
             _controller.setManualMode(true);
@@ -283,7 +319,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
           },
         ),
         InputChip(
-          label: Text(category?.name ?? "Categoria"),
+          label: Text(category?.name ?? l10n.voiceChipCategory),
           selected: _controller.step == VoiceStep.askingCategory,
           onSelected: (_) {
             _controller.setManualMode(true);
@@ -295,7 +331,8 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
   }
 
   Widget _buildStepContent(
-    ThemeData theme, {
+    ThemeData theme,
+    AppLocalizations l10n, {
     required VoiceStep step,
     required List<Account> accounts,
     required List<Category> categories,
@@ -307,29 +344,36 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
   }) {
     switch (step) {
       case VoiceStep.askingAmount:
-        return _buildAmountInput(theme, currency);
+        return _buildAmountInput(theme, currency, l10n);
       case VoiceStep.askingAccount:
-        return _buildAccountSelector(theme, accounts);
+        return _buildAccountSelector(theme, accounts, l10n);
       case VoiceStep.askingDate:
-        return _buildDateSelector(theme, date);
+        return _buildDateSelector(theme, date, l10n);
       case VoiceStep.askingCategory:
-        return _buildCategorySelector(theme, categories);
+        return _buildCategorySelector(theme, categories, l10n);
       case VoiceStep.confirm:
-        return _buildConfirmation(theme, account, category, amount, date);
+        _controller.setConfirmationText(
+          _summaryText(account, category, amount, date, l10n),
+        );
+        return _buildConfirmation(theme, account, category, amount, date, l10n);
       case VoiceStep.saving:
-        return _buildSaving(theme);
+        return _buildSaving(theme, l10n);
       case VoiceStep.success:
-        return _buildSuccess(theme);
+        return _buildSuccess(theme, l10n);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildAmountInput(ThemeData theme, String currency) {
+  Widget _buildAmountInput(
+    ThemeData theme,
+    String currency,
+    AppLocalizations l10n,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Digite o valor", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceAmountLabel, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppSpacing.sm),
         TextField(
           controller: _amountController,
@@ -341,13 +385,17 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
             hintText: "0,00",
             prefixText: currency == "BRL" ? "R\$ " : "$currency ",
           ),
-          onSubmitted: (_) => _handleAmountSubmit(),
+          onSubmitted: (_) => _handleAmountSubmit(l10n),
         ),
       ],
     );
   }
 
-  Widget _buildAccountSelector(ThemeData theme, List<Account> accounts) {
+  Widget _buildAccountSelector(
+    ThemeData theme,
+    List<Account> accounts,
+    AppLocalizations l10n,
+  ) {
     final options = _controller.accountMatches.isNotEmpty
         ? _controller.accountMatches
         : accounts;
@@ -356,7 +404,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Escolha a conta", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceAccountLabel, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppSpacing.sm),
         ...visible.map(
           (account) => ListTile(
@@ -370,37 +418,41 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton(
-              onPressed: () => _showAccountPicker(accounts),
-              child: const Text("Ver todas"),
+              onPressed: () => _showAccountPicker(accounts, l10n),
+              child: Text(l10n.voiceAccountAll),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildDateSelector(ThemeData theme, DateTime? date) {
+  Widget _buildDateSelector(
+    ThemeData theme,
+    DateTime? date,
+    AppLocalizations l10n,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Quando foi?", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceDateLabel, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: AppSpacing.sm,
           children: [
             ChoiceChip(
-              label: const Text("Hoje"),
+              label: Text(l10n.voiceDateToday),
               selected: _isToday(date),
               onSelected: (_) => _controller.setDate(DateTime.now()),
             ),
             ChoiceChip(
-              label: const Text("Ontem"),
+              label: Text(l10n.voiceDateYesterday),
               selected: _isYesterday(date),
               onSelected: (_) => _controller.setDate(
                 DateTime.now().subtract(const Duration(days: 1)),
               ),
             ),
             ChoiceChip(
-              label: const Text("Outro dia"),
+              label: Text(l10n.voiceDateOther),
               selected: date != null && !_isToday(date) && !_isYesterday(date),
               onSelected: (_) => _pickDate(),
             ),
@@ -410,7 +462,11 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     );
   }
 
-  Widget _buildCategorySelector(ThemeData theme, List<Category> categories) {
+  Widget _buildCategorySelector(
+    ThemeData theme,
+    List<Category> categories,
+    AppLocalizations l10n,
+  ) {
     final options = categories
         .where((category) => category.kind == "expense")
         .toList();
@@ -424,7 +480,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Escolha a categoria", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceCategoryLabel, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: AppSpacing.sm,
@@ -444,15 +500,15 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
             padding: const EdgeInsets.only(top: AppSpacing.sm),
             child: TextButton(
               onPressed: () => _controller.setCategory(fallback),
-              child: const Text("Sem categoria (Outros)"),
+              child: Text(l10n.voiceCategoryUncategorized),
             ),
           ),
         if (options.length > visible.length)
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton(
-              onPressed: () => _showCategoryPicker(options),
-              child: const Text("Ver todas"),
+              onPressed: () => _showCategoryPicker(options, l10n),
+              child: Text(l10n.voiceCategoryAll),
             ),
           ),
       ],
@@ -465,14 +521,15 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     Category? category,
     double? amount,
     DateTime? date,
+    AppLocalizations l10n,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Confirmacao", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceConfirmTitle, style: theme.textTheme.bodyMedium),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          _summaryText(account, category, amount, date),
+          _summaryText(account, category, amount, date, l10n),
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -482,13 +539,13 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
             _controller.jumpToStep(VoiceStep.askingAmount);
           },
           icon: const Icon(Icons.edit),
-          label: const Text("Editar"),
+          label: Text(l10n.voiceEditButton),
         ),
       ],
     );
   }
 
-  Widget _buildSaving(ThemeData theme) {
+  Widget _buildSaving(ThemeData theme, AppLocalizations l10n) {
     return Row(
       children: [
         const SizedBox(
@@ -497,17 +554,17 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
         const SizedBox(width: AppSpacing.sm),
-        Text("Salvando...", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceSavingLabel, style: theme.textTheme.bodyMedium),
       ],
     );
   }
 
-  Widget _buildSuccess(ThemeData theme) {
+  Widget _buildSuccess(ThemeData theme, AppLocalizations l10n) {
     return Row(
       children: [
         const Icon(Icons.check_circle, color: AppColors.success),
         const SizedBox(width: AppSpacing.sm),
-        Text("Registrado", style: theme.textTheme.bodyMedium),
+        Text(l10n.voiceSuccessLabel, style: theme.textTheme.bodyMedium),
       ],
     );
   }
@@ -518,9 +575,11 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     required Category? category,
     required double? amount,
     required DateTime? date,
+    required AppLocalizations l10n,
   }) {
-    final primaryLabel = _primaryLabel(step);
-    final secondaryLabel = step == VoiceStep.success ? "Fechar" : "Cancelar";
+    final primaryLabel = _primaryLabel(step, l10n);
+    final secondaryLabel =
+        step == VoiceStep.success ? l10n.voiceSecondaryClose : l10n.voiceSecondaryCancel;
     final isSaving = step == VoiceStep.saving;
 
     return Padding(
@@ -537,6 +596,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                         category: category,
                         amount: amount,
                         date: date,
+                        l10n: l10n,
                       ),
               child: Text(primaryLabel),
             ),
@@ -557,14 +617,15 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     required Category? category,
     required double? amount,
     required DateTime? date,
+    required AppLocalizations l10n,
   }) {
     switch (step) {
       case VoiceStep.askingAmount:
-        _handleAmountSubmit();
+        _handleAmountSubmit(l10n);
         return;
       case VoiceStep.askingAccount:
         if (_controller.draft.fromAccountId == null) {
-          showStandardSnackbar(context, "Falta escolher conta de saida");
+          showStandardSnackbar(context, l10n.voiceSnackbarMissingAccount);
           return;
         }
         _controller.continueFlow();
@@ -578,13 +639,13 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
         return;
       case VoiceStep.askingCategory:
         if (_controller.draft.categoryId == null) {
-          showStandardSnackbar(context, "Falta escolher categoria");
+          showStandardSnackbar(context, l10n.voiceSnackbarMissingCategory);
           return;
         }
         _controller.continueFlow();
         return;
       case VoiceStep.confirm:
-        _saveTransaction(account, category, amount, date);
+        _saveTransaction(account, category, amount, date, l10n);
         return;
       case VoiceStep.success:
         _amountController.clear();
@@ -600,6 +661,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     Category? category,
     double? amount,
     DateTime? date,
+    AppLocalizations l10n,
   ) async {
     final fallbackCategory = _defaultCategory(
       context
@@ -611,16 +673,16 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     );
 
     if (amount == null || amount <= 0) {
-      showStandardSnackbar(context, "O valor deve ser maior que 0");
+      showStandardSnackbar(context, l10n.voiceSnackbarInvalidAmount);
       return;
     }
     if (account == null) {
-      showStandardSnackbar(context, "Falta escolher conta de saida");
+      showStandardSnackbar(context, l10n.voiceSnackbarMissingAccount);
       return;
     }
     final categoryToUse = category ?? fallbackCategory;
     if (categoryToUse == null) {
-      showStandardSnackbar(context, "Falta escolher categoria");
+      showStandardSnackbar(context, l10n.voiceSnackbarMissingCategory);
       return;
     }
 
@@ -647,7 +709,7 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
 
     if (created == null) {
       _controller.jumpToStep(VoiceStep.confirm);
-      showStandardSnackbar(context, "Erro ao salvar");
+      showStandardSnackbar(context, l10n.voiceSnackbarSaveError);
       return;
     }
 
@@ -663,10 +725,10 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     _controller.setSuccess();
   }
 
-  void _handleAmountSubmit() {
+  void _handleAmountSubmit(AppLocalizations l10n) {
     final amount = _parseAmount(_amountController.text);
     if (amount == null || amount <= 0) {
-      showStandardSnackbar(context, "Digite um valor valido");
+      showStandardSnackbar(context, l10n.voiceSnackbarAmountRequired);
       return;
     }
     _controller.setAmount(amount);
@@ -736,10 +798,10 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     return formatCurrency(amount, currency);
   }
 
-  String _formatDateLabel(DateTime? date) {
-    if (date == null) return "Data";
-    if (_isToday(date)) return "Hoje";
-    if (_isYesterday(date)) return "Ontem";
+  String _formatDateLabel(DateTime? date, AppLocalizations l10n) {
+    if (date == null) return l10n.voiceChipDate;
+    if (_isToday(date)) return l10n.voiceDateToday;
+    if (_isYesterday(date)) return l10n.voiceDateYesterday;
     return formatDate(date);
   }
 
@@ -764,40 +826,68 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     Category? category,
     double? amount,
     DateTime? date,
+    AppLocalizations l10n,
   ) {
     final safeAmount =
         amount == null ? "--" : _formatAmount(amount, account?.currency ?? "BRL");
-    final safeCategory = category?.name ?? "Sem categoria";
-    final safeAccount = account?.name ?? "Conta";
-    final safeDate = _formatDateLabel(date);
-    return "Vou registrar: $safeAmount em $safeCategory, da conta $safeAccount, $safeDate.";
+    final safeCategory = category?.name ?? l10n.voiceCategoryUncategorized;
+    final safeAccount = account?.name ?? l10n.voiceChipAccount;
+    final safeDate = _formatDateLabel(date, l10n);
+    return _controller.copy.summaryText(
+      amount: safeAmount,
+      category: safeCategory,
+      account: safeAccount,
+      date: safeDate,
+    );
   }
 
-  String _primaryLabel(VoiceStep step) {
+  String _primaryLabel(VoiceStep step, AppLocalizations l10n) {
     switch (step) {
       case VoiceStep.confirm:
-        return "Confirmar";
+        return l10n.voicePrimaryConfirm;
       case VoiceStep.saving:
-        return "Salvando";
+        return l10n.voicePrimarySaving;
       case VoiceStep.success:
-        return "Registrar outro";
+        return l10n.voicePrimaryNew;
       default:
-        return "Continuar";
+        return l10n.voicePrimaryContinue;
     }
   }
 
-  String _titleForIntent(String intent) {
+  String _titleForIntent(String intent, AppLocalizations l10n) {
     switch (intent) {
       case "income":
-        return "Registrar receita";
+        return l10n.voiceTitleIncome;
       case "transfer":
-        return "Registrar transferencia";
+        return l10n.voiceTitleTransfer;
       default:
-        return "Registrar despesa";
+        return l10n.voiceTitleExpense;
     }
   }
 
-  Future<void> _showAccountPicker(List<Account> accounts) async {
+  Locale _resolveSessionLocale({
+    required Locale deviceLocale,
+    Locale? userLocale,
+  }) {
+    final base = userLocale ?? deviceLocale;
+    final language = base.languageCode.toLowerCase();
+    final country = base.countryCode;
+    switch (language) {
+      case "es":
+        return Locale("es", country?.isNotEmpty == true ? country : "419");
+      case "en":
+        return Locale("en", country?.isNotEmpty == true ? country : "US");
+      case "pt":
+        return Locale("pt", country?.isNotEmpty == true ? country : "BR");
+      default:
+        return const Locale("pt", "BR");
+    }
+  }
+
+  Future<void> _showAccountPicker(
+    List<Account> accounts,
+    AppLocalizations l10n,
+  ) async {
     final controller = TextEditingController();
     await showModalBottomSheet(
       context: context,
@@ -818,9 +908,9 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                 children: [
                   TextField(
                     controller: controller,
-                    decoration: const InputDecoration(
-                      hintText: "Buscar conta",
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      hintText: l10n.voiceSearchAccount,
+                      prefixIcon: const Icon(Icons.search),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -850,7 +940,10 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
     controller.dispose();
   }
 
-  Future<void> _showCategoryPicker(List<Category> categories) async {
+  Future<void> _showCategoryPicker(
+    List<Category> categories,
+    AppLocalizations l10n,
+  ) async {
     final controller = TextEditingController();
     await showModalBottomSheet(
       context: context,
@@ -871,9 +964,9 @@ class _VoiceCaptureScreenState extends State<VoiceCaptureScreen>
                 children: [
                   TextField(
                     controller: controller,
-                    decoration: const InputDecoration(
-                      hintText: "Buscar categoria",
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      hintText: l10n.voiceSearchCategory,
+                      prefixIcon: const Icon(Icons.search),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),

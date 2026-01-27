@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_voice_expense_short">Registrar despesa</string>
+    <string name="shortcut_voice_expense_long">Registrar despesa por voz</string>
+    <string name="shortcut_voice_expense_disabled">Atalho indisponivel</string>
+</resources>

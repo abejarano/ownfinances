@@ -10,6 +10,7 @@ class SettingsController extends ChangeNotifier {
   String _primaryCurrency = "BRL";
   Locale? _locale;
   String? _countryCode;
+  bool _voiceAssistantEnabled = true;
   bool _isLoading = true;
 
   SettingsController(this._storage, this._repository);
@@ -17,6 +18,7 @@ class SettingsController extends ChangeNotifier {
   String get primaryCurrency => _primaryCurrency;
   Locale? get locale => _locale;
   String? get countryCode => _countryCode;
+  bool get voiceAssistantEnabled => _voiceAssistantEnabled;
   bool get isLoading => _isLoading;
 
   Future<void> load() async {
@@ -38,6 +40,11 @@ class SettingsController extends ChangeNotifier {
       final storedCountry = await _storage.readCountry();
       if (storedCountry != null && storedCountry.isNotEmpty) {
         _countryCode = storedCountry;
+      }
+
+      final storedVoiceAssistant = await _storage.readVoiceAssistantEnabled();
+      if (storedVoiceAssistant != null) {
+        _voiceAssistantEnabled = storedVoiceAssistant;
       }
     } catch (e) {
       debugPrint("Error loading settings: $e");
@@ -88,10 +95,18 @@ class SettingsController extends ChangeNotifier {
     await _updateRemote(countryCode: countryCode);
   }
 
+  Future<void> setVoiceAssistantEnabled(bool enabled) async {
+    if (_voiceAssistantEnabled == enabled) return;
+    _voiceAssistantEnabled = enabled;
+    notifyListeners();
+    await _storage.saveVoiceAssistantEnabled(enabled);
+  }
+
   Future<void> reset() async {
     _primaryCurrency = "BRL";
     _locale = null;
     _countryCode = null;
+    _voiceAssistantEnabled = true;
     _isLoading = false;
     notifyListeners();
     await _storage.clear();

@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+<shortcuts
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent android:action="android.intent.action.VIEW">
+            <url-template android:value="desquadra://voice{?feature,source}" />
+            <parameter android:name="feature" android:key="feature" />
+            <parameter android:name="source" android:key="source" />
+        </intent>
+    </capability>
+
     <shortcut
         android:shortcutId="voice_capture_expense"
         android:enabled="true"
-        android:shortcutShortLabel="Registrar despesa"
-        android:shortcutLongLabel="Registrar despesa por voz"
-        android:shortcutDisabledMessage="Atalho indisponivel">
-        <intent
-            android:action="android.intent.action.VIEW"
-            android:data="desquadra://voice?intent=expense&amp;source=assistant" />
+        android:shortcutShortLabel="@string/shortcut_voice_expense_short"
+        android:shortcutLongLabel="@string/shortcut_voice_expense_long"
+        android:shortcutDisabledMessage="@string/shortcut_voice_expense_disabled">
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
-            <parameter
-                android:name="feature"
-                android:value="voice_capture_expense" />
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/voice_capture_expense_phrases" />
+            <parameter-binding
+                android:key="source"
+                android:value="assistant" />
         </capability-binding>
     </shortcut>
 </shortcuts>

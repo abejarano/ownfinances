@@ -40,10 +40,28 @@ class SettingsStorageImpl implements SettingsStorage {
     await _storage.write(key: _countryKey, value: countryCode);
   }
 
+  static const _voiceAssistantEnabledKey = "of_voice_assistant_enabled";
+
+  @override
+  Future<bool?> readVoiceAssistantEnabled() async {
+    final raw = await _storage.read(key: _voiceAssistantEnabledKey);
+    if (raw == null) return null;
+    return raw.toLowerCase() == "true";
+  }
+
+  @override
+  Future<void> saveVoiceAssistantEnabled(bool enabled) async {
+    await _storage.write(
+      key: _voiceAssistantEnabledKey,
+      value: enabled.toString(),
+    );
+  }
+
   @override
   Future<void> clear() async {
     await _storage.delete(key: _primaryCurrencyKey);
     await _storage.delete(key: _localeKey);
     await _storage.delete(key: _countryKey);
+    await _storage.delete(key: _voiceAssistantEnabledKey);
   }
 }

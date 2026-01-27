@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_voice_expense_short">Registrar gasto</string>
+    <string name="shortcut_voice_expense_long">Registrar gasto por voz</string>
+    <string name="shortcut_voice_expense_disabled">Atajo no disponible</string>
+</resources>

@@ -13,5 +13,8 @@ abstract class SettingsStorage {
   Future<String?> readCountry();
   Future<void> saveCountry(String countryCode);
 
+  Future<bool?> readVoiceAssistantEnabled();
+  Future<void> saveVoiceAssistantEnabled(bool enabled);
+
   Future<void> clear();
 }
