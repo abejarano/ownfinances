@@ -13,6 +13,7 @@ Base: Clean Code y principios SOLID en toda la base.
 - Multi-tenant: todo filtrado por userId desde JWT.
 - Fecha de transacción es "YYYY-MM-DD" (string local) para evitar timezone bugs.
 - MVP: BRL-only para reportes (no sumar monedas distintas).
+- NO Soluciones paliativas: resolver causa raíz.
 
 ---
 

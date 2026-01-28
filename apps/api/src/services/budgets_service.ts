@@ -166,10 +166,11 @@ export class BudgetsService {
         const entries = (category.entries ?? []).map((entry) =>
           this.normalizeEntry(entry)
         )
-        const plannedTotal = entries.reduce(
-          (sum, entry) => sum + entry.amount,
-          0
-        )
+        const plannedTotal: Record<string, number> = {}
+        for (const entry of entries) {
+          plannedTotal[entry.currency] =
+            (plannedTotal[entry.currency] || 0) + entry.amount
+        }
         return {
           categoryId: category.categoryId,
           plannedTotal,
@@ -182,12 +183,14 @@ export class BudgetsService {
   private normalizeEntry(entry: {
     entryId?: string
     amount: number
+    currency: string
     description?: string
     createdAt?: string | Date
   }): BudgetPlanEntry {
     return {
       entryId: entry.entryId ?? createMongoId(),
       amount: entry.amount,
+      currency: entry.currency,
       description: entry.description ?? null,
       createdAt: entry.createdAt ? new Date(entry.createdAt) : new Date(),
     }

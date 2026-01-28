@@ -23,13 +23,14 @@ const DateLikeSchema = v.union([v.string(), v.date()])
 const BudgetEntrySchema = v.strictObject({
   entryId: v.optional(v.string()),
   amount: v.pipe(v.number(), v.minValue(0)),
+  currency: v.pipe(v.string(), v.minLength(3), v.maxLength(5)),
   description: v.optional(v.string()),
   createdAt: v.optional(DateLikeSchema),
 })
 
 const BudgetCategorySchema = v.strictObject({
   categoryId: v.pipe(v.string(), v.minLength(1)),
-  plannedTotal: v.optional(v.number()),
+  plannedTotal: v.optional(v.record(v.string(), v.number())),
   entries: v.optional(v.array(BudgetEntrySchema)),
 })
 
@@ -127,9 +128,11 @@ export function validateBudgetPayload(isUpdate: boolean) {
 
 export type BudgetCategoryPlanPayload = {
   categoryId: string
+  plannedTotal?: Record<string, number>
   entries?: Array<{
     entryId?: string
     amount: number
+    currency: string
     description?: string
     createdAt?: string | Date
   }>

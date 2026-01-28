@@ -24,6 +24,8 @@ class BudgetCategoriesTab extends StatefulWidget {
   final Future<String?> Function(
     String categoryId,
     double amount,
+
+    String currency,
     String? description,
   )
   onAddEntry;
@@ -76,10 +78,11 @@ class _BudgetCategoriesTabState extends State<BudgetCategoriesTab> {
         return BudgetSmartAddModal(
           categories: widget.categories,
           primaryCurrency: widget.primaryCurrency,
-          onSubmit: (categoryId, amount, description) async {
+          onSubmit: (categoryId, amount, currency, description) async {
             final error = await widget.onAddEntry(
               categoryId,
               amount,
+              currency,
               description,
             );
             if (!mounted) return;
@@ -150,7 +153,7 @@ class _BudgetCategoriesTabState extends State<BudgetCategoriesTab> {
     double totalExpense = 0.0;
     double totalIncome = 0.0;
     for (final item in planItems) {
-      final amount = item.plan.plannedTotal;
+      final amount = item.plan.plannedTotal[widget.primaryCurrency] ?? 0.0;
       if (item.category!.kind == "income") {
         totalIncome += amount;
       } else {
@@ -257,34 +260,16 @@ class _BudgetCategoriesTabState extends State<BudgetCategoriesTab> {
                           final item = planItems[index];
                           final category = item.category!;
                           final plannedTotal = item.plan.plannedTotal;
-                          final plannedExpense = category.kind == "expense"
-                              ? plannedTotal
-                              : 0.0;
-                          final plannedIncome = category.kind == "income"
-                              ? plannedTotal
-                              : 0.0;
                           final actualByCurrency =
                               widget
                                   .summaryMap[category.id]
                                   ?.actualByCurrency ??
                               {};
-                          final actualPrimary =
-                              actualByCurrency[widget.primaryCurrency] ?? 0.0;
-                          final otherCurrencyTotals =
-                              Map<String, double>.fromEntries(
-                                actualByCurrency.entries.where(
-                                  (entry) =>
-                                      entry.key != widget.primaryCurrency &&
-                                      entry.value != 0,
-                                ),
-                              );
 
                           return BudgetPlanCategoryCard(
                             category: category,
-                            plannedExpense: plannedExpense,
-                            plannedIncome: plannedIncome,
-                            actualPrimary: actualPrimary,
-                            otherCurrencyTotals: otherCurrencyTotals,
+                            plannedTotal: plannedTotal,
+                            actualTotal: actualByCurrency,
                             primaryCurrency: widget.primaryCurrency,
                             onOpenDetails: () => _openCategoryDetail(
                               category,

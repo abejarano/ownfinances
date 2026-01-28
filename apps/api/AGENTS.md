@@ -34,6 +34,7 @@ Base: Clean Code y principios SOLID siempre.
 - PROHIBIDO: crear interfaces de repositorios propias si ya se usa el repo Mongo directamente.
 - PROHIBIDO: instanciar AggregateRoot con `new`; usar `Model.create(...)`.
 - PROHIBIDO: crear manualmente `id` del documento (Mongo lo genera).
+- PROHIBIDO: Soluciones paliativas (atacar causa raíz, no parchar síntomas).
 
 ---
 

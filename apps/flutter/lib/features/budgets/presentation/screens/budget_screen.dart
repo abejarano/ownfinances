@@ -225,10 +225,16 @@ class _BudgetViewState extends State<BudgetView> {
     };
     final plannedExpenseTotal = budgetState.planCategories
         .where((plan) => categoryKindById[plan.categoryId] == "expense")
-        .fold(0.0, (sum, plan) => sum + plan.plannedTotal);
+        .fold(
+          0.0,
+          (sum, plan) => sum + (plan.plannedTotal[primaryCurrency] ?? 0.0),
+        );
     final plannedIncomeTotal = budgetState.planCategories
         .where((plan) => categoryKindById[plan.categoryId] == "income")
-        .fold(0.0, (sum, plan) => sum + plan.plannedTotal);
+        .fold(
+          0.0,
+          (sum, plan) => sum + (plan.plannedTotal[primaryCurrency] ?? 0.0),
+        );
     final estimatedAvailable = otherCurrenciesText == null
         ? plannedIncomeTotal - plannedExpenseTotal - plannedDebtPrimary
         : null;
@@ -333,15 +339,17 @@ class _BudgetViewState extends State<BudgetView> {
                       },
                       onStartFresh: () =>
                           context.read<BudgetController>().clearPlan(),
-                      onAddEntry: (categoryId, amount, description) async {
-                        return context.read<BudgetController>().addEntry(
-                          period: period,
-                          date: date,
-                          categoryId: categoryId,
-                          amount: amount,
-                          description: description,
-                        );
-                      },
+                      onAddEntry:
+                          (categoryId, amount, currency, description) async {
+                            return context.read<BudgetController>().addEntry(
+                              period: period,
+                              date: date,
+                              categoryId: categoryId,
+                              amount: amount,
+                              currency: currency,
+                              description: description,
+                            );
+                          },
                       onRemoveEntry: (entryId) =>
                           context.read<BudgetController>().removeEntry(entryId),
                       onRemoveCategory: (categoryId) {

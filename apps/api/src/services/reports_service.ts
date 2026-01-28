@@ -66,38 +66,54 @@ export class ReportsService {
     const plannedByCategory = new Map<string, number>()
     if (budgetPrimitives?.categories) {
       for (const category of budgetPrimitives.categories) {
-        const plannedTotal =
-          category.plannedTotal ??
-          (category.entries ?? []).reduce(
+        const plannedTotalRaw = category.plannedTotal
+        let plannedTotal = 0
+
+        if (
+          plannedTotalRaw &&
+          typeof plannedTotalRaw === "object" &&
+          !Array.isArray(plannedTotalRaw)
+        ) {
+          plannedTotal = Object.values(plannedTotalRaw).reduce(
+            (sum, val) => sum + (val ?? 0),
+            0
+          )
+        } else if (typeof plannedTotalRaw === "number") {
+          plannedTotal = plannedTotalRaw
+        } else {
+          plannedTotal = (category.entries ?? []).reduce(
             (sum, entry) => sum + (entry.amount ?? 0),
             0
           )
-        plannedByCategory.set(category.categoryId, plannedTotal)
+        }
+        plannedByCategory.set(String(category.categoryId), plannedTotal)
       }
     }
 
     const actualByCategory = new Map<string, number>()
     const actualByCategoryCurrency = new Map<string, Map<string, number>>()
     for (const row of sums) {
+      const catId = String(row.categoryId)
       actualByCategory.set(
-        row.categoryId,
-        (actualByCategory.get(row.categoryId) ?? 0) + row.total
+        catId,
+        (actualByCategory.get(catId) ?? 0) + row.total
       )
       const categoryCurrencies =
-        actualByCategoryCurrency.get(row.categoryId) ?? new Map()
+        actualByCategoryCurrency.get(catId) ?? new Map()
       categoryCurrencies.set(
         row.currency,
         (categoryCurrencies.get(row.currency) ?? 0) + row.total
       )
-      actualByCategoryCurrency.set(row.categoryId, categoryCurrencies)
+      actualByCategoryCurrency.set(catId, categoryCurrencies)
     }
 
     const byCategory = categories.map((category) => {
-      const planned = plannedByCategory.get(category.categoryId) ?? 0
-      const actual = actualByCategory.get(category.categoryId) ?? 0
+      const catId = String(category.categoryId)
+      const planned = plannedByCategory.get(catId) ?? 0
+      const actual = actualByCategory.get(catId) ?? 0
       const remaining = planned - actual
       const progressPct = planned > 0 ? (actual / planned) * 100 : 0
-      const currencyTotals = actualByCategoryCurrency.get(category.categoryId)
+      const currencyTotals = actualByCategoryCurrency.get(catId)
       const actualByCurrency = currencyTotals
         ? Object.fromEntries(currencyTotals.entries())
         : {}

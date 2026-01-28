@@ -10,6 +10,7 @@ Meta: consistencia visual + arquitectura limpia + UX absurdamente fácil.
 - Nada de lógica de negocio en Widgets
 - pt-BR copy (según docs/ux.md)
 - Widgets reusables, pequenos y con un solo objetivo
+- Soluciones paliativas PROHIBIDAS (atacar causa raíz)
 
 ---
 

@@ -1,6 +1,10 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
+import "package:ownfinances/core/presentation/components/money_input.dart";
+import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
+import "package:ownfinances/core/utils/currency_utils.dart";
+import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/categories/domain/entities/category.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
 
@@ -10,6 +14,7 @@ class BudgetSmartAddModal extends StatefulWidget {
   final Future<void> Function(
     String categoryId,
     double amount,
+    String currency,
     String? description,
   )
   onSubmit;
@@ -30,7 +35,15 @@ class _BudgetSmartAddModalState extends State<BudgetSmartAddModal> {
   final _descriptionController = TextEditingController();
   String _selectedType = "expense";
   String? _selectedCategoryId;
+  late String _selectedCurrency;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCurrency = widget.primaryCurrency;
+    _amountController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -47,8 +60,7 @@ class _BudgetSmartAddModalState extends State<BudgetSmartAddModal> {
   }
 
   Future<void> _handleSubmit() async {
-    final amount =
-        double.tryParse(_amountController.text.replaceAll(",", "")) ?? 0.0;
+    final amount = parseMoney(_amountController.text);
     if (_selectedCategoryId == null || amount <= 0) return;
 
     setState(() {
@@ -59,6 +71,7 @@ class _BudgetSmartAddModalState extends State<BudgetSmartAddModal> {
       await widget.onSubmit(
         _selectedCategoryId!,
         amount,
+        _selectedCurrency,
         _descriptionController.text.isEmpty
             ? null
             : _descriptionController.text,
@@ -69,6 +82,7 @@ class _BudgetSmartAddModalState extends State<BudgetSmartAddModal> {
         setState(() {
           _isLoading = false;
         });
+        showStandardSnackbar(context, e.toString());
       }
     }
   }
@@ -80,7 +94,7 @@ class _BudgetSmartAddModalState extends State<BudgetSmartAddModal> {
         widget.categories.where((c) => c.kind == _selectedType).toList()
           ..sort((a, b) => a.name.compareTo(b.name));
 
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
+    final amount = parseMoney(_amountController.text);
     final isValid = _selectedCategoryId != null && amount > 0;
 
     return Padding(
@@ -154,33 +168,51 @@ class _BudgetSmartAddModalState extends State<BudgetSmartAddModal> {
           ),
           const SizedBox(height: AppSpacing.md),
           // Amount and Description
+          // Amount and Currency Row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                flex: 4,
-                child: TextFormField(
+                flex: 2,
+                child: MoneyInput(
                   controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText:
-                        "${l10n.budgetsPlanAmountLabel} (${widget.primaryCurrency})",
-                  ),
-                  onChanged: (_) => setState(() {}),
+                  label: l10n.budgetsPlanAmountLabel,
+                  currencySymbol: _selectedCurrency,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
-                flex: 6,
-                child: TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    labelText: l10n.budgetsPlanDescriptionLabel,
+                flex: 1,
+                child: DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: "Moneda",
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 16,
+                    ),
                   ),
+                  value: _selectedCurrency,
+                  items: CurrencyUtils.commonCurrencies.map((c) {
+                    return DropdownMenuItem(value: c, child: Text(c));
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedCurrency = value;
+                      });
+                    }
+                  },
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Description Row
+          TextFormField(
+            controller: _descriptionController,
+            decoration: InputDecoration(
+              labelText: l10n.budgetsPlanDescriptionLabel,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           PrimaryButton(

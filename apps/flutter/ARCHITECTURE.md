@@ -10,6 +10,7 @@ Objetivo: consistencia por feature, testabilidad y UX ultra simple.
 - Feedback inmediato (snackbar con restante)
 - Undo real (chama restore)
 - pt-BR como idioma oficial
+- Soluciones paliativas PROHIBIDAS (resolver causa raíz)
 
 ---
 

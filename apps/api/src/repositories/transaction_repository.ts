@@ -80,15 +80,6 @@ export class TransactionMongoRepository
     return result.modifiedCount
   }
 
-  async restore(userId: string, id: string): Promise<boolean> {
-    const collection = await this.collection()
-    const result = await collection.updateOne(
-      { userId, transactionId: id },
-      { $set: { deletedAt: null } }
-    )
-    return result.modifiedCount > 0
-  }
-
   async sumByCategory(
     userId: string,
     start: Date,
@@ -116,7 +107,11 @@ export class TransactionMongoRepository
         },
         {
           $group: {
-            _id: { categoryId: "$categoryId", type: "$type", currency: "$currency" },
+            _id: {
+              categoryId: "$categoryId",
+              type: "$type",
+              currency: { $ifNull: ["$currency", "BRL"] },
+            },
             total: { $sum: "$amount" },
           },
         },
@@ -239,7 +234,7 @@ export class TransactionMongoRepository
       ])
       .toArray()
 
-    return results.length === 0 ? 0 : (results[0].total as number)
+    return results.length === 0 ? 0 : (results[0]!.total as number)
   }
 
   async confirmBatch(

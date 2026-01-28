@@ -6,13 +6,14 @@ export type BudgetPeriodType = "monthly" | "quarterly" | "semiannual" | "annual"
 export type BudgetPlanEntry = {
   entryId: string
   amount: number
+  currency: string
   description?: string | null
   createdAt: Date
 }
 
 export type BudgetCategoryPlan = {
   categoryId: string
-  plannedTotal: number
+  plannedTotal: Record<string, number>
   entries: BudgetPlanEntry[]
 }
 

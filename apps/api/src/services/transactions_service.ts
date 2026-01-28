@@ -136,10 +136,7 @@ export class TransactionsService {
     userId: string,
     id: string
   ): Promise<Result<TransactionPrimitives>> {
-    const restored = await this.transactions.restore(userId, id)
-    if (!restored) {
-      return { error: "Transacao nao encontrada", status: 404 }
-    }
+    
     const updated = await this.transactions.one({ userId, transactionId: id })
     if (!updated) {
       return { error: "Transacao nao encontrada", status: 404 }

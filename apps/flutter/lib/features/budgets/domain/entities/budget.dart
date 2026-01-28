@@ -1,12 +1,14 @@
 class BudgetPlanEntry {
   final String id;
   final double amount;
+  final String currency;
   final String? description;
   final DateTime createdAt;
 
   const BudgetPlanEntry({
     required this.id,
     required this.amount,
+    required this.currency,
     required this.createdAt,
     this.description,
   });
@@ -15,6 +17,8 @@ class BudgetPlanEntry {
     return BudgetPlanEntry(
       id: json["entryId"] as String,
       amount: (json["amount"] as num?)?.toDouble() ?? 0,
+      currency:
+          json["currency"] as String? ?? "BRL", // Default fallback if missing
       description: json["description"] as String?,
       createdAt: json["createdAt"] != null
           ? DateTime.parse(json["createdAt"] as String)
@@ -25,6 +29,7 @@ class BudgetPlanEntry {
   Map<String, dynamic> toJson() => {
     "entryId": id,
     "amount": amount,
+    "currency": currency,
     "description": description,
     "createdAt": createdAt.toIso8601String(),
   };
@@ -32,7 +37,7 @@ class BudgetPlanEntry {
 
 class BudgetCategoryPlan {
   final String categoryId;
-  final double plannedTotal;
+  final Map<String, double> plannedTotal;
   final List<BudgetPlanEntry> entries;
 
   const BudgetCategoryPlan({
@@ -44,7 +49,11 @@ class BudgetCategoryPlan {
   factory BudgetCategoryPlan.fromJson(Map<String, dynamic> json) {
     return BudgetCategoryPlan(
       categoryId: json["categoryId"] as String,
-      plannedTotal: (json["plannedTotal"] as num?)?.toDouble() ?? 0,
+      plannedTotal:
+          (json["plannedTotal"] as Map<String, dynamic>?)?.map(
+            (key, value) => MapEntry(key, (value as num).toDouble()),
+          ) ??
+          {},
       entries: (json["entries"] as List<dynamic>? ?? [])
           .map((item) => BudgetPlanEntry.fromJson(item as Map<String, dynamic>))
           .toList(),
@@ -62,10 +71,7 @@ class BudgetDebtPayment {
   final String debtId;
   final double plannedAmount;
 
-  const BudgetDebtPayment({
-    required this.debtId,
-    required this.plannedAmount,
-  });
+  const BudgetDebtPayment({required this.debtId, required this.plannedAmount});
 
   factory BudgetDebtPayment.fromJson(Map<String, dynamic> json) {
     return BudgetDebtPayment(
@@ -105,16 +111,12 @@ class Budget {
       endDate: DateTime.parse(json["endDate"] as String),
       categories: (json["categories"] as List<dynamic>? ?? [])
           .map(
-            (item) => BudgetCategoryPlan.fromJson(
-              item as Map<String, dynamic>,
-            ),
+            (item) => BudgetCategoryPlan.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
       debtPayments: (json["debtPayments"] as List<dynamic>? ?? [])
           .map(
-            (item) => BudgetDebtPayment.fromJson(
-              item as Map<String, dynamic>,
-            ),
+            (item) => BudgetDebtPayment.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
     );

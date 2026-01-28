@@ -62,6 +62,7 @@ class BudgetController extends ChangeNotifier {
     required DateTime date,
     required String categoryId,
     required double amount,
+    required String currency,
     String? description,
   }) async {
     if (amount <= 0) return null;
@@ -69,6 +70,7 @@ class BudgetController extends ChangeNotifier {
     final entry = BudgetPlanEntry(
       id: _newEntryId(),
       amount: amount,
+      currency: currency,
       description: description?.trim().isEmpty == true
           ? null
           : description?.trim(),
@@ -91,7 +93,7 @@ class BudgetController extends ChangeNotifier {
       nextCategories.add(
         BudgetCategoryPlan(
           categoryId: categoryId,
-          plannedTotal: amount,
+          plannedTotal: {currency: amount},
           entries: [entry],
         ),
       );
@@ -284,7 +286,11 @@ class BudgetController extends ChangeNotifier {
     BudgetCategoryPlan category,
     List<BudgetPlanEntry> entries,
   ) {
-    final plannedTotal = entries.fold(0.0, (sum, entry) => sum + entry.amount);
+    final plannedTotal = <String, double>{};
+    for (final entry in entries) {
+      plannedTotal[entry.currency] =
+          (plannedTotal[entry.currency] ?? 0.0) + entry.amount;
+    }
     return BudgetCategoryPlan(
       categoryId: category.categoryId,
       plannedTotal: plannedTotal,
