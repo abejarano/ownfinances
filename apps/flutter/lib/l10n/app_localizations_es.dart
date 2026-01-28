@@ -885,7 +885,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsSaveCategoriesButton => 'Guardar plan del mes';
 
   @override
-  String get budgetsSaveDebtsButton => 'Guardar pagos';
+  String get budgetsSaveDebtsButton => 'Guardar planificación de pago';
 
   @override
   String get budgetsSuccessSaved => 'Listo. Tu plan del mes fue guardado.';

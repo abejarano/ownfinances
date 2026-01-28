@@ -249,7 +249,8 @@ class _BudgetViewState extends State<BudgetView> {
         budgetState.plannedByDebt.isEmpty &&
         !hasDebtEdits;
     final isOnboarding = budgetState.budget == null;
-    final showSave = budgetState.hasChanges || hasDebtEdits;
+    final canSave = budgetState.hasChanges || hasDebtEdits;
+    const showSave = true;
 
     Future<String?> saveBudget({required bool showSuccess}) async {
       for (final entry in _debtControllers.entries) {
@@ -365,6 +366,7 @@ class _BudgetViewState extends State<BudgetView> {
                       },
                       onSave: () => saveBudget(showSuccess: true),
                       onSaveEntry: () => saveBudget(showSuccess: false),
+                      canSave: canSave,
                       showSave: showSave,
                     ),
                     BudgetDebtsTab(
@@ -384,7 +386,9 @@ class _BudgetViewState extends State<BudgetView> {
                         );
                       },
                       onSave: () => saveBudget(showSuccess: true),
+                      canSave: canSave,
                       showSave: showSave,
+                      onDebtInputChange: () => setState(() {}),
                     ),
                     BudgetSummaryTab(
                       plannedExpense: plannedExpenseTotal,

@@ -33,6 +33,7 @@ class BudgetCategoriesTab extends StatefulWidget {
   final void Function(String categoryId) onRemoveCategory;
   final Future<String?> Function() onSave;
   final Future<String?> Function() onSaveEntry;
+  final bool canSave;
   final bool showSave;
 
   const BudgetCategoriesTab({
@@ -51,7 +52,8 @@ class BudgetCategoriesTab extends StatefulWidget {
     required this.onRemoveCategory,
     required this.onSave,
     required this.onSaveEntry,
-    required this.showSave,
+    required this.canSave,
+    this.showSave = true,
   });
 
   @override
@@ -299,9 +301,11 @@ class _BudgetCategoriesTabState extends State<BudgetCategoriesTab> {
               top: false,
               child: PrimaryButton(
                 label: l10n.budgetsSaveCategoriesButton,
-                onPressed: () async {
-                  await widget.onSave();
-                },
+                onPressed: widget.canSave
+                    ? () async {
+                        await widget.onSave();
+                      }
+                    : null,
               ),
             ),
           ),

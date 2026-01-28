@@ -17,6 +17,7 @@ class BudgetDebtPlannedCard extends StatelessWidget {
   final String? otherCurrenciesText;
   final VoidCallback onAddDebt;
   final void Function(String debtId, double amount) onUpdatePlanned;
+  final VoidCallback? onDebtInputChange;
 
   const BudgetDebtPlannedCard({
     super.key,
@@ -29,6 +30,7 @@ class BudgetDebtPlannedCard extends StatelessWidget {
     required this.otherCurrenciesText,
     required this.onAddDebt,
     required this.onUpdatePlanned,
+    this.onDebtInputChange,
   });
 
   @override
@@ -40,10 +42,7 @@ class BudgetDebtPlannedCard extends StatelessWidget {
       final controller = controllers[debt.id];
       if (controller == null) return;
       controller.text = value > 0
-          ? formatMoney(
-              value,
-              symbol: debt.currency,
-            )
+          ? formatMoney(value, symbol: debt.currency)
           : "";
     }
 
@@ -79,10 +78,7 @@ class BudgetDebtPlannedCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   l10n.budgetsDebtPaymentNote,
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
               ],
             ),
@@ -115,26 +111,18 @@ class BudgetDebtPlannedCard extends StatelessWidget {
             Builder(
               builder: (context) {
                 final planned = plannedByDebt[debt.id] ?? 0;
-                final controller = controllers.putIfAbsent(
-                  debt.id,
-                  () => TextEditingController(
+                final controller = controllers.putIfAbsent(debt.id, () {
+                  final controller = TextEditingController(
                     text: planned > 0
-                        ? formatMoney(
-                            planned,
-                            symbol: debt.currency,
-                          )
+                        ? formatMoney(planned, symbol: debt.currency)
                         : "",
-                  ),
-                );
-                if (planned != parseMoney(controller.text)) {
-                  controller.text = planned > 0
-                      ? formatMoney(
-                          planned,
-                          symbol: debt.currency,
-                        )
-                      : "";
-                }
-
+                  );
+                  if (onDebtInputChange != null) {
+                    controller.addListener(onDebtInputChange!);
+                  }
+                  return controller;
+                });
+                // REMOVED: Conflicting sync logic that caused infinite loop with setState
                 final summary = summaries[debt.id];
                 final paid = summary?.paymentsThisMonth ?? 0;
                 String? progressText;
@@ -146,17 +134,11 @@ class BudgetDebtPlannedCard extends StatelessWidget {
                   );
                   if (paid > planned) {
                     progressHelper = l10n.budgetsDebtOverpaid(
-                      formatCurrency(
-                        paid - planned,
-                        debt.currency,
-                      ),
+                      formatCurrency(paid - planned, debt.currency),
                     );
                   } else if (paid < planned) {
                     progressHelper = l10n.budgetsDebtRemaining(
-                      formatCurrency(
-                        planned - paid,
-                        debt.currency,
-                      ),
+                      formatCurrency(planned - paid, debt.currency),
                     );
                   }
                 }
@@ -169,8 +151,8 @@ class BudgetDebtPlannedCard extends StatelessWidget {
                 }
                 final overpayWarning =
                     debt.amountDue > 0 && planned > debt.amountDue
-                        ? l10n.budgetsDebtOverpayWarning
-                        : null;
+                    ? l10n.budgetsDebtOverpayWarning
+                    : null;
 
                 final dueLabel = debt.dueDay != null
                     ? l10n.debtsDueDayLabel(debt.dueDay!)
@@ -228,18 +210,14 @@ class BudgetDebtPlannedCard extends StatelessWidget {
                               if (debt.minimumPayment != null &&
                                   debt.minimumPayment! > 0)
                                 TextButton(
-                                  onPressed: () => updatePlanned(
-                                    debt,
-                                    debt.minimumPayment!,
-                                  ),
+                                  onPressed: () =>
+                                      updatePlanned(debt, debt.minimumPayment!),
                                   child: Text(l10n.budgetsDebtQuickMin),
                                 ),
                               if (debt.amountDue > 0)
                                 TextButton(
-                                  onPressed: () => updatePlanned(
-                                    debt,
-                                    debt.amountDue,
-                                  ),
+                                  onPressed: () =>
+                                      updatePlanned(debt, debt.amountDue),
                                   child: Text(l10n.budgetsDebtQuickTotal),
                                 ),
                             ],
@@ -292,8 +270,8 @@ class BudgetDebtPlannedCard extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   for (final debt in debts) {
-                    final suggested = debt.minimumPayment != null &&
-                            debt.minimumPayment! > 0
+                    final suggested =
+                        debt.minimumPayment != null && debt.minimumPayment! > 0
                         ? debt.minimumPayment!
                         : (debt.amountDue > 0 ? debt.amountDue : 0.0);
                     updatePlanned(debt, suggested);

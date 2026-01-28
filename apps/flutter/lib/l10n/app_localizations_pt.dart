@@ -886,7 +886,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get budgetsSaveCategoriesButton => 'Salvar plano do mês';
 
   @override
-  String get budgetsSaveDebtsButton => 'Salvar pagamentos';
+  String get budgetsSaveDebtsButton => 'Salvar planejamento de pagamento';
 
   @override
   String get budgetsSuccessSaved => 'Pronto. Seu plano do mês foi salvo.';

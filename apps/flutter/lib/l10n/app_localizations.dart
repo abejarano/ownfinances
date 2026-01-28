@@ -1721,7 +1721,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsSaveDebtsButton.
   ///
   /// In pt, this message translates to:
-  /// **'Salvar pagamentos'**
+  /// **'Salvar planejamento de pagamento'**
   String get budgetsSaveDebtsButton;
 
   /// No description provided for @budgetsSuccessSaved.

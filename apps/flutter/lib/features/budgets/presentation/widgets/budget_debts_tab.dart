@@ -18,7 +18,9 @@ class BudgetDebtsTab extends StatelessWidget {
   final VoidCallback onAddDebt;
   final void Function(String debtId, double amount) onUpdatePlanned;
   final Future<String?> Function() onSave;
+  final bool canSave;
   final bool showSave;
+  final VoidCallback? onDebtInputChange;
 
   const BudgetDebtsTab({
     super.key,
@@ -33,7 +35,9 @@ class BudgetDebtsTab extends StatelessWidget {
     required this.onAddDebt,
     required this.onUpdatePlanned,
     required this.onSave,
-    required this.showSave,
+    required this.canSave,
+    this.showSave = true,
+    this.onDebtInputChange,
   });
 
   @override
@@ -61,6 +65,7 @@ class BudgetDebtsTab extends StatelessWidget {
                 otherCurrenciesText: otherCurrenciesText,
                 onAddDebt: onAddDebt,
                 onUpdatePlanned: onUpdatePlanned,
+                onDebtInputChange: onDebtInputChange,
               ),
           ],
         ),
@@ -73,9 +78,11 @@ class BudgetDebtsTab extends StatelessWidget {
               top: false,
               child: PrimaryButton(
                 label: l10n.budgetsSaveDebtsButton,
-                onPressed: () async {
-                  await onSave();
-                },
+                onPressed: canSave
+                    ? () async {
+                        await onSave();
+                      }
+                    : null,
               ),
             ),
           ),

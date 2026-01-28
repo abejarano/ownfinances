@@ -305,7 +305,7 @@
   "budgetsSuccessRemoved": "Categoría eliminada del presupuesto de este mes",
   "budgetsSaveButton": "Guardar Presupuesto",
   "budgetsSaveCategoriesButton": "Guardar plan del mes",
-  "budgetsSaveDebtsButton": "Guardar pagos",
+  "budgetsSaveDebtsButton": "Guardar planificación de pago",
   "budgetsMonthSummaryTitle": "Resumen del mes",
   "budgetsMonthSummaryPlannedCategories": "Gastos planificados (categorías)",
   "budgetsMonthSummaryPlannedDebts": "Pagos de deudas planificados",

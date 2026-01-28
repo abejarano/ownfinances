@@ -306,7 +306,7 @@
   "budgetsRemoveCategory": "Remove from month",
   "budgetsSaveButton": "Save Budget",
   "budgetsSaveCategoriesButton": "Save monthly plan",
-  "budgetsSaveDebtsButton": "Save payments",
+  "budgetsSaveDebtsButton": "Save payment plan",
   "budgetsSuccessSaved": "All set. Your month plan was saved.",
   "budgetsMonthSummaryTitle": "Month summary",
   "budgetsMonthSummaryPlannedCategories": "Planned spending (categories)",
