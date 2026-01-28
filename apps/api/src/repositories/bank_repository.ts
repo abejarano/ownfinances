@@ -31,7 +31,7 @@ export class BankMongoRepository
   async banks(country?: string): Promise<Bank[]> {
     const collection = await this.collection()
     const query = country ? { country } : {}
-    const banks = await collection.find(query).toArray()
+    const banks = await collection.find(query).sort({ name: 1 }).toArray()
 
     return banks.map((b: any) => (b.toPrimitives ? b.toPrimitives() : b))
   }
