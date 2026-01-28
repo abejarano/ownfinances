@@ -1,8 +1,10 @@
+/**
+ * @param db {import('mongodb').Db}
+ * @param client {import('mongodb').MongoClient}
+ * @returns {Promise<void>}
+ */
 
-import { MongoClient } from "mongodb";
-import { createMongoId } from "../src/models/shared/mongo_id";
-import { MongoClientFactory } from "@abejarano/ts-mongodb-criteria";
-
+import crypto from "node:crypto"
 
 const banks = [
   // BR
@@ -52,42 +54,44 @@ const banks = [
   { name: "Davivienda", code: "CO03", country: "CO" },
   { name: "BBVA Colombia", code: "CO04", country: "CO" },
   { name: "Banco de Occidente", code: "CO05", country: "CO" },
-];
+]
 
-async function seed() {
-  
-  const client = await MongoClientFactory.createClient()
-  
-  try {
-    
-    const db = client.db(process.env.MONGO_DB);
-    const col = db.collection("banks");
+export const up = async (db, client) => {
+  // TODO write your migration here.
+  // See https://github.com/seppevs/migrate-mongo/#creating-a-new-migration-script
+  // Example:
+  // await db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: true}});
 
-    console.log("Clearing existing banks...");
-    await col.deleteMany({});
+  const col = db.collection("banks")
 
-    console.log("Inserting banks...");
-    const docs = banks.map(b => ({
-        bankId: createMongoId(),
-        ...b,
-        isActive: true,
-        logoUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    }));
+  console.log("Clearing existing banks...")
+  await col.deleteMany({})
 
-    await col.insertMany(docs);
-    console.log(`Inserted ${docs.length} banks.`);
+  console.log("Inserting banks...")
+  const docs = banks.map((b) => ({
+    bankId: crypto.randomBytes(12).toString("hex"),
+    ...b,
+    isActive: true,
+    logoUrl: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
 
-    // Indexes
-    await col.createIndex({ country: 1 });
-    await col.createIndex({ code: 1, country: 1 }, { unique: true });
+  await col.insertMany(docs)
+  console.log(`Inserted ${docs.length} banks.`)
 
-  } catch (e) {
-    console.error(e);
-  } finally {
-    await client.close();
-  }
+  // Indexes
+  await col.createIndex({ country: 1 })
+  await col.createIndex({ code: 1, country: 1 }, { unique: true })
 }
 
-seed();
+/**
+ * @param db {import('mongodb').Db}
+ * @param client {import('mongodb').MongoClient}
+ * @returns {Promise<void>}
+ */
+export const down = async (db, client) => {
+  // TODO write the statements to rollback your migration (if possible)
+  // Example:
+  // await db.collection('albums').updateOne({artist: 'The Beatles'}, {$set: {blacklisted: false}});
+}
