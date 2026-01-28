@@ -1,19 +1,60 @@
-class BudgetLine {
+class BudgetPlanEntry {
+  final String id;
+  final double amount;
+  final String? description;
+  final DateTime createdAt;
+
+  const BudgetPlanEntry({
+    required this.id,
+    required this.amount,
+    required this.createdAt,
+    this.description,
+  });
+
+  factory BudgetPlanEntry.fromJson(Map<String, dynamic> json) {
+    return BudgetPlanEntry(
+      id: json["entryId"] as String,
+      amount: (json["amount"] as num?)?.toDouble() ?? 0,
+      description: json["description"] as String?,
+      createdAt: json["createdAt"] != null
+          ? DateTime.parse(json["createdAt"] as String)
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "entryId": id,
+    "amount": amount,
+    "description": description,
+    "createdAt": createdAt.toIso8601String(),
+  };
+}
+
+class BudgetCategoryPlan {
   final String categoryId;
-  final double plannedAmount;
+  final double plannedTotal;
+  final List<BudgetPlanEntry> entries;
 
-  const BudgetLine({required this.categoryId, required this.plannedAmount});
+  const BudgetCategoryPlan({
+    required this.categoryId,
+    required this.plannedTotal,
+    required this.entries,
+  });
 
-  factory BudgetLine.fromJson(Map<String, dynamic> json) {
-    return BudgetLine(
+  factory BudgetCategoryPlan.fromJson(Map<String, dynamic> json) {
+    return BudgetCategoryPlan(
       categoryId: json["categoryId"] as String,
-      plannedAmount: (json["plannedAmount"] as num?)?.toDouble() ?? 0,
+      plannedTotal: (json["plannedTotal"] as num?)?.toDouble() ?? 0,
+      entries: (json["entries"] as List<dynamic>? ?? [])
+          .map((item) => BudgetPlanEntry.fromJson(item as Map<String, dynamic>))
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
     "categoryId": categoryId,
-    "plannedAmount": plannedAmount,
+    "plannedTotal": plannedTotal,
+    "entries": entries.map((entry) => entry.toJson()).toList(),
   };
 }
 
@@ -44,7 +85,7 @@ class Budget {
   final String periodType;
   final DateTime startDate;
   final DateTime endDate;
-  final List<BudgetLine> lines;
+  final List<BudgetCategoryPlan> categories;
   final List<BudgetDebtPayment> debtPayments;
 
   const Budget({
@@ -52,7 +93,7 @@ class Budget {
     required this.periodType,
     required this.startDate,
     required this.endDate,
-    required this.lines,
+    required this.categories,
     required this.debtPayments,
   });
 
@@ -62,8 +103,12 @@ class Budget {
       periodType: json["periodType"] as String,
       startDate: DateTime.parse(json["startDate"] as String),
       endDate: DateTime.parse(json["endDate"] as String),
-      lines: (json["lines"] as List<dynamic>? ?? [])
-          .map((item) => BudgetLine.fromJson(item as Map<String, dynamic>))
+      categories: (json["categories"] as List<dynamic>? ?? [])
+          .map(
+            (item) => BudgetCategoryPlan.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
           .toList(),
       debtPayments: (json["debtPayments"] as List<dynamic>? ?? [])
           .map(

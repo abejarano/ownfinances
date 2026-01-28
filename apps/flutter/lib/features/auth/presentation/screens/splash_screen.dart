@@ -22,13 +22,25 @@ class _SplashScreenState extends State<SplashScreen> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    _bootstrap();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _bootstrap();
+      }
+    });
+  }
+
+  void _safeGo(String path) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.go(path);
+      }
+    });
   }
 
   Future<void> _bootstrap() async {
     final auth = context.read<AuthController>();
     if (auth.state.status != AuthStatus.authenticated) {
-      if (mounted) context.go("/login");
+      _safeGo("/login");
       return;
     }
 
@@ -56,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
           await onboarding.complete();
         }
         if (!mounted) return;
-        context.go("/dashboard");
+        _safeGo("/dashboard");
         return;
       }
       if (onboarding.completed) {
@@ -66,7 +78,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // If API fails, fall back to explicit onboarding.
     }
 
-    if (mounted) context.go("/onboarding");
+    _safeGo("/onboarding");
   }
 
   @override

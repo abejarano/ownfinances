@@ -4,17 +4,13 @@ import type {
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import type {
-  BudgetDebtPayment,
-  BudgetLine,
-  BudgetPeriodType,
-} from "../../models/budget"
+import type { BudgetDebtPayment, BudgetPeriodType } from "../../models/budget"
 
 export type BudgetCreatePayload = {
   periodType: BudgetPeriodType
   startDate: string | Date
   endDate: string | Date
-  lines?: BudgetLine[]
+  categories?: BudgetCategoryPlanPayload[]
   debtPayments?: BudgetDebtPayment[]
 }
 
@@ -24,9 +20,17 @@ const BudgetPeriodSchema = v.picklist(["monthly"])
 
 const DateLikeSchema = v.union([v.string(), v.date()])
 
-const BudgetLineSchema = v.strictObject({
+const BudgetEntrySchema = v.strictObject({
+  entryId: v.optional(v.string()),
+  amount: v.pipe(v.number(), v.minValue(0)),
+  description: v.optional(v.string()),
+  createdAt: v.optional(DateLikeSchema),
+})
+
+const BudgetCategorySchema = v.strictObject({
   categoryId: v.pipe(v.string(), v.minLength(1)),
-  plannedAmount: v.pipe(v.number(), v.minValue(0)),
+  plannedTotal: v.optional(v.number()),
+  entries: v.optional(v.array(BudgetEntrySchema)),
 })
 
 const BudgetDebtPaymentSchema = v.strictObject({
@@ -38,7 +42,7 @@ const BudgetBaseSchema = v.strictObject({
   periodType: BudgetPeriodSchema,
   startDate: DateLikeSchema,
   endDate: DateLikeSchema,
-  lines: v.optional(v.array(BudgetLineSchema)),
+  categories: v.optional(v.array(BudgetCategorySchema)),
   debtPayments: v.optional(v.array(BudgetDebtPaymentSchema)),
 })
 
@@ -51,7 +55,20 @@ export function validateBudgetPayload(isUpdate: boolean) {
     res: ServerResponse,
     next: NextFunction
   ): Promise<void> => {
-    const payload = req.body
+    const payload = req.body as any
+
+    // Pre-process payload to handle null description coming from Flutter
+    if (payload?.categories && Array.isArray(payload.categories)) {
+      for (const category of payload.categories) {
+        if (category.entries && Array.isArray(category.entries)) {
+          for (const entry of category.entries) {
+            if (entry.description === null) {
+              entry.description = undefined
+            }
+          }
+        }
+      }
+    }
 
     const schema = isUpdate ? BudgetUpdateSchema : BudgetCreateSchema
     const result = v.safeParse(schema, payload)
@@ -66,24 +83,26 @@ export function validateBudgetPayload(isUpdate: boolean) {
 
       if (!result.issues)
         return res.status(422).send({ error: "Payload invalido" })
-      const flattened = v.flatten(result.issues)
-
-      if (flattened.nested?.periodType)
+      
+      const firstIssue = result.issues[0]
+      const path = firstIssue.path?.map((p) => p.key).join(".")
+      
+      if (path?.includes("periodType"))
         return res.status(422).send({ error: "Periodo invalido" })
-      if (flattened.nested?.startDate)
+      if (path?.includes("startDate"))
         return res.status(422).send({ error: "Falta la fecha de inicio" })
-      if (flattened.nested?.endDate)
+      if (path?.includes("endDate"))
         return res.status(422).send({ error: "Falta la fecha de fin" })
-      if (flattened.nested?.lines)
+      if (path?.includes("categories"))
         return res
           .status(422)
-          .send({ error: "Lineas invalidas en el presupuesto" })
-      if (flattened.nested?.debtPayments)
+          .send({ error: `Categorias inválidas: ${firstIssue.message}` })
+      if (path?.includes("debtPayments"))
         return res
           .status(422)
-          .send({ error: "Pagos de deuda inválidos" })
+          .send({ error: `Pagos de deuda inválidos: ${firstIssue.message}` })
 
-      return res.status(422).send({ error: "Payload invalido" })
+      return res.status(422).send({ error: `Payload invalido: ${firstIssue.message} en ${path}` })
     }
 
     const maybePayload = payload as {
@@ -104,4 +123,14 @@ export function validateBudgetPayload(isUpdate: boolean) {
 
     return next()
   }
+}
+
+export type BudgetCategoryPlanPayload = {
+  categoryId: string
+  entries?: Array<{
+    entryId?: string
+    amount: number
+    description?: string
+    createdAt?: string | Date
+  }>
 }

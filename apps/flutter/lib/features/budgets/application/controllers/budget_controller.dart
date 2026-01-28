@@ -1,8 +1,9 @@
 import "package:flutter/material.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
 import "package:ownfinances/features/budgets/application/state/budget_state.dart";
-import "package:ownfinances/features/budgets/domain/entities/budget.dart";
 import "package:ownfinances/features/budgets/data/repositories/budget_repository.dart";
+import "package:ownfinances/features/budgets/domain/entities/budget.dart";
+import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
 
 class BudgetController extends ChangeNotifier {
   final BudgetRepository repository;
@@ -23,62 +24,211 @@ class BudgetController extends ChangeNotifier {
   Future<void> load({required String period, required DateTime date}) async {
     _loadingDate = date;
 
-    // Clear state completely before loading to prevent stale data
     _state = BudgetState.initial.copyWith(isLoading: true);
     notifyListeners();
     try {
       final current = await repository.current(period: period, date: date);
 
-      // If another load started for a different date, ignore this result
       if (_loadingDate != date) return;
 
-      final planned = <String, double>{};
       final plannedDebts = <String, double>{};
-      if (current.budget != null) {
-        for (final line in current.budget!.lines) {
-          planned[line.categoryId] = line.plannedAmount;
-        }
-        for (final payment in current.budget!.debtPayments) {
+      final budget = current.budget;
+      if (budget != null) {
+        for (final payment in budget.debtPayments) {
           plannedDebts[payment.debtId] = payment.plannedAmount;
         }
       }
+
       _state = _state.copyWith(
         isLoading: false,
-        budget: current.budget,
+        budget: budget,
         range: current.range,
-        plannedByCategory: planned,
+        planCategories: budget?.categories ?? const [],
         plannedByDebt: plannedDebts,
+        hasChanges: false,
+        snapshotDismissed: false,
+        overwriteSnapshot: true,
+        snapshot: null,
       );
+      notifyListeners();
     } catch (error) {
       _state = _state.copyWith(isLoading: false, error: _message(error));
+      notifyListeners();
     }
+  }
+
+  Future<String?> addEntry({
+    required String period,
+    required DateTime date,
+    required String categoryId,
+    required double amount,
+    String? description,
+  }) async {
+    if (amount <= 0) return null;
+
+    final entry = BudgetPlanEntry(
+      id: _newEntryId(),
+      amount: amount,
+      description: description?.trim().isEmpty == true
+          ? null
+          : description?.trim(),
+      createdAt: DateTime.now(),
+    );
+
+    final nextCategories = <BudgetCategoryPlan>[];
+    var found = false;
+    for (final category in _state.planCategories) {
+      if (category.categoryId == categoryId) {
+        final updatedEntries = [...category.entries, entry];
+        nextCategories.add(_withEntries(category, updatedEntries));
+        found = true;
+      } else {
+        nextCategories.add(category);
+      }
+    }
+
+    if (!found) {
+      nextCategories.add(
+        BudgetCategoryPlan(
+          categoryId: categoryId,
+          plannedTotal: amount,
+          entries: [entry],
+        ),
+      );
+    }
+
+    // Try to save to API
+    final range = _state.range ?? _fallbackRange(period, date);
+    if (range == null) return "Periodo inválido";
+
+    try {
+      final debtPayments = _state.plannedByDebt.entries
+          .where((entry) => entry.value > 0)
+          .map(
+            (entry) => BudgetDebtPayment(
+              debtId: entry.key,
+              plannedAmount: entry.value,
+            ),
+          )
+          .toList();
+
+      final saved = await repository.save(
+        id: _state.budget?.id,
+        period: period,
+        startDate: range.start,
+        endDate: range.end,
+        categories: nextCategories,
+        debtPayments: debtPayments,
+      );
+
+      _state = _state.copyWith(
+        budget: saved,
+        range: range,
+        planCategories: nextCategories,
+        hasChanges: false, // Saved!
+        snapshotDismissed: true,
+      );
+      notifyListeners();
+      return null;
+    } catch (error) {
+      // Do not update state if failed
+      return _message(error);
+    }
+  }
+
+  void removeEntry(String entryId) {
+    final nextCategories = <BudgetCategoryPlan>[];
+    for (final category in _state.planCategories) {
+      final updatedEntries = category.entries
+          .where((entry) => entry.id != entryId)
+          .toList();
+      if (updatedEntries.isEmpty) continue;
+      nextCategories.add(_withEntries(category, updatedEntries));
+    }
+
+    _state = _state.copyWith(
+      planCategories: nextCategories,
+      hasChanges: true,
+      snapshotDismissed: true,
+    );
     notifyListeners();
   }
 
-  void updatePlanned(String categoryId, double amount) {
-    final next = Map<String, double>.from(_state.plannedByCategory);
-    next[categoryId] = amount;
-    _state = _state.copyWith(plannedByCategory: next);
+  void removeCategoryEntries(String categoryId) {
+    final nextCategories = _state.planCategories
+        .where((category) => category.categoryId != categoryId)
+        .toList();
+
+    _state = _state.copyWith(
+      planCategories: nextCategories,
+      hasChanges: true,
+      snapshotDismissed: true,
+    );
+    notifyListeners();
+  }
+
+  void clearPlan() {
+    final hadData =
+        _state.planCategories.isNotEmpty ||
+        _state.plannedByDebt.values.any((value) => value > 0) ||
+        _state.budget != null;
+    _state = _state.copyWith(
+      planCategories: const [],
+      plannedByDebt: const {},
+      snapshotDismissed: true,
+      hasChanges: hadData,
+    );
+    notifyListeners();
+  }
+
+  Future<bool> applySnapshot({
+    required String period,
+    required DateTime date,
+  }) async {
+    final snapshot = await _findSnapshot(period, date);
+    if (snapshot == null) {
+      _state = _state.copyWith(
+        snapshot: null,
+        overwriteSnapshot: true,
+        snapshotDismissed: true,
+      );
+      notifyListeners();
+      return false;
+    }
+    _state = _state.copyWith(
+      planCategories: snapshot.categories,
+      plannedByDebt: snapshot.plannedByDebt,
+      hasChanges: true,
+      snapshotDismissed: true,
+      snapshot: snapshot,
+      overwriteSnapshot: true,
+    );
+    notifyListeners();
+    return true;
+  }
+
+  void dismissSnapshot() {
+    _state = _state.copyWith(snapshotDismissed: true);
     notifyListeners();
   }
 
   void updatePlannedDebt(String debtId, double amount) {
     final next = Map<String, double>.from(_state.plannedByDebt);
     next[debtId] = amount;
-    _state = _state.copyWith(plannedByDebt: next);
+    _state = _state.copyWith(
+      plannedByDebt: next,
+      hasChanges: true,
+      snapshotDismissed: true,
+    );
     notifyListeners();
   }
 
-  Future<String?> save(String period) async {
-    if (_state.range == null) return "Periodo inválido";
+  Future<String?> save(String period, {required DateTime date}) async {
+    final range = _state.range ?? _fallbackRange(period, date);
+    if (range == null) return "Periodo inválido";
     try {
-      final lines = _state.plannedByCategory.entries
-          .map(
-            (entry) =>
-                BudgetLine(categoryId: entry.key, plannedAmount: entry.value),
-          )
-          .toList();
       final debtPayments = _state.plannedByDebt.entries
+          .where((entry) => entry.value > 0)
           .map(
             (entry) => BudgetDebtPayment(
               debtId: entry.key,
@@ -89,12 +239,12 @@ class BudgetController extends ChangeNotifier {
       final saved = await repository.save(
         id: _state.budget?.id,
         period: period,
-        startDate: _state.range!.start,
-        endDate: _state.range!.end,
-        lines: lines,
+        startDate: range.start,
+        endDate: range.end,
+        categories: _state.planCategories,
         debtPayments: debtPayments,
       );
-      _state = _state.copyWith(budget: saved);
+      _state = _state.copyWith(budget: saved, range: range, hasChanges: false);
       notifyListeners();
       return null;
     } catch (error) {
@@ -102,72 +252,48 @@ class BudgetController extends ChangeNotifier {
     }
   }
 
-  Future<String?> removeCategory(
-    String period,
-    DateTime date,
-    String categoryId,
-  ) async {
-    try {
-      final updatedBudget = await repository.removeLine(
-        period: period,
-        date: date,
-        categoryId: categoryId,
-      );
-
-      final nextPlanned = Map<String, double>.from(_state.plannedByCategory);
-      nextPlanned.remove(categoryId);
-
-      _state = _state.copyWith(
-        budget: updatedBudget,
-        plannedByCategory: nextPlanned,
-      );
-      notifyListeners();
-      return null;
-    } catch (error) {
-      return _message(error);
-    }
+  ReportRange? _fallbackRange(String period, DateTime date) {
+    if (period != "monthly") return null;
+    final start = DateTime.utc(date.year, date.month, 1);
+    final end = DateTime.utc(date.year, date.month + 1, 0, 23, 59, 59, 999);
+    return ReportRange(start: start, end: end);
   }
 
-  Future<String?> createFromPrevious(String period, DateTime date) async {
-    try {
-      Map<String, double> planned = {};
-      Map<String, double> plannedDebts = {};
+  Future<BudgetSnapshot?> _findSnapshot(String period, DateTime date) async {
+    final previousDate = DateTime(date.year, date.month - 1, 1);
+    final result = await repository.current(period: period, date: previousDate);
 
-      // Search backwards up to 12 months for a budget to copy
-      for (int i = 1; i <= 12; i++) {
-        final previousDate = DateTime(date.year, date.month - i, 1);
-        final result = await repository.current(
-          period: period,
-          date: previousDate,
-        );
+    if (result.budget == null) return null;
 
-        if (result.budget != null && result.budget!.lines.isNotEmpty) {
-          // Found a budget! Copy and break.
-          for (final line in result.budget!.lines) {
-            if (line.plannedAmount > 0) {
-              planned[line.categoryId] = line.plannedAmount;
-            }
-          }
-          for (final payment in result.budget!.debtPayments) {
-            if (payment.plannedAmount > 0) {
-              plannedDebts[payment.debtId] = payment.plannedAmount;
-            }
-          }
-          break;
-        }
+    final categories = result.budget!.categories;
+    final plannedDebts = <String, double>{};
+    for (final payment in result.budget!.debtPayments) {
+      if (payment.plannedAmount > 0) {
+        plannedDebts[payment.debtId] = payment.plannedAmount;
       }
-
-      // 4. Update state with the copied values (or empty if none found)
-      _state = _state.copyWith(
-        plannedByCategory: planned,
-        plannedByDebt: plannedDebts,
-      );
-
-      // 5. Save purely to persist this new 'copy' as the current month's budget
-      return await save(period);
-    } catch (error) {
-      return _message(error);
     }
+
+    if (categories.isEmpty && plannedDebts.isEmpty) {
+      return null;
+    }
+
+    return BudgetSnapshot(categories: categories, plannedByDebt: plannedDebts);
+  }
+
+  BudgetCategoryPlan _withEntries(
+    BudgetCategoryPlan category,
+    List<BudgetPlanEntry> entries,
+  ) {
+    final plannedTotal = entries.fold(0.0, (sum, entry) => sum + entry.amount);
+    return BudgetCategoryPlan(
+      categoryId: category.categoryId,
+      plannedTotal: plannedTotal,
+      entries: entries,
+    );
+  }
+
+  String _newEntryId() {
+    return DateTime.now().microsecondsSinceEpoch.toString();
   }
 
   String _message(Object error) {

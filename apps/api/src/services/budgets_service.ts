@@ -1,10 +1,16 @@
-import type { BudgetPrimitives } from "../models/budget"
+import type {
+  BudgetCategoryPlan,
+  BudgetPlanEntry,
+  BudgetPrimitives,
+} from "../models/budget"
 import { Budget } from "../models/budget"
 import type { BudgetMongoRepository } from "../repositories/budget_repository"
+import { createMongoId } from "../models/shared/mongo_id"
 
 import type { Result } from "../bootstrap/response"
 import type {
   BudgetCreatePayload,
+  BudgetCategoryPlanPayload,
   BudgetUpdatePayload,
 } from "../http/validation/budgets.validation"
 import { computePeriodRange, getRangeAnchorDate } from "../shared/dates"
@@ -54,7 +60,7 @@ export class BudgetsService {
       periodType: "monthly",
       startDate: startRange.start,
       endDate: startRange.end,
-      lines: payload.lines ?? [],
+      categories: this.normalizeCategories(payload.categories),
       debtPayments: payload.debtPayments ?? [],
     })
 
@@ -85,6 +91,9 @@ export class BudgetsService {
       endDate: payload.endDate
         ? new Date(payload.endDate)
         : existingPrimitives.endDate,
+      categories: payload.categories
+        ? this.normalizeCategories(payload.categories)
+        : existingPrimitives.categories,
       updatedAt: new Date(),
     }
 
@@ -130,23 +139,57 @@ export class BudgetsService {
     }
 
     const primitives = existing.toPrimitives()
-    const newLines = primitives.lines.filter(
-      (line) => line.categoryId !== categoryId
+    const newCategories = primitives.categories.filter(
+      (category) => category.categoryId !== categoryId
     )
 
-    if (newLines.length === primitives.lines.length) {
-      // Category not found in lines, treating as success (idempotent) or error?
-      // Ticket says "noop (200 ok)".
+    if (newCategories.length === primitives.categories.length) {
       return { value: primitives, status: 200 }
     }
 
     const updated = Budget.fromPrimitives({
       ...primitives,
-      lines: newLines,
+      categories: newCategories,
       updatedAt: new Date(),
     })
 
     await this.budgets.upsert(updated)
     return { value: updated.toPrimitives(), status: 200 }
+  }
+
+  private normalizeCategories(
+    categories?: BudgetCategoryPlanPayload[]
+  ): BudgetCategoryPlan[] {
+    if (!categories || categories.length === 0) return []
+    return categories
+      .map((category) => {
+        const entries = (category.entries ?? []).map((entry) =>
+          this.normalizeEntry(entry)
+        )
+        const plannedTotal = entries.reduce(
+          (sum, entry) => sum + entry.amount,
+          0
+        )
+        return {
+          categoryId: category.categoryId,
+          plannedTotal,
+          entries,
+        }
+      })
+      .filter((category) => category.entries.length > 0)
+  }
+
+  private normalizeEntry(entry: {
+    entryId?: string
+    amount: number
+    description?: string
+    createdAt?: string | Date
+  }): BudgetPlanEntry {
+    return {
+      entryId: entry.entryId ?? createMongoId(),
+      amount: entry.amount,
+      description: entry.description ?? null,
+      createdAt: entry.createdAt ? new Date(entry.createdAt) : new Date(),
+    }
   }
 }

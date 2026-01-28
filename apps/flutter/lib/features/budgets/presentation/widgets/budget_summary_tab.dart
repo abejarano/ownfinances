@@ -1,5 +1,4 @@
 import "package:flutter/material.dart";
-import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/budgets/presentation/widgets/budget_summary_row.dart";
@@ -7,24 +6,20 @@ import "package:ownfinances/l10n/app_localizations.dart";
 
 class BudgetSummaryTab extends StatelessWidget {
   final double plannedExpense;
-  final double actualExpense;
-  final int overspentCount;
+  final double plannedIncome;
   final double plannedDebt;
-  final int? nextDueDay;
+  final double? estimatedAvailable;
   final String primaryCurrency;
-  final VoidCallback onViewCategories;
-  final VoidCallback onViewDebts;
+  final String? otherDebtCurrenciesText;
 
   const BudgetSummaryTab({
     super.key,
     required this.plannedExpense,
-    required this.actualExpense,
-    required this.overspentCount,
+    required this.plannedIncome,
     required this.plannedDebt,
-    required this.nextDueDay,
+    required this.estimatedAvailable,
     required this.primaryCurrency,
-    required this.onViewCategories,
-    required this.onViewDebts,
+    required this.otherDebtCurrenciesText,
   });
 
   @override
@@ -41,31 +36,25 @@ class BudgetSummaryTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.budgetsSummaryCategoriesTitle,
+                  l10n.budgetsSummaryPlanTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 BudgetSummaryRow(
-                  label: l10n.budgetsSummaryTotalPlanned,
+                  label: l10n.budgetsSummaryPlannedExpense,
                   value: formatCurrency(plannedExpense, primaryCurrency),
                 ),
                 BudgetSummaryRow(
-                  label: l10n.budgetsSummaryTotalSpent,
-                  value: formatCurrency(actualExpense, primaryCurrency),
+                  label: l10n.budgetsSummaryPlannedIncome,
+                  value: formatCurrency(plannedIncome, primaryCurrency),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  l10n.budgetsSummaryOverspentCount(overspentCount),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textTertiary,
+                if (estimatedAvailable != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  BudgetSummaryRow(
+                    label: l10n.budgetsSummaryEstimatedAvailable,
+                    value: formatCurrency(estimatedAvailable!, primaryCurrency),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                SecondaryButton(
-                  label: l10n.budgetsSummaryViewCategories,
-                  onPressed: onViewCategories,
-                ),
+                ],
               ],
             ),
           ),
@@ -83,24 +72,19 @@ class BudgetSummaryTab extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 BudgetSummaryRow(
-                  label: l10n.budgetsSummaryTotalPlanned,
+                  label: l10n.budgetsSummaryPlannedDebts,
                   value: formatCurrency(plannedDebt, primaryCurrency),
                 ),
-                if (nextDueDay != null) ...[
+                if (otherDebtCurrenciesText != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    l10n.budgetsSummaryNextDueDay(nextDueDay!),
+                    "${l10n.budgetsMonthSummaryOtherCurrencies}: $otherDebtCurrenciesText",
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textTertiary,
                     ),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.md),
-                SecondaryButton(
-                  label: l10n.budgetsSummaryViewDebts,
-                  onPressed: onViewDebts,
-                ),
               ],
             ),
           ),

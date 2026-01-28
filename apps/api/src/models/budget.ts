@@ -3,9 +3,17 @@ import { createMongoId } from "./shared/mongo_id"
 
 export type BudgetPeriodType = "monthly" | "quarterly" | "semiannual" | "annual"
 
-export type BudgetLine = {
+export type BudgetPlanEntry = {
+  entryId: string
+  amount: number
+  description?: string | null
+  createdAt: Date
+}
+
+export type BudgetCategoryPlan = {
   categoryId: string
-  plannedAmount: number
+  plannedTotal: number
+  entries: BudgetPlanEntry[]
 }
 
 export type BudgetDebtPayment = {
@@ -20,7 +28,7 @@ export type BudgetPrimitives = {
   periodType: BudgetPeriodType
   startDate: Date
   endDate: Date
-  lines: BudgetLine[]
+  categories: BudgetCategoryPlan[]
   debtPayments?: BudgetDebtPayment[]
   createdAt: Date
   updatedAt?: Date
@@ -31,7 +39,7 @@ export type BudgetCreateProps = {
   periodType: BudgetPeriodType
   startDate: Date
   endDate: Date
-  lines?: BudgetLine[]
+  categories?: BudgetCategoryPlan[]
   debtPayments?: BudgetDebtPayment[]
 }
 
@@ -49,7 +57,7 @@ export class Budget extends AggregateRoot {
       periodType: props.periodType,
       startDate: props.startDate,
       endDate: props.endDate,
-      lines: props.lines ?? [],
+      categories: props.categories ?? [],
       debtPayments: props.debtPayments ?? [],
       createdAt: now,
       updatedAt: now,
@@ -71,6 +79,7 @@ export class Budget extends AggregateRoot {
   static override fromPrimitives(primitives: BudgetPrimitives): Budget {
     return new Budget({
       ...primitives,
+      categories: primitives.categories ?? [],
       debtPayments: primitives.debtPayments ?? [],
     })
   }

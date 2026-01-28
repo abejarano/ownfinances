@@ -64,12 +64,15 @@ export class ReportsService {
     )
 
     const plannedByCategory = new Map<string, number>()
-    if (budgetPrimitives?.lines) {
-      for (const line of budgetPrimitives.lines) {
-        plannedByCategory.set(
-          line.categoryId,
-          (plannedByCategory.get(line.categoryId) ?? 0) + line.plannedAmount
-        )
+    if (budgetPrimitives?.categories) {
+      for (const category of budgetPrimitives.categories) {
+        const plannedTotal =
+          category.plannedTotal ??
+          (category.entries ?? []).reduce(
+            (sum, entry) => sum + (entry.amount ?? 0),
+            0
+          )
+        plannedByCategory.set(category.categoryId, plannedTotal)
       }
     }
 

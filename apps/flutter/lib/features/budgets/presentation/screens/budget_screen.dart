@@ -69,9 +69,10 @@ class BudgetView extends StatefulWidget {
 }
 
 class _BudgetViewState extends State<BudgetView> {
-  final Map<String, TextEditingController> _controllers = {};
   final Map<String, TextEditingController> _debtControllers = {};
   ReportsController? _reports;
+  TabController? _innerTabController;
+  bool _debtsTabRequested = false;
 
   @override
   void initState() {
@@ -88,17 +89,14 @@ class _BudgetViewState extends State<BudgetView> {
         date: reportsState.date,
       );
 
-      _lastDebtSummaryDate = reportsState.date;
-      _loadDebtSummaries(reportsState.date);
+      _lastDebtSummaryDate = null;
     });
   }
 
   @override
   void dispose() {
     _reports?.removeListener(_onReportsChange);
-    for (final controller in _controllers.values) {
-      controller.dispose();
-    }
+    _innerTabController?.removeListener(_onInnerTabChange);
     for (final controller in _debtControllers.values) {
       controller.dispose();
     }
@@ -128,9 +126,8 @@ class _BudgetViewState extends State<BudgetView> {
       date: reportsState.date,
     );
 
-    if (!isSameMonth(reportsState.date, _lastDebtSummaryDate)) {
-      _lastDebtSummaryDate = reportsState.date;
-      _loadDebtSummaries(reportsState.date);
+    if (_debtsTabRequested && _innerTabController?.index == 1) {
+      _maybeLoadDebtSummaries(reportsState.date);
     }
   }
 
@@ -141,7 +138,8 @@ class _BudgetViewState extends State<BudgetView> {
 
   Future<void> _loadDebtSummaries(DateTime date) async {
     final debtsController = context.read<DebtsController>();
-    if (!debtsController.state.isLoading && debtsController.state.items.isEmpty) {
+    if (!debtsController.state.isLoading &&
+        debtsController.state.items.isEmpty) {
       await debtsController.load();
     }
     if (!mounted) return;
@@ -150,6 +148,31 @@ class _BudgetViewState extends State<BudgetView> {
         .map((debt) => debt.id);
     if (activeDebts.isEmpty) return;
     await debtsController.loadSummaries(activeDebts, month: date);
+  }
+
+  Future<void> _maybeLoadDebtSummaries(DateTime date) async {
+    if (isSameMonth(date, _lastDebtSummaryDate)) return;
+    _lastDebtSummaryDate = date;
+    await _loadDebtSummaries(date);
+  }
+
+  void _attachTabController(TabController controller) {
+    if (_innerTabController == controller) return;
+    _innerTabController?.removeListener(_onInnerTabChange);
+    _innerTabController = controller;
+    controller.addListener(_onInnerTabChange);
+  }
+
+  void _onInnerTabChange() {
+    final controller = _innerTabController;
+    if (controller == null || controller.indexIsChanging) return;
+    if (controller.index == 1 && controller.previousIndex != 1) {
+      _debtsTabRequested = true;
+      final reportsState = _reports?.state;
+      if (reportsState != null) {
+        _maybeLoadDebtSummaries(reportsState.date);
+      }
+    }
   }
 
   String? _formatOtherCurrencies(
@@ -171,8 +194,7 @@ class _BudgetViewState extends State<BudgetView> {
     final budgetState = context.watch<BudgetController>().state;
     final categoriesState = context.watch<CategoriesController>().state;
     final debtsState = context.watch<DebtsController>().state;
-    final primaryCurrency =
-        context.watch<SettingsController>().primaryCurrency;
+    final primaryCurrency = context.watch<SettingsController>().primaryCurrency;
     final l10n = AppLocalizations.of(context)!;
 
     final summary = reportsState.summary;
@@ -180,8 +202,9 @@ class _BudgetViewState extends State<BudgetView> {
       for (final item in summary?.byCategory ?? <CategorySummary>[])
         item.categoryId: item,
     };
-    final activeDebts =
-        debtsState.items.where((debt) => debt.isActive).toList();
+    final activeDebts = debtsState.items
+        .where((debt) => debt.isActive)
+        .toList();
     final plannedDebtTotals = <String, double>{};
     for (final debt in activeDebts) {
       final planned = budgetState.plannedByDebt[debt.id] ?? 0;
@@ -192,81 +215,59 @@ class _BudgetViewState extends State<BudgetView> {
     final plannedDebtPrimary = plannedDebtTotals[primaryCurrency] ?? 0;
     final period = reportsState.period;
     final date = reportsState.date;
-    final otherCurrenciesText =
-        _formatOtherCurrencies(plannedDebtTotals, primaryCurrency);
-    final showSave = budgetState.budget != null;
-    final budgetCategoryIds = budgetState.budget?.lines
-            .map((line) => line.categoryId)
-            .toSet() ??
-        <String>{};
-    final budgetCategories = categoriesState.items
-        .where((category) => budgetCategoryIds.contains(category.id))
-        .toList();
-
-    final plannedExpenseTotal = budgetState.plannedByCategory.entries
-        .where((entry) => summaryMap[entry.key]?.kind == "expense")
-        .fold(0.0, (sum, entry) => sum + entry.value);
-    final actualExpenseTotalPrimary = budgetState.plannedByCategory.entries
-        .where((entry) => summaryMap[entry.key]?.kind == "expense")
-        .fold(0.0, (sum, entry) {
-      final actualByCurrency =
-          summaryMap[entry.key]?.actualByCurrency ?? {};
-      return sum + (actualByCurrency[primaryCurrency] ?? 0.0);
+    final otherCurrenciesText = _formatOtherCurrencies(
+      plannedDebtTotals,
+      primaryCurrency,
+    );
+    final categories = categoriesState.items;
+    final categoryKindById = {
+      for (final category in categories) category.id: category.kind,
+    };
+    final plannedExpenseTotal = budgetState.planCategories
+        .where((plan) => categoryKindById[plan.categoryId] == "expense")
+        .fold(0.0, (sum, plan) => sum + plan.plannedTotal);
+    final plannedIncomeTotal = budgetState.planCategories
+        .where((plan) => categoryKindById[plan.categoryId] == "income")
+        .fold(0.0, (sum, plan) => sum + plan.plannedTotal);
+    final estimatedAvailable = otherCurrenciesText == null
+        ? plannedIncomeTotal - plannedExpenseTotal - plannedDebtPrimary
+        : null;
+    final hasDebtEdits = _debtControllers.entries.any((entry) {
+      final planned = budgetState.plannedByDebt[entry.key] ?? 0.0;
+      return parseMoney(entry.value.text) != planned;
     });
-    final overspentCount = budgetState.plannedByCategory.entries
-        .where((entry) => summaryMap[entry.key]?.kind == "expense")
-        .where((entry) {
-      final actualByCurrency =
-          summaryMap[entry.key]?.actualByCurrency ?? {};
-      return (actualByCurrency[primaryCurrency] ?? 0.0) > entry.value;
-    }).length;
-    final dueDays = activeDebts
-        .map((debt) => debt.dueDay)
-        .whereType<int>()
-        .toList()
-      ..sort();
-    final nextDueDay = dueDays.isEmpty ? null : dueDays.first;
+    final showSnapshotPrompt =
+        budgetState.budget == null &&
+        !budgetState.snapshotDismissed &&
+        budgetState.planCategories.isEmpty &&
+        budgetState.plannedByDebt.isEmpty &&
+        !hasDebtEdits;
+    final isOnboarding = budgetState.budget == null;
+    final showSave = budgetState.hasChanges || hasDebtEdits;
 
-    Future<void> saveCategories() async {
-      for (final entry in _controllers.entries) {
-        context.read<BudgetController>().updatePlanned(
-              entry.key,
-              parseMoney(entry.value.text),
-            );
-      }
-      final error = await context.read<BudgetController>().save(period);
-      if (error != null && context.mounted) {
-        showStandardSnackbar(context, error);
-        return;
-      }
-      await context.read<ReportsController>().load();
-      if (context.mounted) {
-        showStandardSnackbar(
-          context,
-          AppLocalizations.of(context)!.budgetsSuccessSaved,
-        );
-      }
-    }
-
-    Future<void> saveDebts() async {
+    Future<String?> saveBudget({required bool showSuccess}) async {
       for (final entry in _debtControllers.entries) {
         context.read<BudgetController>().updatePlannedDebt(
-              entry.key,
-              parseMoney(entry.value.text),
-            );
+          entry.key,
+          parseMoney(entry.value.text),
+        );
       }
-      final error = await context.read<BudgetController>().save(period);
+      final error = await context.read<BudgetController>().save(
+        period,
+        date: date,
+      );
       if (error != null && context.mounted) {
         showStandardSnackbar(context, error);
-        return;
+        return error;
       }
       await context.read<ReportsController>().load();
-      if (context.mounted) {
+      if (showSuccess && context.mounted) {
         showStandardSnackbar(
           context,
           AppLocalizations.of(context)!.budgetsSuccessSaved,
         );
       }
+      return null;
     }
 
     return DefaultTabController(
@@ -274,6 +275,7 @@ class _BudgetViewState extends State<BudgetView> {
       child: Builder(
         builder: (context) {
           final tabController = DefaultTabController.of(context)!;
+          _attachTabController(tabController);
           return Column(
             children: [
               Padding(
@@ -312,29 +314,53 @@ class _BudgetViewState extends State<BudgetView> {
                   children: [
                     BudgetCategoriesTab(
                       isLoading: budgetState.isLoading,
-                      hasBudget: budgetState.budget != null,
-                      categories: budgetCategories,
-                      controllers: _controllers,
+                      isOnboarding: isOnboarding,
+                      showSnapshotPrompt: showSnapshotPrompt,
+                      categories: categories,
+                      planCategories: budgetState.planCategories,
                       summaryMap: summaryMap,
-                      plannedByCategory: budgetState.plannedByCategory,
                       primaryCurrency: primaryCurrency,
-                      onCreateBudget: () => _createBudget(
-                        context,
-                        period,
-                        date,
-                      ),
-                      onRemoveCategory: (categoryId) => _removeCategory(
-                        context,
-                        period,
-                        date,
-                        categoryId,
-                      ),
-                      onSave: saveCategories,
+                      onApplySnapshot: () async {
+                        final ok = await context
+                            .read<BudgetController>()
+                            .applySnapshot(period: period, date: date);
+                        if (!ok && context.mounted) {
+                          showStandardSnackbar(
+                            context,
+                            l10n.budgetsSnapshotNotFound,
+                          );
+                        }
+                      },
+                      onStartFresh: () =>
+                          context.read<BudgetController>().clearPlan(),
+                      onAddEntry: (categoryId, amount, description) async {
+                        return context.read<BudgetController>().addEntry(
+                          period: period,
+                          date: date,
+                          categoryId: categoryId,
+                          amount: amount,
+                          description: description,
+                        );
+                      },
+                      onRemoveEntry: (entryId) =>
+                          context.read<BudgetController>().removeEntry(entryId),
+                      onRemoveCategory: (categoryId) {
+                        context.read<BudgetController>().removeCategoryEntries(
+                          categoryId,
+                        );
+                        if (context.mounted) {
+                          showStandardSnackbar(
+                            context,
+                            AppLocalizations.of(context)!.budgetsSuccessRemoved,
+                          );
+                        }
+                      },
+                      onSave: () => saveBudget(showSuccess: true),
+                      onSaveEntry: () => saveBudget(showSuccess: false),
                       showSave: showSave,
                     ),
                     BudgetDebtsTab(
                       isLoading: budgetState.isLoading,
-                      hasBudget: budgetState.budget != null,
                       debts: activeDebts,
                       plannedByDebt: budgetState.plannedByDebt,
                       summaries: debtsState.summaries,
@@ -344,27 +370,21 @@ class _BudgetViewState extends State<BudgetView> {
                       otherCurrenciesText: otherCurrenciesText,
                       onAddDebt: () => context.push("/debts"),
                       onUpdatePlanned: (debtId, amount) {
-                        context
-                            .read<BudgetController>()
-                            .updatePlannedDebt(debtId, amount);
+                        context.read<BudgetController>().updatePlannedDebt(
+                          debtId,
+                          amount,
+                        );
                       },
-                      onCreateBudget: () => _createBudget(
-                        context,
-                        period,
-                        date,
-                      ),
-                      onSave: saveDebts,
+                      onSave: () => saveBudget(showSuccess: true),
                       showSave: showSave,
                     ),
                     BudgetSummaryTab(
                       plannedExpense: plannedExpenseTotal,
-                      actualExpense: actualExpenseTotalPrimary,
-                      overspentCount: overspentCount,
+                      plannedIncome: plannedIncomeTotal,
                       plannedDebt: plannedDebtPrimary,
-                      nextDueDay: nextDueDay,
+                      estimatedAvailable: estimatedAvailable,
                       primaryCurrency: primaryCurrency,
-                      onViewCategories: () => tabController.animateTo(0),
-                      onViewDebts: () => tabController.animateTo(1),
+                      otherDebtCurrenciesText: otherCurrenciesText,
                     ),
                   ],
                 ),
@@ -393,41 +413,6 @@ class _BudgetViewState extends State<BudgetView> {
           period: "monthly",
         );
       }
-    }
-  }
-
-  Future<void> _createBudget(
-    BuildContext context,
-    String period,
-    DateTime date,
-  ) async {
-    final error = await context.read<BudgetController>().createFromPrevious(
-      period,
-      date,
-    );
-    if (error != null && context.mounted) {
-      showStandardSnackbar(context, error);
-    }
-  }
-
-  Future<void> _removeCategory(
-    BuildContext context,
-    String period,
-    DateTime date,
-    String categoryId,
-  ) async {
-    final error = await context.read<BudgetController>().removeCategory(
-      period,
-      date,
-      categoryId,
-    );
-    if (error != null && context.mounted) {
-      showStandardSnackbar(context, error);
-    } else if (context.mounted) {
-      showStandardSnackbar(
-        context,
-        AppLocalizations.of(context)!.budgetsSuccessRemoved,
-      );
     }
   }
 }

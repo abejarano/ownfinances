@@ -1,20 +1,36 @@
 import "package:ownfinances/features/budgets/domain/entities/budget.dart";
 import "package:ownfinances/features/reports/domain/entities/report_summary.dart";
 
+class BudgetSnapshot {
+  final List<BudgetCategoryPlan> categories;
+  final Map<String, double> plannedByDebt;
+
+  const BudgetSnapshot({
+    required this.categories,
+    required this.plannedByDebt,
+  });
+}
+
 class BudgetState {
   final bool isLoading;
   final Budget? budget;
   final ReportRange? range;
-  final Map<String, double> plannedByCategory;
+  final List<BudgetCategoryPlan> planCategories;
   final Map<String, double> plannedByDebt;
+  final BudgetSnapshot? snapshot;
+  final bool snapshotDismissed;
+  final bool hasChanges;
   final String? error;
 
   const BudgetState({
     required this.isLoading,
     required this.budget,
     required this.range,
-    required this.plannedByCategory,
+    required this.planCategories,
     required this.plannedByDebt,
+    required this.snapshot,
+    required this.snapshotDismissed,
+    required this.hasChanges,
     this.error,
   });
 
@@ -22,16 +38,23 @@ class BudgetState {
     bool? isLoading,
     Budget? budget,
     ReportRange? range,
-    Map<String, double>? plannedByCategory,
+    List<BudgetCategoryPlan>? planCategories,
     Map<String, double>? plannedByDebt,
+    BudgetSnapshot? snapshot,
+    bool overwriteSnapshot = false,
+    bool? snapshotDismissed,
+    bool? hasChanges,
     String? error,
   }) {
     return BudgetState(
       isLoading: isLoading ?? this.isLoading,
       budget: budget ?? this.budget,
       range: range ?? this.range,
-      plannedByCategory: plannedByCategory ?? this.plannedByCategory,
+      planCategories: planCategories ?? this.planCategories,
       plannedByDebt: plannedByDebt ?? this.plannedByDebt,
+      snapshot: overwriteSnapshot ? snapshot : (snapshot ?? this.snapshot),
+      snapshotDismissed: snapshotDismissed ?? this.snapshotDismissed,
+      hasChanges: hasChanges ?? this.hasChanges,
       error: error,
     );
   }
@@ -40,7 +63,10 @@ class BudgetState {
     isLoading: false,
     budget: null,
     range: null,
-    plannedByCategory: {},
+    planCategories: [],
     plannedByDebt: {},
+    snapshot: null,
+    snapshotDismissed: false,
+    hasChanges: false,
   );
 }

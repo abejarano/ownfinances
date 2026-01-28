@@ -697,6 +697,100 @@ class AppLocalizationsPt extends AppLocalizations {
   String get budgetsPlanPeriod => 'Plano do período';
 
   @override
+  String get budgetsPlanTitle => 'Plano do mês';
+
+  @override
+  String get budgetsPlanSubtitle =>
+      'Registre o que planeja gastar ou receber este mês.';
+
+  @override
+  String get budgetsPlanTypeExpense => 'Gasto';
+
+  @override
+  String get budgetsPlanTypeIncome => 'Receita';
+
+  @override
+  String get budgetsPlanCategoryLabel => 'Categoria';
+
+  @override
+  String get budgetsPlanAmountLabel => 'Valor';
+
+  @override
+  String get budgetsPlanDescriptionLabel => 'Descrição (opcional)';
+
+  @override
+  String get budgetsPlanAddAction => 'Adicionar';
+
+  @override
+  String get budgetsPlanOnboardingTitle => 'Crie seu orçamento do mês';
+
+  @override
+  String get budgetsPlanOnboardingSubtitle =>
+      'Adicione o que planeja gastar ou receber. Você pode ajustar depois.';
+
+  @override
+  String get budgetsPlanOnboardingNote => 'Não move dinheiro. É só um plano.';
+
+  @override
+  String get budgetsPlanSectionTitle => 'Seu plano por categorias';
+
+  @override
+  String get budgetsPlanEmptyTitle =>
+      'Você ainda não tem um plano para este mês.';
+
+  @override
+  String get budgetsPlanEmptyHelper =>
+      'Comece com 1 gasto ou 1 receita. Você pode melhorar depois.';
+
+  @override
+  String get budgetsPlanEmptyAction => 'Adicionar primeiro registro';
+
+  @override
+  String get budgetsPlanEmptyLink => 'Adicionar registro';
+
+  @override
+  String get budgetsPlanEntryAddedToast =>
+      'Pronto. Adicionado ao seu plano do mês.';
+
+  @override
+  String get budgetsPlanPlannedExpense => 'Planejado (gastos)';
+
+  @override
+  String get budgetsPlanPlannedIncome => 'Planejado (receitas)';
+
+  @override
+  String get budgetsPlanDetailsAction => 'Ver detalhes';
+
+  @override
+  String budgetsPlanCategoryDetailTitle(Object category) {
+    return 'Detalhe de $category';
+  }
+
+  @override
+  String get budgetsPlanAddAnotherAction => 'Adicionar outro';
+
+  @override
+  String get budgetsPlanEmptyCategoryDetail =>
+      'Você ainda não tem registros nesta categoria.';
+
+  @override
+  String get budgetsSnapshotTitle =>
+      'Usamos o seu plano do mês passado como base.';
+
+  @override
+  String get budgetsSnapshotSubtitle => 'Você pode aplicar ou começar do zero.';
+
+  @override
+  String get budgetsSnapshotApplyAction => 'Usar mês anterior como base';
+
+  @override
+  String get budgetsSnapshotNotFound =>
+      'Não encontramos um plano anterior para usar como base.';
+
+  @override
+  String get budgetsSnapshotStartFreshAction => 'Começar do zero';
+
+  @override
   String get budgetsSegmentCategories => 'Categorias';
 
   @override
@@ -719,12 +813,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String budgetsCategoryStatusRemaining(Object value) {
-    return 'Falta $value';
+    return 'Você ainda tem $value';
   }
 
   @override
   String budgetsCategoryIncomeStatusRemaining(Object value) {
-    return 'Faltam $value para sua meta';
+    return 'Faltam $value';
   }
 
   @override
@@ -745,12 +839,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String budgetsCategoryStatusOver(Object value) {
-    return 'Estourou — Passou $value';
+    return 'Você passou $value';
   }
 
   @override
   String budgetsCategoryIncomeStatusOver(Object value) {
-    return 'Você passou da meta em $value';
+    return 'Você superou $value';
   }
 
   @override
@@ -789,13 +883,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get budgetsSaveButton => 'Salvar orçamento';
 
   @override
-  String get budgetsSaveCategoriesButton => 'Salvar orçamento';
+  String get budgetsSaveCategoriesButton => 'Salvar plano do mês';
 
   @override
   String get budgetsSaveDebtsButton => 'Salvar pagamentos';
 
   @override
-  String get budgetsSuccessSaved => 'Orçamento salvo!';
+  String get budgetsSuccessSaved => 'Pronto. Seu plano do mês foi salvo.';
 
   @override
   String get budgetsMonthSummaryTitle => 'Resumo do mês';
@@ -816,7 +910,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Outras moedas (sem conversão)';
 
   @override
-  String get budgetsDebtPlannedTitle => 'Pagamentos planejados';
+  String get budgetsDebtPlannedTitle => 'Dívidas (pagamentos planejados)';
 
   @override
   String get budgetsDebtPlannedSubtitle =>
@@ -879,6 +973,21 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get budgetsSummaryDebtsTitle => 'Pagamentos planejados de dívidas';
+
+  @override
+  String get budgetsSummaryPlanTitle => 'Resumo do mês';
+
+  @override
+  String get budgetsSummaryPlannedExpense => 'Total planejado (gastos)';
+
+  @override
+  String get budgetsSummaryPlannedIncome => 'Total planejado (receitas)';
+
+  @override
+  String get budgetsSummaryEstimatedAvailable => 'Disponível estimado';
+
+  @override
+  String get budgetsSummaryPlannedDebts => 'Total de pagamentos planejados';
 
   @override
   String get budgetsSummaryTotalPlanned => 'Total planejado';
@@ -1914,4 +2023,53 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get settingsVoiceAssistantDesc =>
       'Ative para ouvir perguntas por voz durante o registro.';
+
+  @override
+  String budgetsHeaderCompactExpenses(Object value) {
+    return 'Gastos planejados: $value';
+  }
+
+  @override
+  String budgetsHeaderCompactIncomes(Object value) {
+    return 'Receitas planejadas: $value';
+  }
+
+  @override
+  String budgetsHeaderCompactBalance(Object value) {
+    return 'Balanço planejado: $value';
+  }
+
+  @override
+  String get budgetsActionAddRecord => '+ Adicionar';
+
+  @override
+  String get budgetsModalTitle => 'Adicionar ao plano';
+
+  @override
+  String get budgetsModalButtonAdd => 'Adicionar';
+
+  @override
+  String get budgetsModalConfirmAdded => 'Adicionado ao plano';
+
+  @override
+  String get budgetsEntryDialogDeleteConfirm => 'Remover este item do plano?';
+
+  @override
+  String get budgetsEntryDialogDeleteAction => 'Sim, remover';
+
+  @override
+  String get budgetsStatusExceededChip => 'Excedido';
+
+  @override
+  String budgetsStatusOverText(Object value) {
+    return 'Você passou $value';
+  }
+
+  @override
+  String get budgetsStatusLimitReached => 'Limite atingido';
+
+  @override
+  String budgetsStatusRemainingText(Object value) {
+    return 'Você ainda tem $value';
+  }
 }

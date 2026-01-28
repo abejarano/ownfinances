@@ -31,7 +31,7 @@ class BudgetRepository {
     required String period,
     required DateTime startDate,
     required DateTime endDate,
-    required List<BudgetLine> lines,
+    required List<BudgetCategoryPlan> categories,
     required List<BudgetDebtPayment> debtPayments,
   }) async {
     final payload = id == null
@@ -39,23 +39,14 @@ class BudgetRepository {
             period: period,
             startDate: startDate,
             endDate: endDate,
-            lines: lines,
+            categories: categories,
             debtPayments: debtPayments,
           )
-        : await remote.update(id, lines: lines, debtPayments: debtPayments);
-    return Budget.fromJson(payload);
-  }
-
-  Future<Budget> removeLine({
-    required String period,
-    required DateTime date,
-    required String categoryId,
-  }) async {
-    final payload = await remote.removeLine(
-      period: period,
-      date: date,
-      categoryId: categoryId,
-    );
+        : await remote.update(
+            id,
+            categories: categories,
+            debtPayments: debtPayments,
+          );
     return Budget.fromJson(payload);
   }
 }

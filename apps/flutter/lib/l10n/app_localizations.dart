@@ -1388,6 +1388,174 @@ abstract class AppLocalizations {
   /// **'Plano do período'**
   String get budgetsPlanPeriod;
 
+  /// No description provided for @budgetsPlanTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Plano do mês'**
+  String get budgetsPlanTitle;
+
+  /// No description provided for @budgetsPlanSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registre o que planeja gastar ou receber este mês.'**
+  String get budgetsPlanSubtitle;
+
+  /// No description provided for @budgetsPlanTypeExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gasto'**
+  String get budgetsPlanTypeExpense;
+
+  /// No description provided for @budgetsPlanTypeIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receita'**
+  String get budgetsPlanTypeIncome;
+
+  /// No description provided for @budgetsPlanCategoryLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria'**
+  String get budgetsPlanCategoryLabel;
+
+  /// No description provided for @budgetsPlanAmountLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor'**
+  String get budgetsPlanAmountLabel;
+
+  /// No description provided for @budgetsPlanDescriptionLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descrição (opcional)'**
+  String get budgetsPlanDescriptionLabel;
+
+  /// No description provided for @budgetsPlanAddAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar'**
+  String get budgetsPlanAddAction;
+
+  /// No description provided for @budgetsPlanOnboardingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie seu orçamento do mês'**
+  String get budgetsPlanOnboardingTitle;
+
+  /// No description provided for @budgetsPlanOnboardingSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione o que planeja gastar ou receber. Você pode ajustar depois.'**
+  String get budgetsPlanOnboardingSubtitle;
+
+  /// No description provided for @budgetsPlanOnboardingNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não move dinheiro. É só um plano.'**
+  String get budgetsPlanOnboardingNote;
+
+  /// No description provided for @budgetsPlanSectionTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu plano por categorias'**
+  String get budgetsPlanSectionTitle;
+
+  /// No description provided for @budgetsPlanEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem um plano para este mês.'**
+  String get budgetsPlanEmptyTitle;
+
+  /// No description provided for @budgetsPlanEmptyHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comece com 1 gasto ou 1 receita. Você pode melhorar depois.'**
+  String get budgetsPlanEmptyHelper;
+
+  /// No description provided for @budgetsPlanEmptyAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar primeiro registro'**
+  String get budgetsPlanEmptyAction;
+
+  /// No description provided for @budgetsPlanEmptyLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar registro'**
+  String get budgetsPlanEmptyLink;
+
+  /// No description provided for @budgetsPlanEntryAddedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pronto. Adicionado ao seu plano do mês.'**
+  String get budgetsPlanEntryAddedToast;
+
+  /// No description provided for @budgetsPlanPlannedExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Planejado (gastos)'**
+  String get budgetsPlanPlannedExpense;
+
+  /// No description provided for @budgetsPlanPlannedIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Planejado (receitas)'**
+  String get budgetsPlanPlannedIncome;
+
+  /// No description provided for @budgetsPlanDetailsAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver detalhes'**
+  String get budgetsPlanDetailsAction;
+
+  /// No description provided for @budgetsPlanCategoryDetailTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Detalhe de {category}'**
+  String budgetsPlanCategoryDetailTitle(Object category);
+
+  /// No description provided for @budgetsPlanAddAnotherAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar outro'**
+  String get budgetsPlanAddAnotherAction;
+
+  /// No description provided for @budgetsPlanEmptyCategoryDetail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem registros nesta categoria.'**
+  String get budgetsPlanEmptyCategoryDetail;
+
+  /// No description provided for @budgetsSnapshotTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usamos o seu plano do mês passado como base.'**
+  String get budgetsSnapshotTitle;
+
+  /// No description provided for @budgetsSnapshotSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode aplicar ou começar do zero.'**
+  String get budgetsSnapshotSubtitle;
+
+  /// No description provided for @budgetsSnapshotApplyAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar mês anterior como base'**
+  String get budgetsSnapshotApplyAction;
+
+  /// No description provided for @budgetsSnapshotNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não encontramos um plano anterior para usar como base.'**
+  String get budgetsSnapshotNotFound;
+
+  /// No description provided for @budgetsSnapshotStartFreshAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começar do zero'**
+  String get budgetsSnapshotStartFreshAction;
+
   /// No description provided for @budgetsSegmentCategories.
   ///
   /// In pt, this message translates to:
@@ -1433,13 +1601,13 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsCategoryStatusRemaining.
   ///
   /// In pt, this message translates to:
-  /// **'Falta {value}'**
+  /// **'Você ainda tem {value}'**
   String budgetsCategoryStatusRemaining(Object value);
 
   /// No description provided for @budgetsCategoryIncomeStatusRemaining.
   ///
   /// In pt, this message translates to:
-  /// **'Faltam {value} para sua meta'**
+  /// **'Faltam {value}'**
   String budgetsCategoryIncomeStatusRemaining(Object value);
 
   /// No description provided for @budgetsCategoryStatusAtLimit.
@@ -1469,13 +1637,13 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsCategoryStatusOver.
   ///
   /// In pt, this message translates to:
-  /// **'Estourou — Passou {value}'**
+  /// **'Você passou {value}'**
   String budgetsCategoryStatusOver(Object value);
 
   /// No description provided for @budgetsCategoryIncomeStatusOver.
   ///
   /// In pt, this message translates to:
-  /// **'Você passou da meta em {value}'**
+  /// **'Você superou {value}'**
   String budgetsCategoryIncomeStatusOver(Object value);
 
   /// No description provided for @budgetsCategoryStatusOverHelper.
@@ -1547,7 +1715,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsSaveCategoriesButton.
   ///
   /// In pt, this message translates to:
-  /// **'Salvar orçamento'**
+  /// **'Salvar plano do mês'**
   String get budgetsSaveCategoriesButton;
 
   /// No description provided for @budgetsSaveDebtsButton.
@@ -1559,7 +1727,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsSuccessSaved.
   ///
   /// In pt, this message translates to:
-  /// **'Orçamento salvo!'**
+  /// **'Pronto. Seu plano do mês foi salvo.'**
   String get budgetsSuccessSaved;
 
   /// No description provided for @budgetsMonthSummaryTitle.
@@ -1595,7 +1763,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtPlannedTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Pagamentos planejados'**
+  /// **'Dívidas (pagamentos planejados)'**
   String get budgetsDebtPlannedTitle;
 
   /// No description provided for @budgetsDebtPlannedSubtitle.
@@ -1699,6 +1867,36 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Pagamentos planejados de dívidas'**
   String get budgetsSummaryDebtsTitle;
+
+  /// No description provided for @budgetsSummaryPlanTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo do mês'**
+  String get budgetsSummaryPlanTitle;
+
+  /// No description provided for @budgetsSummaryPlannedExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total planejado (gastos)'**
+  String get budgetsSummaryPlannedExpense;
+
+  /// No description provided for @budgetsSummaryPlannedIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total planejado (receitas)'**
+  String get budgetsSummaryPlannedIncome;
+
+  /// No description provided for @budgetsSummaryEstimatedAvailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível estimado'**
+  String get budgetsSummaryEstimatedAvailable;
+
+  /// No description provided for @budgetsSummaryPlannedDebts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total de pagamentos planejados'**
+  String get budgetsSummaryPlannedDebts;
 
   /// No description provided for @budgetsSummaryTotalPlanned.
   ///
@@ -3582,6 +3780,84 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Ative para ouvir perguntas por voz durante o registro.'**
   String get settingsVoiceAssistantDesc;
+
+  /// No description provided for @budgetsHeaderCompactExpenses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gastos planejados: {value}'**
+  String budgetsHeaderCompactExpenses(Object value);
+
+  /// No description provided for @budgetsHeaderCompactIncomes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receitas planejadas: {value}'**
+  String budgetsHeaderCompactIncomes(Object value);
+
+  /// No description provided for @budgetsHeaderCompactBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Balanço planejado: {value}'**
+  String budgetsHeaderCompactBalance(Object value);
+
+  /// No description provided for @budgetsActionAddRecord.
+  ///
+  /// In pt, this message translates to:
+  /// **'+ Adicionar'**
+  String get budgetsActionAddRecord;
+
+  /// No description provided for @budgetsModalTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar ao plano'**
+  String get budgetsModalTitle;
+
+  /// No description provided for @budgetsModalButtonAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar'**
+  String get budgetsModalButtonAdd;
+
+  /// No description provided for @budgetsModalConfirmAdded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionado ao plano'**
+  String get budgetsModalConfirmAdded;
+
+  /// No description provided for @budgetsEntryDialogDeleteConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover este item do plano?'**
+  String get budgetsEntryDialogDeleteConfirm;
+
+  /// No description provided for @budgetsEntryDialogDeleteAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sim, remover'**
+  String get budgetsEntryDialogDeleteAction;
+
+  /// No description provided for @budgetsStatusExceededChip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excedido'**
+  String get budgetsStatusExceededChip;
+
+  /// No description provided for @budgetsStatusOverText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você passou {value}'**
+  String budgetsStatusOverText(Object value);
+
+  /// No description provided for @budgetsStatusLimitReached.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limite atingido'**
+  String get budgetsStatusLimitReached;
+
+  /// No description provided for @budgetsStatusRemainingText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda tem {value}'**
+  String budgetsStatusRemainingText(Object value);
 }
 
 class _AppLocalizationsDelegate
