@@ -3787,6 +3787,126 @@ abstract class AppLocalizations {
   /// **'Gastos planejados: {value}'**
   String budgetsHeaderCompactExpenses(Object value);
 
+  /// No description provided for @budgetsSavePlanButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar plano'**
+  String get budgetsSavePlanButton;
+
+  /// No description provided for @budgetsSavePlanMicrocopy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só salva seu plano. Não mexe no seu dinheiro.'**
+  String get budgetsSavePlanMicrocopy;
+
+  /// No description provided for @budgetsSavePlanSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Plano salvo'**
+  String get budgetsSavePlanSuccess;
+
+  /// No description provided for @budgetsSummaryAffordTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vai dar certo este mês?'**
+  String get budgetsSummaryAffordTitle;
+
+  /// No description provided for @budgetsStatusEnough.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dá certo'**
+  String get budgetsStatusEnough;
+
+  /// No description provided for @budgetsStatusNotEnough.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não dá certo'**
+  String get budgetsStatusNotEnough;
+
+  /// No description provided for @budgetsStatusJustRight.
+  ///
+  /// In pt, this message translates to:
+  /// **'No limite'**
+  String get budgetsStatusJustRight;
+
+  /// No description provided for @budgetsAmountLeftover.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobra {currency} {amount}'**
+  String budgetsAmountLeftover(Object currency, Object amount);
+
+  /// No description provided for @budgetsAmountShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {currency} {amount}'**
+  String budgetsAmountShort(Object currency, Object amount);
+
+  /// No description provided for @budgetsAmountZero.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está no zero (aprox.)'**
+  String get budgetsAmountZero;
+
+  /// No description provided for @budgetsSummaryAffordOneLine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receitas – Gastos – Pagamento de dívidas'**
+  String get budgetsSummaryAffordOneLine;
+
+  /// No description provided for @budgetsSummaryAffordCalming.
+  ///
+  /// In pt, this message translates to:
+  /// **'Isso é só um plano. Não mexe no seu dinheiro.'**
+  String get budgetsSummaryAffordCalming;
+
+  /// No description provided for @budgetsCtaAdjust.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajustar meu plano'**
+  String get budgetsCtaAdjust;
+
+  /// No description provided for @budgetsCtaSaveGoal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Guardar sobra como meta'**
+  String get budgetsCtaSaveGoal;
+
+  /// No description provided for @budgetsCtaReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revisar meu plano'**
+  String get budgetsCtaReview;
+
+  /// No description provided for @budgetsSummaryBreakdownTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'De onde vem esse resultado?'**
+  String get budgetsSummaryBreakdownTitle;
+
+  /// No description provided for @budgetsSummaryHelpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para dar certo'**
+  String get budgetsSummaryHelpTitle;
+
+  /// No description provided for @budgetsHelpText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {currency} {amount}. Reduza gastos ou aumente receitas nesse valor.'**
+  String budgetsHelpText(Object currency, Object amount);
+
+  /// No description provided for @budgetsHelpActionCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver categorias'**
+  String get budgetsHelpActionCategories;
+
+  /// No description provided for @budgetsHelpActionIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar receita'**
+  String get budgetsHelpActionIncome;
+
   /// No description provided for @budgetsHeaderCompactIncomes.
   ///
   /// In pt, this message translates to:

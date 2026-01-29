@@ -250,7 +250,7 @@ class _BudgetViewState extends State<BudgetView> {
         !hasDebtEdits;
     final isOnboarding = budgetState.budget == null;
     final canSave = budgetState.hasChanges || hasDebtEdits;
-    const showSave = true;
+    final showSave = canSave;
 
     Future<String?> saveBudget({required bool showSuccess}) async {
       for (final entry in _debtControllers.entries) {
@@ -397,6 +397,7 @@ class _BudgetViewState extends State<BudgetView> {
                       estimatedAvailable: estimatedAvailable,
                       primaryCurrency: primaryCurrency,
                       otherDebtCurrenciesText: otherCurrenciesText,
+                      onSave: () => saveBudget(showSuccess: true),
                     ),
                   ],
                 ),

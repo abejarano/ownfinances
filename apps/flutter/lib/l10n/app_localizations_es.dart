@@ -2029,6 +2029,75 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get budgetsSavePlanButton => 'Guardar plan';
+
+  @override
+  String get budgetsSavePlanMicrocopy =>
+      'Solo guarda tu plan. No mueve dinero.';
+
+  @override
+  String get budgetsSavePlanSuccess => 'Plan guardado';
+
+  @override
+  String get budgetsSummaryAffordTitle => '¿Me alcanza este mes?';
+
+  @override
+  String get budgetsStatusEnough => 'Te alcanza';
+
+  @override
+  String get budgetsStatusNotEnough => 'No te alcanza';
+
+  @override
+  String get budgetsStatusJustRight => 'Estás justo';
+
+  @override
+  String budgetsAmountLeftover(Object currency, Object amount) {
+    return 'Te sobran $currency $amount';
+  }
+
+  @override
+  String budgetsAmountShort(Object currency, Object amount) {
+    return 'Te faltan $currency $amount';
+  }
+
+  @override
+  String get budgetsAmountZero => 'Estás en cero (aprox.)';
+
+  @override
+  String get budgetsSummaryAffordOneLine =>
+      'Ingresos – Gastos – Pagos de deudas';
+
+  @override
+  String get budgetsSummaryAffordCalming =>
+      'Esto solo es un plan. No mueve dinero.';
+
+  @override
+  String get budgetsCtaAdjust => 'Ajustar mi plan';
+
+  @override
+  String get budgetsCtaSaveGoal => 'Guardar sobrante como meta';
+
+  @override
+  String get budgetsCtaReview => 'Revisar mi plan';
+
+  @override
+  String get budgetsSummaryBreakdownTitle => '¿De dónde sale ese resultado?';
+
+  @override
+  String get budgetsSummaryHelpTitle => 'Para que te alcance';
+
+  @override
+  String budgetsHelpText(Object currency, Object amount) {
+    return 'Te faltan $currency $amount. Baja gastos o sube ingresos por ese valor.';
+  }
+
+  @override
+  String get budgetsHelpActionCategories => 'Ver en qué categorías';
+
+  @override
+  String get budgetsHelpActionIncome => 'Agregar un ingreso';
+
+  @override
   String budgetsHeaderCompactIncomes(Object value) {
     return 'Ingresos planeados: $value';
   }

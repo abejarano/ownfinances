@@ -720,5 +720,43 @@
     "placeholders": {
       "value": {}
     }
-  }
+  },
+  "budgetsSavePlanButton": "Save plan",
+  "budgetsSavePlanMicrocopy": "It only saves your plan. It doesn't move your money.",
+  "budgetsSavePlanSuccess": "Plan saved",
+  "budgetsSummaryAffordTitle": "Will I be okay this month?",
+  "budgetsStatusEnough": "You’re okay",
+  "budgetsStatusNotEnough": "Not enough",
+  "budgetsStatusJustRight": "Right on track",
+  "budgetsAmountLeftover": "You have {currency} {amount} left",
+  "@budgetsAmountLeftover": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsAmountShort": "You’re short by {currency} {amount}",
+  "@budgetsAmountShort": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsAmountZero": "You’re around zero",
+  "budgetsSummaryAffordOneLine": "Income – Expenses – Debt payments",
+  "budgetsSummaryAffordCalming": "This is just a plan. It doesn’t move your money.",
+  "budgetsCtaAdjust": "Adjust my plan",
+  "budgetsCtaSaveGoal": "Save leftover as a goal",
+  "budgetsCtaReview": "Review my plan",
+  "budgetsSummaryBreakdownTitle": "Where does this come from?",
+  "budgetsSummaryHelpTitle": "To make it work",
+  "budgetsHelpText": "You’re short by {currency} {amount}. Reduce expenses or add income by that amount.",
+  "@budgetsHelpText": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsHelpActionCategories": "View categories",
+  "budgetsHelpActionIncome": "Add income"
 }

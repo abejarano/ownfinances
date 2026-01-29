@@ -803,6 +803,44 @@
       "value": {}
     }
   },
+  "budgetsSavePlanButton": "Salvar plano",
+  "budgetsSavePlanMicrocopy": "Só salva seu plano. Não mexe no seu dinheiro.",
+  "budgetsSavePlanSuccess": "Plano salvo",
+  "budgetsSummaryAffordTitle": "Vai dar certo este mês?",
+  "budgetsStatusEnough": "Dá certo",
+  "budgetsStatusNotEnough": "Não dá certo",
+  "budgetsStatusJustRight": "No limite",
+  "budgetsAmountLeftover": "Sobra {currency} {amount}",
+  "@budgetsAmountLeftover": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsAmountShort": "Faltam {currency} {amount}",
+  "@budgetsAmountShort": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsAmountZero": "Você está no zero (aprox.)",
+  "budgetsSummaryAffordOneLine": "Receitas – Gastos – Pagamento de dívidas",
+  "budgetsSummaryAffordCalming": "Isso é só um plano. Não mexe no seu dinheiro.",
+  "budgetsCtaAdjust": "Ajustar meu plano",
+  "budgetsCtaSaveGoal": "Guardar sobra como meta",
+  "budgetsCtaReview": "Revisar meu plano",
+  "budgetsSummaryBreakdownTitle": "De onde vem esse resultado?",
+  "budgetsSummaryHelpTitle": "Para dar certo",
+  "budgetsHelpText": "Faltam {currency} {amount}. Reduza gastos ou aumente receitas nesse valor.",
+  "@budgetsHelpText": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsHelpActionCategories": "Ver categorias",
+  "budgetsHelpActionIncome": "Adicionar receita",
   "budgetsHeaderCompactIncomes": "Receitas planejadas: {value}",
   "@budgetsHeaderCompactIncomes": {
     "placeholders": {

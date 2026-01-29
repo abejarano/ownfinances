@@ -718,5 +718,43 @@
     "placeholders": {
       "value": {}
     }
-  }
+  },
+  "budgetsSavePlanButton": "Guardar plan",
+  "budgetsSavePlanMicrocopy": "Solo guarda tu plan. No mueve dinero.",
+  "budgetsSavePlanSuccess": "Plan guardado",
+  "budgetsSummaryAffordTitle": "¿Me alcanza este mes?",
+  "budgetsStatusEnough": "Te alcanza",
+  "budgetsStatusNotEnough": "No te alcanza",
+  "budgetsStatusJustRight": "Estás justo",
+  "budgetsAmountLeftover": "Te sobran {currency} {amount}",
+  "@budgetsAmountLeftover": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsAmountShort": "Te faltan {currency} {amount}",
+  "@budgetsAmountShort": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsAmountZero": "Estás en cero (aprox.)",
+  "budgetsSummaryAffordOneLine": "Ingresos – Gastos – Pagos de deudas",
+  "budgetsSummaryAffordCalming": "Esto solo es un plan. No mueve dinero.",
+  "budgetsCtaAdjust": "Ajustar mi plan",
+  "budgetsCtaSaveGoal": "Guardar sobrante como meta",
+  "budgetsCtaReview": "Revisar mi plan",
+  "budgetsSummaryBreakdownTitle": "¿De dónde sale ese resultado?",
+  "budgetsSummaryHelpTitle": "Para que te alcance",
+  "budgetsHelpText": "Te faltan {currency} {amount}. Baja gastos o sube ingresos por ese valor.",
+  "@budgetsHelpText": {
+    "placeholders": {
+      "currency": {},
+      "amount": {}
+    }
+  },
+  "budgetsHelpActionCategories": "Ver en qué categorías",
+  "budgetsHelpActionIncome": "Agregar un ingreso"
 }

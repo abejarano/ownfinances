@@ -2026,6 +2026,74 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get budgetsSavePlanButton => 'Save plan';
+
+  @override
+  String get budgetsSavePlanMicrocopy =>
+      'It only saves your plan. It doesn\'t move your money.';
+
+  @override
+  String get budgetsSavePlanSuccess => 'Plan saved';
+
+  @override
+  String get budgetsSummaryAffordTitle => 'Will I be okay this month?';
+
+  @override
+  String get budgetsStatusEnough => 'You’re okay';
+
+  @override
+  String get budgetsStatusNotEnough => 'Not enough';
+
+  @override
+  String get budgetsStatusJustRight => 'Right on track';
+
+  @override
+  String budgetsAmountLeftover(Object currency, Object amount) {
+    return 'You have $currency $amount left';
+  }
+
+  @override
+  String budgetsAmountShort(Object currency, Object amount) {
+    return 'You’re short by $currency $amount';
+  }
+
+  @override
+  String get budgetsAmountZero => 'You’re around zero';
+
+  @override
+  String get budgetsSummaryAffordOneLine => 'Income – Expenses – Debt payments';
+
+  @override
+  String get budgetsSummaryAffordCalming =>
+      'This is just a plan. It doesn’t move your money.';
+
+  @override
+  String get budgetsCtaAdjust => 'Adjust my plan';
+
+  @override
+  String get budgetsCtaSaveGoal => 'Save leftover as a goal';
+
+  @override
+  String get budgetsCtaReview => 'Review my plan';
+
+  @override
+  String get budgetsSummaryBreakdownTitle => 'Where does this come from?';
+
+  @override
+  String get budgetsSummaryHelpTitle => 'To make it work';
+
+  @override
+  String budgetsHelpText(Object currency, Object amount) {
+    return 'You’re short by $currency $amount. Reduce expenses or add income by that amount.';
+  }
+
+  @override
+  String get budgetsHelpActionCategories => 'View categories';
+
+  @override
+  String get budgetsHelpActionIncome => 'Add income';
+
+  @override
   String budgetsHeaderCompactIncomes(Object value) {
     return 'Planned income: $value';
   }

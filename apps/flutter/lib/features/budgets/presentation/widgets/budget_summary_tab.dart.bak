@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
@@ -34,45 +35,85 @@ class BudgetSummaryTab extends StatelessWidget {
     final isPositive = !isNeutral && balance > 0;
     final isNegative = !isNeutral && balance < 0;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.xl, // Bottom padding
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1) Main Card: "Me alcanza?"
-          _MainCard(
-            l10n: l10n,
-            balance: balance,
-            currency: primaryCurrency,
-            isPositive: isPositive,
-            isNegative: isNegative,
-            isNeutral: isNeutral,
-            mixedCurrencies: estimatedAvailable == null,
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            100, // Space for the bottom button
           ),
-          const SizedBox(height: AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1) Main Card: "Me alcanza?"
+              _MainCard(
+                l10n: l10n,
+                balance: balance,
+                currency: primaryCurrency,
+                isPositive: isPositive,
+                isNegative: isNegative,
+                isNeutral: isNeutral,
+                mixedCurrencies: estimatedAvailable == null,
+              ),
+              const SizedBox(height: AppSpacing.md),
 
-          // 2) Breakdown Card: "De donde sale?"
-          _BreakdownCard(
-            l10n: l10n,
-            income: plannedIncome,
-            expense: plannedExpense,
-            debt: plannedDebt,
-            currency: primaryCurrency,
-            otherCurrenciesText: otherDebtCurrenciesText,
+              // 2) Breakdown Card: "De donde sale?"
+              _BreakdownCard(
+                l10n: l10n,
+                income: plannedIncome,
+                expense: plannedExpense,
+                debt: plannedDebt,
+                currency: primaryCurrency,
+                otherCurrenciesText: otherDebtCurrenciesText,
+              ),
+
+              // 3) Help Card: "Para que te alcance" (Only if negative)
+              if (isNegative) ...[
+                const SizedBox(height: AppSpacing.md),
+                _HelpCard(
+                  l10n: l10n,
+                  balance: balance,
+                  currency: primaryCurrency,
+                ),
+              ],
+            ],
           ),
+        ),
 
-          // 3) Help Card: "Para que te alcance" (Only if negative)
-          if (isNegative) ...[
-            const SizedBox(height: AppSpacing.md),
-            _HelpCard(l10n: l10n, balance: balance, currency: primaryCurrency),
-          ],
-        ],
-      ),
+        // 4) Persistent Save Button
+        Positioned(
+          left: AppSpacing.md,
+          right: AppSpacing.md,
+          bottom: 0,
+          child: SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PrimaryButton(
+                    label: l10n.budgetsSavePlanButton,
+                    onPressed: onSave,
+                    fullWidth: true,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.budgetsSavePlanMicrocopy,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textTertiary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -98,55 +139,63 @@ class _MainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color backgroundColor;
     Color textColor;
-    Color borderColor;
     String statusTitle;
     String amountText;
+    String ctaLabel;
 
-    // Design: Surface Background + Semantic Border + Semantic Text
-    const backgroundColor = AppColors.surface1;
-
+    // Handle mixed currencies edge case (not fully specified but shouldn't crash)
     if (mixedCurrencies) {
+      backgroundColor = AppColors.surface1;
       textColor = AppColors.textPrimary;
-      borderColor = AppColors.borderSoft;
-      statusTitle = l10n.budgetsStatusJustRight;
-      amountText = l10n.budgetsAmountZero;
+      statusTitle = l10n.budgetsStatusJustRight; // Fallback
+      amountText = l10n.budgetsAmountZero; // Fallback
+      ctaLabel = l10n.budgetsCtaReview;
     } else if (isPositive) {
+      backgroundColor = AppColors.successSoft;
       textColor = AppColors.success;
-      borderColor = AppColors.success;
       statusTitle = l10n.budgetsStatusEnough;
       amountText = l10n.budgetsAmountLeftover(currency, formatMoney(balance));
+      ctaLabel = l10n.budgetsCtaSaveGoal;
     } else if (isNegative) {
-      textColor = AppColors
-          .danger; // "Rojo suave" for text might be too light, using Danger for readability + Border
-      borderColor = AppColors.danger;
+      backgroundColor = AppColors.dangerSoft;
+      textColor = AppColors.danger;
       statusTitle = l10n.budgetsStatusNotEnough;
       amountText = l10n.budgetsAmountShort(
         currency,
         formatMoney(balance.abs()),
       );
+      ctaLabel = l10n.budgetsCtaAdjust;
     } else {
       // Neutral
-      textColor = AppColors.warning;
-      borderColor = AppColors.warning;
+      backgroundColor = AppColors.warningSoft;
+      textColor = AppColors.textPrimary;
       statusTitle = l10n.budgetsStatusJustRight;
       amountText = l10n.budgetsAmountZero;
+      ctaLabel = l10n.budgetsCtaReview;
     }
 
     return Card(
       color: backgroundColor,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: borderColor.withOpacity(0.5), // Softer border (1-2px)
-          width: 1.5,
-        ),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: [
+            Text(
+              l10n.budgetsSummaryAffordTitle,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: textColor.withOpacity(0.8),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+
+            // Status Big (Icon + Text maybe? User just said "State large")
+            // Let's just use large text.
             Text(
               statusTitle,
               style: TextStyle(
@@ -158,12 +207,13 @@ class _MainCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
 
+            // Amount Big sentence
             Text(
               amountText,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: textColor, // Amount carries emphasis
+                color: textColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -172,10 +222,7 @@ class _MainCard extends StatelessWidget {
             // Mini Explanation
             Text(
               l10n.budgetsSummaryAffordOneLine,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: textColor.withOpacity(0.7)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -183,12 +230,44 @@ class _MainCard extends StatelessWidget {
             // Calming phrase
             Text(
               l10n.budgetsSummaryAffordCalming,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textTertiary,
+                color: textColor.withOpacity(0.7),
                 fontStyle: FontStyle.italic,
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Single Main CTA
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Functionality not strictly defined, but "Adjust" acts as "Go back/Review"
+                  // For now, we can just trigger the same save action or print?
+                  // Or maybe do nothing if it's just a visual CTA.
+                  // The user said "Adjust my plan". This implies navigation.
+                  // But for this task, I will leave it empty or print.
+                  debugPrint("CTA Clicked: $ctaLabel");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: textColor,
+                  foregroundColor: backgroundColor,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  ctaLabel,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -353,6 +432,9 @@ class _HelpCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
+                      // CTA action: Go to categories?
+                      // DefaultTabController.of(context)?.animateTo(0);
+                      // But Summary is Tab 2, Categories is Tab 0.
                       DefaultTabController.of(context).animateTo(0);
                     },
                     style: OutlinedButton.styleFrom(
@@ -370,6 +452,8 @@ class _HelpCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
+                      // CTA action: Go to Income?
+                      // This usually means adding an income category/entry.
                       DefaultTabController.of(context).animateTo(0);
                     },
                     style: OutlinedButton.styleFrom(
