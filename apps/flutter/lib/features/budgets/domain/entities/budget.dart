@@ -69,21 +69,32 @@ class BudgetCategoryPlan {
 
 class BudgetDebtPayment {
   final String debtId;
-  final double plannedAmount;
+  final double amount;
+  final String? note;
 
-  const BudgetDebtPayment({required this.debtId, required this.plannedAmount});
+  const BudgetDebtPayment({
+    required this.debtId,
+    required this.amount,
+    this.note,
+  });
 
-  factory BudgetDebtPayment.fromJson(Map<String, dynamic> json) {
-    return BudgetDebtPayment(
-      debtId: json["debtId"] as String,
-      plannedAmount: (json["plannedAmount"] as num?)?.toDouble() ?? 0,
-    );
+  Map<String, dynamic> toJson() {
+    return {
+      'debtId': debtId,
+      'amount': amount,
+      'plannedAmount': amount,
+      'note': note,
+    };
   }
 
-  Map<String, dynamic> toJson() => {
-    "debtId": debtId,
-    "plannedAmount": plannedAmount,
-  };
+  factory BudgetDebtPayment.fromJson(Map<String, dynamic> map) {
+    return BudgetDebtPayment(
+      debtId: map['debtId'] as String,
+      amount:
+          ((map['amount'] ?? map['plannedAmount']) as num?)?.toDouble() ?? 0.0,
+      note: map['note'] as String?,
+    );
+  }
 }
 
 class Budget {

@@ -910,11 +910,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Outras moedas (sem conversão)';
 
   @override
-  String get budgetsDebtPlannedTitle => 'Dívidas (pagamentos planejados)';
+  String get budgetsDebtPlannedTitle => 'Pagamentos planejados de dívidas';
 
   @override
   String get budgetsDebtPlannedSubtitle =>
-      'Reserve quanto você vai pagar este mês. Não é um gasto novo.';
+      'Reserve quanto você pretende pagar este mês.';
 
   @override
   String get budgetsDebtPaymentNote =>
@@ -958,7 +958,8 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get budgetsDebtEmptyState => 'Você não tem dívidas registradas.';
+  String get budgetsDebtEmptyState =>
+      'Você ainda não adicionou pagamentos para este mês.';
 
   @override
   String get budgetsDebtMinimumWarning => 'Seu plano está abaixo do mínimo.';
@@ -2141,4 +2142,64 @@ class AppLocalizationsPt extends AppLocalizations {
   String budgetsStatusRemainingText(Object value) {
     return 'Você ainda tem $value';
   }
+
+  @override
+  String get budgetsDebtPlannedHelper => 'Não move dinheiro. É só um plano.';
+
+  @override
+  String get budgetsDebtActionAdd => '+ Adicionar pagamento';
+
+  @override
+  String get budgetsDebtEmptyAction => 'Adicionar meu primeiro pagamento';
+
+  @override
+  String get budgetsDebtCardOwe => 'Devo:';
+
+  @override
+  String get budgetsDebtCardPlan => 'Plano do mês:';
+
+  @override
+  String budgetsDebtCardDue(Object day) {
+    return 'Vence dia $day';
+  }
+
+  @override
+  String get budgetsDebtModalTitleAdd => 'Adicionar pagamento';
+
+  @override
+  String get budgetsDebtModalTitleEdit => 'Editar pagamento';
+
+  @override
+  String get budgetsDebtModalLabelDebt => 'Dívida';
+
+  @override
+  String get budgetsDebtModalLabelAmount => 'Valor';
+
+  @override
+  String get budgetsDebtModalLabelNote => 'Nota (opcional)';
+
+  @override
+  String get budgetsDebtModalSubmitAdd => 'Adicionar';
+
+  @override
+  String get budgetsDebtModalSubmitSave => 'Salvar';
+
+  @override
+  String get budgetsDebtModalErrorSelect =>
+      'Selecione uma dívida e informe um valor.';
+
+  @override
+  String get budgetsDebtModalWarningOverpay =>
+      'Esse valor é maior que o que você deve. Quer continuar?';
+
+  @override
+  String get budgetsDebtModalCurrencyHelper =>
+      'A moeda é definida pela dívida.';
+
+  @override
+  String get budgetsDebtModalPlanHelper =>
+      'Isso não move dinheiro, só organiza seu plano';
+
+  @override
+  String get budgetsDebtAlreadyAdded => 'Já adicionada';
 }

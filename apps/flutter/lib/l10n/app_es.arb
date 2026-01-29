@@ -756,5 +756,31 @@
     }
   },
   "budgetsHelpActionCategories": "Ver en qué categorías",
-  "budgetsHelpActionIncome": "Agregar un ingreso"
+  "budgetsHelpActionIncome": "Agregar un ingreso",
+  "budgetsDebtPlannedTitle": "Pagos planificados de deudas",
+  "budgetsDebtPlannedSubtitle": "Reserva cuánto piensas pagar este mes.",
+  "budgetsDebtPlannedHelper": "No mueve dinero. Solo es un plan.",
+  "budgetsDebtActionAdd": "+ Agregar pago",
+  "budgetsDebtEmptyState": "Aún no agregaste pagos para este mes.",
+  "budgetsDebtEmptyAction": "Agregar mi primer pago",
+  "budgetsDebtCardOwe": "Debo:",
+  "budgetsDebtCardPlan": "Plan del mes:",
+  "budgetsDebtCardDue": "Vence el día {day}",
+  "@budgetsDebtCardDue": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "budgetsDebtModalTitleAdd": "Agregar pago",
+  "budgetsDebtModalTitleEdit": "Editar pago",
+  "budgetsDebtModalLabelDebt": "Deuda",
+  "budgetsDebtModalLabelAmount": "Monto",
+  "budgetsDebtModalLabelNote": "Nota (opcional)",
+  "budgetsDebtModalSubmitAdd": "Agregar",
+  "budgetsDebtModalSubmitSave": "Guardar",
+  "budgetsDebtModalErrorSelect": "Selecciona una deuda e ingresa un monto.",
+  "budgetsDebtModalWarningOverpay": "Ese monto es mayor que lo que debes. ¿Quieres continuar?",
+  "budgetsDebtModalCurrencyHelper": "La moneda se define por la deuda.",
+  "budgetsDebtModalPlanHelper": "Esto no mueve dinero, solo organiza tu plan.",
+  "budgetsDebtAlreadyAdded": "Ya agregada"
 }

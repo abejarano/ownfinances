@@ -758,5 +758,31 @@
     }
   },
   "budgetsHelpActionCategories": "View categories",
-  "budgetsHelpActionIncome": "Add income"
+  "budgetsHelpActionIncome": "Add income",
+  "budgetsDebtPlannedTitle": "Planned debt payments",
+  "budgetsDebtPlannedSubtitle": "Set aside what you plan to pay this month.",
+  "budgetsDebtPlannedHelper": "This doesn’t move money. It’s just a plan.",
+  "budgetsDebtActionAdd": "+ Add payment",
+  "budgetsDebtEmptyState": "You haven’t added any payments for this month yet.",
+  "budgetsDebtEmptyAction": "Add my first payment",
+  "budgetsDebtCardOwe": "I owe:",
+  "budgetsDebtCardPlan": "This month’s plan:",
+  "budgetsDebtCardDue": "Due on day {day}",
+  "@budgetsDebtCardDue": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "budgetsDebtModalTitleAdd": "Add payment",
+  "budgetsDebtModalTitleEdit": "Edit payment",
+  "budgetsDebtModalLabelDebt": "Debt",
+  "budgetsDebtModalLabelAmount": "Amount",
+  "budgetsDebtModalLabelNote": "Note (optional)",
+  "budgetsDebtModalSubmitAdd": "Add",
+  "budgetsDebtModalSubmitSave": "Save",
+  "budgetsDebtModalErrorSelect": "Select a debt and enter an amount.",
+  "budgetsDebtModalWarningOverpay": "This amount is higher than what you owe. Continue?",
+  "budgetsDebtModalCurrencyHelper": "Currency is defined by the debt.",
+  "budgetsDebtModalPlanHelper": "This doesn’t move money, just organizes your plan.",
+  "budgetsDebtAlreadyAdded": "Already added"
 }

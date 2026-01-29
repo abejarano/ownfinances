@@ -69,7 +69,7 @@ class BudgetView extends StatefulWidget {
 }
 
 class _BudgetViewState extends State<BudgetView> {
-  final Map<String, TextEditingController> _debtControllers = {};
+  // final Map<String, TextEditingController> _debtControllers = {}; // Removed
   ReportsController? _reports;
   TabController? _innerTabController;
   bool _debtsTabRequested = false;
@@ -97,9 +97,7 @@ class _BudgetViewState extends State<BudgetView> {
   void dispose() {
     _reports?.removeListener(_onReportsChange);
     _innerTabController?.removeListener(_onInnerTabChange);
-    for (final controller in _debtControllers.values) {
-      controller.dispose();
-    }
+    // _debtControllers removed
     super.dispose();
   }
 
@@ -207,7 +205,7 @@ class _BudgetViewState extends State<BudgetView> {
         .toList();
     final plannedDebtTotals = <String, double>{};
     for (final debt in activeDebts) {
-      final planned = budgetState.plannedByDebt[debt.id] ?? 0;
+      final planned = budgetState.plannedByDebt[debt.id]?.amount ?? 0;
       if (planned <= 0) continue;
       plannedDebtTotals[debt.currency] =
           (plannedDebtTotals[debt.currency] ?? 0) + planned;
@@ -238,27 +236,18 @@ class _BudgetViewState extends State<BudgetView> {
     final estimatedAvailable = otherCurrenciesText == null
         ? plannedIncomeTotal - plannedExpenseTotal - plannedDebtPrimary
         : null;
-    final hasDebtEdits = _debtControllers.entries.any((entry) {
-      final planned = budgetState.plannedByDebt[entry.key] ?? 0.0;
-      return parseMoney(entry.value.text) != planned;
-    });
+    // final hasDebtEdits = ... (removed)
     final showSnapshotPrompt =
         budgetState.budget == null &&
         !budgetState.snapshotDismissed &&
         budgetState.planCategories.isEmpty &&
-        budgetState.plannedByDebt.isEmpty &&
-        !hasDebtEdits;
+        budgetState.plannedByDebt.isEmpty;
     final isOnboarding = budgetState.budget == null;
-    final canSave = budgetState.hasChanges || hasDebtEdits;
+    final canSave = budgetState.hasChanges; // Only rely on store changes
     final showSave = canSave;
 
     Future<String?> saveBudget({required bool showSuccess}) async {
-      for (final entry in _debtControllers.entries) {
-        context.read<BudgetController>().updatePlannedDebt(
-          entry.key,
-          parseMoney(entry.value.text),
-        );
-      }
+      // Logic to update planned debt from controllers REMOVED
       final error = await context.read<BudgetController>().save(
         period,
         date: date,
@@ -374,21 +363,10 @@ class _BudgetViewState extends State<BudgetView> {
                       debts: activeDebts,
                       plannedByDebt: budgetState.plannedByDebt,
                       summaries: debtsState.summaries,
-                      controllers: _debtControllers,
                       plannedDebtPrimary: plannedDebtPrimary,
                       primaryCurrency: primaryCurrency,
                       otherCurrenciesText: otherCurrenciesText,
                       onAddDebt: () => context.push("/debts"),
-                      onUpdatePlanned: (debtId, amount) {
-                        context.read<BudgetController>().updatePlannedDebt(
-                          debtId,
-                          amount,
-                        );
-                      },
-                      onSave: () => saveBudget(showSuccess: true),
-                      canSave: canSave,
-                      showSave: showSave,
-                      onDebtInputChange: () => setState(() {}),
                     ),
                     BudgetSummaryTab(
                       plannedExpense: plannedExpenseTotal,

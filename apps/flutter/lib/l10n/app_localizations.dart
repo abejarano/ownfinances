@@ -1763,13 +1763,13 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtPlannedTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Dívidas (pagamentos planejados)'**
+  /// **'Pagamentos planejados de dívidas'**
   String get budgetsDebtPlannedTitle;
 
   /// No description provided for @budgetsDebtPlannedSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Reserve quanto você vai pagar este mês. Não é um gasto novo.'**
+  /// **'Reserve quanto você pretende pagar este mês.'**
   String get budgetsDebtPlannedSubtitle;
 
   /// No description provided for @budgetsDebtPaymentNote.
@@ -1841,7 +1841,7 @@ abstract class AppLocalizations {
   /// No description provided for @budgetsDebtEmptyState.
   ///
   /// In pt, this message translates to:
-  /// **'Você não tem dívidas registradas.'**
+  /// **'Você ainda não adicionou pagamentos para este mês.'**
   String get budgetsDebtEmptyState;
 
   /// No description provided for @budgetsDebtMinimumWarning.
@@ -3978,6 +3978,114 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Você ainda tem {value}'**
   String budgetsStatusRemainingText(Object value);
+
+  /// No description provided for @budgetsDebtPlannedHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não move dinheiro. É só um plano.'**
+  String get budgetsDebtPlannedHelper;
+
+  /// No description provided for @budgetsDebtActionAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'+ Adicionar pagamento'**
+  String get budgetsDebtActionAdd;
+
+  /// No description provided for @budgetsDebtEmptyAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar meu primeiro pagamento'**
+  String get budgetsDebtEmptyAction;
+
+  /// No description provided for @budgetsDebtCardOwe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Devo:'**
+  String get budgetsDebtCardOwe;
+
+  /// No description provided for @budgetsDebtCardPlan.
+  ///
+  /// In pt, this message translates to:
+  /// **'Plano do mês:'**
+  String get budgetsDebtCardPlan;
+
+  /// No description provided for @budgetsDebtCardDue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vence dia {day}'**
+  String budgetsDebtCardDue(Object day);
+
+  /// No description provided for @budgetsDebtModalTitleAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar pagamento'**
+  String get budgetsDebtModalTitleAdd;
+
+  /// No description provided for @budgetsDebtModalTitleEdit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar pagamento'**
+  String get budgetsDebtModalTitleEdit;
+
+  /// No description provided for @budgetsDebtModalLabelDebt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dívida'**
+  String get budgetsDebtModalLabelDebt;
+
+  /// No description provided for @budgetsDebtModalLabelAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor'**
+  String get budgetsDebtModalLabelAmount;
+
+  /// No description provided for @budgetsDebtModalLabelNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nota (opcional)'**
+  String get budgetsDebtModalLabelNote;
+
+  /// No description provided for @budgetsDebtModalSubmitAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar'**
+  String get budgetsDebtModalSubmitAdd;
+
+  /// No description provided for @budgetsDebtModalSubmitSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get budgetsDebtModalSubmitSave;
+
+  /// No description provided for @budgetsDebtModalErrorSelect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione uma dívida e informe um valor.'**
+  String get budgetsDebtModalErrorSelect;
+
+  /// No description provided for @budgetsDebtModalWarningOverpay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esse valor é maior que o que você deve. Quer continuar?'**
+  String get budgetsDebtModalWarningOverpay;
+
+  /// No description provided for @budgetsDebtModalCurrencyHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'A moeda é definida pela dívida.'**
+  String get budgetsDebtModalCurrencyHelper;
+
+  /// No description provided for @budgetsDebtModalPlanHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'Isso não move dinheiro, só organiza seu plano'**
+  String get budgetsDebtModalPlanHelper;
+
+  /// No description provided for @budgetsDebtAlreadyAdded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já adicionada'**
+  String get budgetsDebtAlreadyAdded;
 }
 
 class _AppLocalizationsDelegate

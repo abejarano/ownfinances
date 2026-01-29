@@ -872,5 +872,31 @@
     "placeholders": {
       "value": {}
     }
-  }
+  },
+  "budgetsDebtPlannedTitle": "Pagamentos planejados de dívidas",
+  "budgetsDebtPlannedSubtitle": "Reserve quanto você pretende pagar este mês.",
+  "budgetsDebtPlannedHelper": "Não move dinheiro. É só um plano.",
+  "budgetsDebtActionAdd": "+ Adicionar pagamento",
+  "budgetsDebtEmptyState": "Você ainda não adicionou pagamentos para este mês.",
+  "budgetsDebtEmptyAction": "Adicionar meu primeiro pagamento",
+  "budgetsDebtCardOwe": "Devo:",
+  "budgetsDebtCardPlan": "Plano do mês:",
+  "budgetsDebtCardDue": "Vence dia {day}",
+  "@budgetsDebtCardDue": {
+    "placeholders": {
+      "day": {}
+    }
+  },
+  "budgetsDebtModalTitleAdd": "Adicionar pagamento",
+  "budgetsDebtModalTitleEdit": "Editar pagamento",
+  "budgetsDebtModalLabelDebt": "Dívida",
+  "budgetsDebtModalLabelAmount": "Valor",
+  "budgetsDebtModalLabelNote": "Nota (opcional)",
+  "budgetsDebtModalSubmitAdd": "Adicionar",
+  "budgetsDebtModalSubmitSave": "Salvar",
+  "budgetsDebtModalErrorSelect": "Selecione uma dívida e informe um valor.",
+  "budgetsDebtModalWarningOverpay": "Esse valor é maior que o que você deve. Quer continuar?",
+  "budgetsDebtModalCurrencyHelper": "A moeda é definida pela dívida.",
+  "budgetsDebtModalPlanHelper": "Isso não move dinheiro, só organiza seu plano",
+  "budgetsDebtAlreadyAdded": "Já adicionada"
 }
