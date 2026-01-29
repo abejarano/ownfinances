@@ -30,6 +30,10 @@ class BudgetCategoryDetailSheet extends StatelessWidget {
     final plannedExpense = isIncome ? 0.0 : total;
     final plannedIncome = isIncome ? total : 0.0;
 
+    final summaryCurrency = entries.isNotEmpty
+        ? entries.first.currency
+        : primaryCurrency;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -50,12 +54,12 @@ class BudgetCategoryDetailSheet extends StatelessWidget {
               if (plannedExpense > 0)
                 _SummaryRow(
                   label: l10n.budgetsPlanPlannedExpense,
-                  value: formatCurrency(plannedExpense, primaryCurrency),
+                  value: formatCurrency(plannedExpense, summaryCurrency),
                 ),
               if (plannedIncome > 0)
                 _SummaryRow(
                   label: l10n.budgetsPlanPlannedIncome,
-                  value: formatCurrency(plannedIncome, primaryCurrency),
+                  value: formatCurrency(plannedIncome, summaryCurrency),
                 ),
               const SizedBox(height: AppSpacing.sm),
               if (entries.isEmpty)
@@ -69,7 +73,7 @@ class BudgetCategoryDetailSheet extends StatelessWidget {
                     for (final entry in entries) ...[
                       _EntryRow(
                         entry: entry,
-                        currency: primaryCurrency,
+                        currency: entry.currency,
                         typeLabel: isIncome
                             ? l10n.budgetsPlanTypeIncome
                             : l10n.budgetsPlanTypeExpense,
