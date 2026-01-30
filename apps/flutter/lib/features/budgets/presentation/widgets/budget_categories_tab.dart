@@ -169,15 +169,7 @@ class _BudgetCategoriesTabState extends State<BudgetCategoriesTab> {
           children: [
             if (widget.isLoading) const LinearProgressIndicator(minHeight: 2),
 
-            // STATE B: Compact Header (only if plan exists)
-            if (hasPlanItems)
-              BudgetPlanHeader(
-                totalPlannedExpense: totalExpense,
-                totalPlannedIncome: totalIncome,
-                currency: widget.primaryCurrency,
-                onAdd: () => _openSmartAddModal(),
-              ),
-
+            // STATE B: Header moved to ListView
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -255,7 +247,16 @@ class _BudgetCategoriesTabState extends State<BudgetCategoriesTab> {
                       ),
                     )
                   else ...[
-                    // STATE B: List of Categories
+                    // STATE B: Header (now scrollable)
+                    BudgetPlanHeader(
+                      totalPlannedExpense: totalExpense,
+                      totalPlannedIncome: totalIncome,
+                      currency: widget.primaryCurrency,
+                      onAdd: () => _openSmartAddModal(),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+
+                    // List of Categories
                     for (int index = 0; index < planItems.length; index++) ...[
                       Builder(
                         builder: (context) {

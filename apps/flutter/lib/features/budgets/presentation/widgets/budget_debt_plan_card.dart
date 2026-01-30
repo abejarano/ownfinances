@@ -52,7 +52,7 @@ class BudgetDebtPlanCard extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.credit_card,
-                    color: AppColors.primary,
+                    color: AppColors.secondary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),

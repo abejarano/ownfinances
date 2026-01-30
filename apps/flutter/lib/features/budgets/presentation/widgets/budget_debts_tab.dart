@@ -7,6 +7,7 @@ import 'package:ownfinances/features/budgets/application/controllers/budget_cont
 import 'package:ownfinances/features/budgets/domain/entities/budget.dart';
 import 'package:ownfinances/features/budgets/presentation/widgets/budget_debt_add_modal.dart';
 import 'package:ownfinances/features/budgets/presentation/widgets/budget_debt_plan_card.dart';
+import 'package:ownfinances/features/budgets/presentation/widgets/budget_summary_item.dart';
 import 'package:ownfinances/features/debts/domain/entities/debt.dart';
 import 'package:ownfinances/features/debts/domain/entities/debt_summary.dart';
 import 'package:ownfinances/features/reports/application/controllers/reports_controller.dart';
@@ -79,16 +80,13 @@ class BudgetDebtsTab extends StatelessWidget {
     }
 
     // Format totals string
-    final totalsList = totalsByCurrency.entries.map((e) {
-      return formatCurrency(e.value, e.key);
-    }).toList();
+    final totalsEntries = totalsByCurrency.entries.toList();
 
-    totalsList.sort((a, b) {
-      if (a.contains(primaryCurrency)) return -1;
-      if (b.contains(primaryCurrency)) return 1;
+    totalsEntries.sort((a, b) {
+      if (a.key == primaryCurrency) return -1;
+      if (b.key == primaryCurrency) return 1;
       return 0;
     });
-    final totalsString = totalsList.join("  ·  ");
 
     final hasPayments = plannedByDebt.values.any((p) => p.amount > 0);
 
@@ -129,18 +127,23 @@ class BudgetDebtsTab extends StatelessWidget {
                 ),
 
                 // Totals
-                if (totalsString.isNotEmpty)
+                if (totalsEntries.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(
                       bottom: AppSpacing.md,
                       top: AppSpacing.md,
                     ),
-                    child: Text(
-                      totalsString,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Wrap(
+                      spacing: AppSpacing.lg,
+                      runSpacing: AppSpacing.md,
+                      children: totalsEntries.map((e) {
+                        return BudgetSummaryItem(
+                          label: "${l10n.budgetsDebtQuickTotal} (${e.key})",
+                          amount: formatCurrency(e.value, e.key),
+                          color: AppColors.textPrimary,
+                          isExpense: true,
+                        );
+                      }).toList(),
                     ),
                   )
                 else
