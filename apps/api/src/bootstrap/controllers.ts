@@ -32,7 +32,6 @@ export const controllersModule = () =>
     SettingsController,
     TemplatesController,
     TransactionsImportController,
-    TransactionsImportController,
     TransactionsController,
     BanksController,
   ])

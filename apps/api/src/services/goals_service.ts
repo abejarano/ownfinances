@@ -3,11 +3,11 @@ import type {
   GoalCreatePayload,
   GoalUpdatePayload,
 } from "../http/validation/goals.validation"
-import type { GoalPrimitives } from "../models/goal"
-import { Goal } from "../models/goal"
-import type { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository"
-import type { GoalMongoRepository } from "../repositories/goal_repository"
-import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+import type { GoalPrimitives } from "@desquadra/database"
+import { Goal } from "@desquadra/database"
+import type { GoalContributionMongoRepository } from "@desquadra/database"
+import type { GoalMongoRepository } from "@desquadra/database"
+import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class GoalsService {
   constructor(

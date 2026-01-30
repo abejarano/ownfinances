@@ -7,6 +7,6 @@ export const env = {
   JWT_SECRET:
     Bun.env.JWT_SECRET ??
     "8137daa815be69d333da7336e19010c1149cd32b53d6a2b217593ae35bddaae3",
-  ACCESS_TOKEN_TTL: Bun.env.ACCESS_TOKEN_TTL ?? "15m",
+  ACCESS_TOKEN_TTL: Bun.env.ACCESS_TOKEN_TTL ?? "45m",
   REFRESH_TOKEN_TTL: Number(Bun.env.REFRESH_TOKEN_TTL ?? 30),
 }

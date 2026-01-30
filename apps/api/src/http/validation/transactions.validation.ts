@@ -3,8 +3,8 @@ import type {
   ServerRequest,
   ServerResponse,
 } from "@abejarano/ts-express-server"
+import { TransactionStatus, TransactionType } from "@desquadra/database"
 import * as v from "valibot"
-import { TransactionStatus, TransactionType } from "../../models/transaction"
 
 export type TransactionCreatePayload = {
   type: TransactionType

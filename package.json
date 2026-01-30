@@ -8,6 +8,7 @@
   "scripts": {
     "dev:api": "bun --cwd apps/api dev",
     "dev:flutter:web": "cd apps/flutter && flutter run -d chrome",
-    "dev:flutter": "cd apps/flutter && flutter run"
+    "dev:flutter": "cd apps/flutter && flutter run",
+    "dev:ai": "bun --cwd apps/ai dev"
   }
 }

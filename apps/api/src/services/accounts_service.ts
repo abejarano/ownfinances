@@ -3,10 +3,10 @@ import type {
   AccountCreatePayload,
   AccountUpdatePayload,
 } from "../http/validation/accounts.validation"
-import type { AccountPrimitives } from "../models/account"
-import { Account } from "../models/account"
-import type { AccountMongoRepository } from "../repositories/account_repository"
-import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+import type { AccountPrimitives } from "@desquadra/database"
+import { Account } from "@desquadra/database"
+import type { AccountMongoRepository } from "@desquadra/database"
+import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class AccountsService {
   constructor(

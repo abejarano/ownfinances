@@ -10,7 +10,7 @@ import {
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { BudgetPeriodType } from "../../models/budget"
+import type { BudgetPeriodType } from "@desquadra/database"
 import type { ReportsService } from "../../services/reports_service"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 

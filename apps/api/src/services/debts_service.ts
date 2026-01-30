@@ -13,15 +13,15 @@ import type {
   DebtUpdatePayload,
 } from "../http/validation/debts.validation"
 
-import type { DebtPrimitives } from "../models/debt"
-import { Debt } from "../models/debt"
-import type { DebtTransactionPrimitives } from "../models/debt_transaction"
+import type { DebtPrimitives } from "@desquadra/database"
+import { Debt } from "@desquadra/database"
+import type { DebtTransactionPrimitives } from "@desquadra/database"
 import {
   DebtTransaction,
   DebtTransactionType,
-} from "../models/debt_transaction"
-import type { DebtMongoRepository } from "../repositories/debt_repository"
-import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository"
+} from "@desquadra/database"
+import type { DebtMongoRepository } from "@desquadra/database"
+import type { DebtTransactionMongoRepository } from "@desquadra/database"
 import { computePeriodRange, type DateInput } from "../shared/dates"
 
 export class DebtsService {

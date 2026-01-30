@@ -3,17 +3,17 @@ import type {
   GoalContributionCreatePayload,
   GoalContributionUpdatePayload,
 } from "../http/validation/goal_contributions.validation"
-import type { GoalContributionPrimitives } from "../models/goal_contribution"
-import { GoalContribution } from "../models/goal_contribution"
+import type { GoalContributionPrimitives } from "@desquadra/database"
+import { GoalContribution } from "@desquadra/database"
 import {
   Transaction,
   TransactionStatus,
   TransactionType,
-} from "../models/transaction"
-import type { AccountMongoRepository } from "../repositories/account_repository"
-import type { GoalContributionMongoRepository } from "../repositories/goal_contribution_repository"
-import type { GoalMongoRepository } from "../repositories/goal_repository"
-import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+} from "@desquadra/database"
+import type { AccountMongoRepository } from "@desquadra/database"
+import type { GoalContributionMongoRepository } from "@desquadra/database"
+import type { GoalMongoRepository } from "@desquadra/database"
+import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class GoalContributionsService {
   constructor(

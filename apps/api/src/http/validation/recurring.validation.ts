@@ -1,11 +1,10 @@
+import { RecurringFrequency, TransactionType } from "@desquadra/database"
 import type {
   NextFunction,
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import { RecurringFrequency } from "../../models/recurring/recurring_rule"
-import { TransactionType } from "../../models/transaction"
 
 export type RecurringTemplatePayload = {
   type: TransactionType

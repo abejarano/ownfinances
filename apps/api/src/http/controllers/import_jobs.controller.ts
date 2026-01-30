@@ -9,7 +9,7 @@ import {
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { ImportJobMongoRepository } from "../../repositories/import_job_repository"
+import type { ImportJobMongoRepository } from "@desquadra/database"
 
 @Controller("/imports")
 export class ImportJobsController {

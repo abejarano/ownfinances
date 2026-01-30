@@ -1,5 +1,5 @@
-import type { BudgetPeriodType, BudgetPrimitives } from "../../models/budget"
-import type { BudgetMongoRepository } from "../../repositories/budget_repository"
+import type { BudgetPeriodType, BudgetPrimitives } from "@desquadra/database"
+import type { BudgetMongoRepository } from "@desquadra/database"
 import type { BudgetsService } from "../../services/budgets_service"
 import { computePeriodRange, getRangeAnchorDate } from "../../shared/dates"
 import { buildBudgetsCriteria } from "../criteria/budgets.criteria"

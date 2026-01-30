@@ -3,10 +3,10 @@ import type {
   CategoryCreatePayload,
   CategoryUpdatePayload,
 } from "../http/validation/categories.validation"
-import type { CategoryPrimitives } from "../models/category"
-import { Category } from "../models/category"
-import type { CategoryMongoRepository } from "../repositories/category_repository"
-import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+import type { CategoryPrimitives } from "@desquadra/database"
+import { Category } from "@desquadra/database"
+import type { CategoryMongoRepository } from "@desquadra/database"
+import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class CategoriesService {
   constructor(

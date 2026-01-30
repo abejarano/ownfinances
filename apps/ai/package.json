@@ -1,0 +1,25 @@
+{
+    "name": "@desquada/ai",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "bun --watch src/index.ts"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "dependencies": {
+        "@abejarano/ts-express-server": "^2.0.3",
+        "@desquadra/database": "workspace:*",
+        "@desquadra/queue": "workspace:*",
+        "@google/generative-ai": "^0.24.1",
+        "ollama": "^0.6.3"
+    }
+}

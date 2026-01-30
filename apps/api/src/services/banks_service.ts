@@ -1,5 +1,5 @@
-import type { BankPrimitives } from "../models/bank"
-import { BankMongoRepository } from "../repositories/bank_repository"
+import type { BankPrimitives } from "@desquadra/database"
+import { BankMongoRepository } from "@desquadra/database"
 
 export class BanksService {
   constructor(private readonly repo: BankMongoRepository) {}

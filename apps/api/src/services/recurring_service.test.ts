@@ -1,9 +1,9 @@
 import { describe, expect, it, mock } from "bun:test"
-import { GeneratedInstance } from "../models/recurring/generated_instance"
+import { GeneratedInstance } from "@desquadra/database"
 import {
   RecurringFrequency,
   RecurringRule,
-} from "../models/recurring/recurring_rule"
+} from "@desquadra/database"
 import { RecurringService } from "./recurring_service"
 
 // Mock repositories

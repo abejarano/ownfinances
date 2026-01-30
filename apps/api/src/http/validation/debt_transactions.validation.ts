@@ -1,10 +1,10 @@
+import { DebtTransactionType } from "@desquadra/database"
 import type {
   NextFunction,
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import { DebtTransactionType } from "../../models/debt_transaction"
 
 export type DebtTransactionCreatePayload = {
   debtId: string

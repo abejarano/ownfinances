@@ -2,10 +2,10 @@ import type {
   BudgetCategoryPlan,
   BudgetPlanEntry,
   BudgetPrimitives,
-} from "../models/budget"
-import { Budget } from "../models/budget"
-import type { BudgetMongoRepository } from "../repositories/budget_repository"
-import { createMongoId } from "../models/shared/mongo_id"
+} from "@desquadra/database"
+import { Budget } from "@desquadra/database"
+import type { BudgetMongoRepository } from "@desquadra/database"
+import { createMongoId } from "@desquadra/database"
 
 import type { Result } from "../bootstrap/response"
 import type {

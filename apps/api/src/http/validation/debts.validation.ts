@@ -1,10 +1,10 @@
+import { DebtType } from "@desquadra/database"
 import type {
   NextFunction,
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import { DebtType } from "../../models/debt"
 
 export type DebtCreatePayload = {
   name: string

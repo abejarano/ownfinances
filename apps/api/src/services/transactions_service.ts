@@ -4,14 +4,14 @@ import type {
   TransactionUpdatePayload,
 } from "../http/validation/transactions.validation"
 
-import type { TransactionPrimitives } from "../models/transaction"
+import type { TransactionPrimitives } from "@desquadra/database"
 import {
   Transaction,
   TransactionStatus,
   TransactionType,
-} from "../models/transaction"
-import type { AccountMongoRepository } from "../repositories/account_repository"
-import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+} from "@desquadra/database"
+import type { AccountMongoRepository } from "@desquadra/database"
+import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class TransactionsService {
   constructor(

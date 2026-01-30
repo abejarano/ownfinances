@@ -1,5 +1,5 @@
-import type { CountryPrimitives } from "../models/country"
-import { CountryMongoRepository } from "../repositories/country_repository"
+import type { CountryPrimitives } from "@desquadra/database"
+import { CountryMongoRepository } from "@desquadra/database"
 
 export class CountriesService {
   constructor(private readonly repo: CountryMongoRepository) {}

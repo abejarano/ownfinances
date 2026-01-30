@@ -14,16 +14,16 @@ import type {
 import {
   GeneratedInstance,
   type GeneratedInstancePrimitives,
-} from "../models/recurring/generated_instance"
+} from "@desquadra/database"
 import {
   RecurringFrequency,
   RecurringRule,
   type RecurringRulePrimitives,
-} from "../models/recurring/recurring_rule"
-import { Transaction, TransactionStatus } from "../models/transaction"
-import { GeneratedInstanceMongoRepository } from "../repositories/generated_instance_repository"
-import { RecurringRuleMongoRepository } from "../repositories/recurring_rule_repository"
-import { TransactionMongoRepository } from "../repositories/transaction_repository"
+} from "@desquadra/database"
+import { Transaction, TransactionStatus } from "@desquadra/database"
+import { GeneratedInstanceMongoRepository } from "@desquadra/database"
+import { RecurringRuleMongoRepository } from "@desquadra/database"
+import { TransactionMongoRepository } from "@desquadra/database"
 import { computePeriodRange } from "../shared/dates"
 
 export interface RecurringPreviewItem {

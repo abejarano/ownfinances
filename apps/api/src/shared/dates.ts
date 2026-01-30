@@ -1,4 +1,4 @@
-import type { BudgetPeriodType } from "../models/budget"
+import type { BudgetPeriodType } from "@desquadra/database"
 
 export type DateInput = Date | string
 

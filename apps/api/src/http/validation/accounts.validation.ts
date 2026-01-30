@@ -1,11 +1,10 @@
+import { AccountType, BankType } from "@desquadra/database"
 import type {
   NextFunction,
   ServerRequest,
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import { AccountType } from "../../models/account"
-import { BankType } from "../../models/bank_type"
 
 export type AccountCreatePayload = {
   name: string

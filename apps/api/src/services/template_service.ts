@@ -13,8 +13,8 @@ import type {
 import {
   TransactionTemplate,
   type TransactionTemplatePrimitives,
-} from "../models/template/transaction_template"
-import { TransactionTemplateMongoRepository } from "../repositories/transaction_template_repository"
+} from "@desquadra/database"
+import { TransactionTemplateMongoRepository } from "@desquadra/database"
 
 export class TemplateService {
   constructor(

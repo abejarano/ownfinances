@@ -3,21 +3,21 @@ import type {
   DebtTransactionCreatePayload,
   DebtTransactionUpdatePayload,
 } from "../http/validation/debt_transactions.validation"
-import type { DebtTransactionPrimitives } from "../models/debt_transaction"
+import type { DebtTransactionPrimitives } from "@desquadra/database"
 import {
   DebtTransaction,
   DebtTransactionType,
-} from "../models/debt_transaction"
+} from "@desquadra/database"
 import {
   Transaction,
   TransactionStatus,
   TransactionType,
-} from "../models/transaction"
-import type { AccountMongoRepository } from "../repositories/account_repository"
-import type { CategoryMongoRepository } from "../repositories/category_repository"
-import type { DebtMongoRepository } from "../repositories/debt_repository"
-import type { DebtTransactionMongoRepository } from "../repositories/debt_transaction_repository"
-import type { TransactionMongoRepository } from "../repositories/transaction_repository"
+} from "@desquadra/database"
+import type { AccountMongoRepository } from "@desquadra/database"
+import type { CategoryMongoRepository } from "@desquadra/database"
+import type { DebtMongoRepository } from "@desquadra/database"
+import type { DebtTransactionMongoRepository } from "@desquadra/database"
+import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class DebtTransactionsService {
   constructor(

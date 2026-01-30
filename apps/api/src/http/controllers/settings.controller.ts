@@ -11,8 +11,8 @@ import {
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import { UserSettings } from "../../models/user_settings"
-import type { UserSettingsRepository } from "../../repositories/user_settings_repository"
+import { UserSettings } from "@desquadra/database"
+import type { UserSettingsRepository } from "@desquadra/database"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 
 @Controller("/settings")

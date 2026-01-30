@@ -1,6 +1,6 @@
-import type { CategoryPrimitives } from "../../models/category"
-import { Category } from "../../models/category"
-import type { CategoryMongoRepository } from "../../repositories/category_repository"
+import type { CategoryPrimitives } from "@desquadra/database"
+import { Category } from "@desquadra/database"
+import type { CategoryMongoRepository } from "@desquadra/database"
 import type { CategoriesService } from "../../services/categories_service"
 import { buildCategoriesCriteria } from "../criteria/categories.criteria"
 import {

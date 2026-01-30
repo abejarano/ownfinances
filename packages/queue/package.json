@@ -1,0 +1,23 @@
+{
+    "name": "@desquadra/queue",
+    "version": "1.0.0",
+    "description": "Shared queue package",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "clean": "rm -rf dist",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "ioredis": "^5.9.2",
+        "@bull-board/api": "^6.16.4",
+        "@bull-board/bun": "^6.16.4",
+        "@bull-board/ui": "^6.16.4",
+        "bull": "^4.16.5",
+        "@abejarano/ts-express-server": "^2.0.3"
+    },
+    "devDependencies": {
+        "@types/bull": "^4.10.0",
+        "typescript": "^5.7.3"
+    }
+}

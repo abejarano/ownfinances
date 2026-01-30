@@ -15,7 +15,7 @@ import {
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { DebtMongoRepository } from "../../repositories/debt_repository"
+import type { DebtMongoRepository } from "@desquadra/database"
 import type { DebtsService } from "../../services/debts_service"
 import { buildDebtsCriteria } from "../criteria/debts.criteria"
 import { AuthMiddleware } from "../middleware/auth.middleware"

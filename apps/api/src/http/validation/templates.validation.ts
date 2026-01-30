@@ -3,8 +3,8 @@ import type {
   ServerRequest,
   ServerResponse,
 } from "@abejarano/ts-express-server"
+import { TransactionType } from "@desquadra/database"
 import * as v from "valibot"
-import { TransactionType } from "../../models/transaction"
 
 export type TemplateCreatePayload = {
   name: string
