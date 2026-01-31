@@ -1,7 +1,8 @@
 import { QueueRegistry } from "./QueueRegistry";
 import { QueueProcessor } from "./QueueProcessor";
 import { QueueDispatcher } from "./QueueDispatcher";
-import { IListQueue, QueueName } from "../domain";
+import type { IListQueue } from "../domain";
+import { QueueName } from "../domain";
 
 export class QueueService {
   private static instance: QueueService;

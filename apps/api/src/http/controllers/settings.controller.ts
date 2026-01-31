@@ -1,3 +1,5 @@
+import type { UserSettingsMongoRepository } from "@desquadra/database"
+import { UserSettings } from "@desquadra/database"
 import {
   Body,
   Controller,
@@ -5,29 +7,27 @@ import {
   Put,
   Req,
   Res,
-  Use,
   type ServerResponse,
+  Use,
 } from "bun-platform-kit"
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import { UserSettings } from "@desquadra/database"
-import type { UserSettingsRepository } from "@desquadra/database"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 
 @Controller("/settings")
 export class SettingsController {
-  private readonly repo: UserSettingsRepository
+  private readonly repo: UserSettingsMongoRepository
 
   constructor() {
-    this.repo = Deps.resolve<UserSettingsRepository>("userSettingsRepo")
+    this.repo = Deps.resolve<UserSettingsMongoRepository>("userSettingsRepo")
   }
 
   @Get("/")
   @Use([AuthMiddleware])
   async get(@Req() req: AuthenticatedRequest, @Res() res: ServerResponse) {
     const userId = req.userId ?? ""
-    let settings = await this.repo.getByUserId(userId)
+    let settings = await this.repo.one({ userId })
 
     if (!settings) {
       // Create default settings if not exists
@@ -52,7 +52,7 @@ export class SettingsController {
     @Res() res: ServerResponse
   ) {
     const userId = req.userId ?? ""
-    let settings = await this.repo.getByUserId(userId)
+    let settings = await this.repo.one({ userId })
 
     if (!settings) {
       settings = UserSettings.create(userId)

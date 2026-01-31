@@ -1,9 +1,8 @@
 import {
   GoogleGenerativeAI,
-  SchemaType,
   type Schema,
+  SchemaType,
 } from "@google/generative-ai";
-import * as fs from "fs";
 
 // ⚠️ Asegúrate de tener tu API KEY en el archivo .env o pegada aquí para probar
 const genAI = new GoogleGenerativeAI(
@@ -23,7 +22,7 @@ const responseSchema: Schema = {
       categoryName: { type: SchemaType.STRING },
       type: {
         type: SchemaType.STRING,
-        enum: ["income", "expense"],
+        enum: ["income", "expense", "transfer"],
         format: "enum" as const,
       },
       reasoning: { type: SchemaType.STRING },
@@ -39,10 +38,14 @@ const responseSchema: Schema = {
   },
 };
 
-export async function categorizeCsvWithGemini(
-  csvContent: string,
-  categoriesContent: string,
-) {
+export async function categorizeCsvWithGemini(params: {
+  userName: string;
+  userCountry: string;
+  csv: string;
+  categories: string;
+}) {
+  const { userName, csv, categories, userCountry } = params;
+
   try {
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
@@ -66,16 +69,18 @@ export async function categorizeCsvWithGemini(
     - Analiza el signo del monto: Negativo es 'expense' (Gasto), Positivo es 'income' (Ingreso).
     - Mapea descripciones sucias (ej: "PG * UBER") a categorías lógicas (ej: "Transporte").
     - Si detectas patrones recurrentes (ej: mismo monto y descripción cada mes), asegúrate de clasificarlos igual.
-    - Si una transacción es ambigua, usa tu mejor criterio basado en el contexto brasileño (ej: "Sonda" es Supermercado).
+    - Si una transacción es ambigua, usa tu mejor criterio basado en el contexto del país ${userCountry} (ej: BR (brasil) "Sonda" es Supermercado).
     - Si absolutamente no puedes clasificarla, usa la categoría "Outros" (si existe) o déjala como null, pero intenta evitarlo.
+    - Si en la descripción de la transacción se encuentra el nombre de la persona ${userName} debe ser clasificado como una 
+    transferencia (transfer) y podrias colocar en el campo categoryId "transfer", ya que no existirá una categoría específica para ella. 
 
     DATOS DE ENTRADA:
     --- COMIENZO CATEGORÍAS ---
-    ${categoriesContent}
+    ${categories}
     --- FIN CATEGORÍAS ---
 
     --- COMIENZO CSV ---
-    ${csvContent}
+    ${csv}
     --- FIN CSV ---
   `;
 

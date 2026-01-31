@@ -1,4 +1,5 @@
-import { IQueueService, QueueName } from "../domain";
+import type { IQueueService } from "../domain";
+import { QueueName } from "../domain";
 import { RequestContext } from "@abejarano/ts-express-server";
 import { QueueRegistry } from "./QueueRegistry";
 

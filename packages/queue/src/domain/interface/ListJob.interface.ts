@@ -1,4 +1,4 @@
-import { IJob } from "./Job.interface";
+import type { IJob } from "./Job.interface";
 
 export interface IListQueue {
   name?: string;

@@ -2,7 +2,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BunAdapter } from "@bull-board/bun";
 import type { ServerApp } from "@abejarano/ts-express-server";
-import { IListQueue } from "../domain";
+import type { IListQueue } from "../domain";
 import { QueueService } from "./QueueService";
 
 type BunRoutes = ReturnType<BunAdapter["getRoutes"]>;

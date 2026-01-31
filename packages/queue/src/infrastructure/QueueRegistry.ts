@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { IListQueue } from "../domain";
+import type { IListQueue } from "../domain";
 
 export class QueueRegistry {
   private static instance: QueueRegistry;

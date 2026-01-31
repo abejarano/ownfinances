@@ -15,7 +15,7 @@ import {
   TransactionMongoRepository,
   TransactionTemplateMongoRepository,
   UserMongoRepository,
-  UserSettingsRepository,
+  UserSettingsMongoRepository,
 } from "@desquadra/database"
 
 import { AccountsService } from "../services/accounts_service"
@@ -64,7 +64,7 @@ export type AppDeps = {
   readonly goalContributionsService: GoalContributionsService
   readonly importJobRepo: ImportJobMongoRepository
   //readonly transactionsImportService: TransactionsImportService
-  readonly userSettingsRepo: UserSettingsRepository
+  readonly userSettingsRepo: UserSettingsMongoRepository
   readonly bankRepo: BankMongoRepository
   readonly banksService: BanksService
 }
@@ -284,7 +284,7 @@ export class Deps {
       //   return transactionsImportService
       // },
       get userSettingsRepo() {
-        return UserSettingsRepository.getInstance()
+        return UserSettingsMongoRepository.getInstance()
       },
       get bankRepo() {
         return BankMongoRepository.getInstance()
