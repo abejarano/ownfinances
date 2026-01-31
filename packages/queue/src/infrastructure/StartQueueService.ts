@@ -1,5 +1,5 @@
 import { createBullBoard } from "@bull-board/api";
-import { BullAdapter } from "@bull-board/api/bullAdapter";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BunAdapter } from "@bull-board/bun";
 import type { ServerApp } from "@abejarano/ts-express-server";
 import { IListQueue } from "../domain";
@@ -93,7 +93,7 @@ export const StartQueueService = async (params: {
     serverAdapter.setBasePath("/ui/queues");
 
     createBullBoard({
-      queues: queues.map((q) => new BullAdapter(q)),
+      queues: queues.map((q) => new BullMQAdapter(q)),
       serverAdapter,
       options: {
         uiConfig: { boardTitle: "My BOARD" },

@@ -39,7 +39,10 @@ export class QueueDispatcher implements IQueueService {
       try {
         // Incluir el ID de solicitud en los datos del trabajo
         const jobData = { ...args, requestId };
-        await queue.add(jobData);
+
+        // BullMQ requiere un nombre de job como primer parámetro
+        // Usamos el queueName como nombre del job por defecto
+        await queue.add(queueName, jobData);
       } catch (error) {
         console.error(`Error dispatching job to queue ${queueName}:`, error);
       }
@@ -54,6 +57,7 @@ export class QueueDispatcher implements IQueueService {
     const queues = this.registry.getAllQueues();
 
     for (const queue of queues) {
+      // BullMQ usa getJobCounts() que retorna un objeto con conteos
       const queueStats = await queue.getJobCounts();
       stats[queue.name] = queueStats;
     }
@@ -69,8 +73,9 @@ export class QueueDispatcher implements IQueueService {
 
     const cleanPromises = this.registry.getAllQueues().map(async (queue) => {
       try {
-        await queue.clean(86400000, "completed"); // Limpiar trabajos completados más antiguos que 1 día
-        await queue.clean(604800000, "failed"); // Limpiar trabajos fallidos más antiguos que 1 semana
+        // BullMQ clean() tiene syntax: clean(grace, limit, type)
+        await queue.clean(86400000, 100, "completed"); // Limpiar trabajos completados más antiguos que 1 día
+        await queue.clean(604800000, 100, "failed"); // Limpiar trabajos fallidos más antiguos que 1 semana
         console.log(`Queue ${queue.name} cleaned`);
       } catch (error) {
         console.error(`Error cleaning queue ${queue.name}:`, error);

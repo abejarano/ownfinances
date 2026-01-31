@@ -1,9 +1,9 @@
-import Queue from "bull";
-import { IListQueue, QueueName } from "../domain";
+import { Queue } from "bullmq";
+import { IListQueue } from "../domain";
 
 export class QueueRegistry {
   private static instance: QueueRegistry;
-  private queueInstances: Map<string, Queue.Queue> = new Map();
+  private queueInstances: Map<string, Queue> = new Map();
   private queueDefinitions: Map<string, IListQueue> = new Map();
 
   private redisConfig = {
@@ -48,8 +48,9 @@ export class QueueRegistry {
       }
 
       try {
+        // BullMQ uses connection instead of redis
         const queue = new Queue(queueName, {
-          redis: this.redisConfig,
+          connection: this.redisConfig,
           defaultJobOptions: {
             delay: definition.delay ? definition.delay * 1000 : 0,
             removeOnComplete: true,
@@ -57,22 +58,14 @@ export class QueueRegistry {
           },
         });
 
-        // Configurar manejo de eventos
-        queue.on("ready", () =>
-          console.log(`Queue ${queueName} connected to Redis`),
-        );
-        queue.on("error", (error) =>
+        // BullMQ doesn't emit 'ready' event, but we can wait for it
+        await queue.waitUntilReady();
+        console.log(`Queue ${queueName} connected to Redis`);
+
+        // Configurar manejo de errores
+        queue.on("error", (error: Error) =>
           console.error(`Queue ${queueName} error:`, error),
         );
-
-        // Verificación importante: asegurarse que la cola esté activa
-        await queue.isReady();
-
-        // Algunas colas pueden iniciar en estado pausado, asegurarse de que estén activas
-        const isPaused = await queue.isPaused();
-        if (isPaused) {
-          await queue.resume();
-        }
 
         this.queueInstances.set(queueName, queue);
       } catch (error) {
@@ -81,7 +74,7 @@ export class QueueRegistry {
     }
   }
 
-  getQueue(queueName: string): Queue.Queue | undefined {
+  getQueue(queueName: string): Queue | undefined {
     return this.queueInstances.get(queueName);
   }
 
@@ -89,7 +82,7 @@ export class QueueRegistry {
     return this.queueDefinitions.get(queueName);
   }
 
-  getAllQueues(): Queue.Queue[] {
+  getAllQueues(): Queue[] {
     return Array.from(this.queueInstances.values());
   }
 

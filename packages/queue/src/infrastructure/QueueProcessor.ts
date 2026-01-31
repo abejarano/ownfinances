@@ -1,10 +1,20 @@
+import { Worker } from "bullmq";
 import { QueueName } from "../domain";
 import { QueueRegistry } from "./QueueRegistry";
 import { RequestContext } from "@abejarano/ts-express-server";
+
 export class QueueProcessor {
   private static instance: QueueProcessor;
   private initialized: Set<string> = new Set();
   private registry: QueueRegistry;
+  private workers: Map<string, Worker> = new Map();
+
+  private redisConfig = {
+    host: process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT || "6379"),
+    username: process.env.REDIS_USER,
+    password: process.env.REDIS_PASSWORD,
+  };
 
   private constructor() {
     this.registry = QueueRegistry.getInstance();
@@ -23,13 +33,6 @@ export class QueueProcessor {
   async startProcessing(): Promise<void> {
     for (const queue of this.registry.getAllQueues()) {
       this.initializeQueueProcessor(queue.name);
-
-      // Verificar que la cola no esté pausada
-      const isPaused = await queue.isPaused();
-      if (isPaused) {
-        console.log(`Queue ${queue.name} is paused, resuming...`);
-        await queue.resume();
-      }
     }
   }
 
@@ -39,17 +42,19 @@ export class QueueProcessor {
   async pauseProcessing(): Promise<void> {
     console.log("Pausing processing for all queues");
 
-    const pausePromises = this.registry.getAllQueues().map(async (queue) => {
-      try {
-        await queue.pause();
-        console.log(`Queue ${queue.name} paused`);
-      } catch (error) {
-        console.error(`Error pausing queue ${queue.name}:`, error);
-      }
-    });
+    const pausePromises = Array.from(this.workers.entries()).map(
+      async ([queueName, worker]) => {
+        try {
+          await worker.pause();
+          console.log(`Worker for ${queueName} paused`);
+        } catch (error) {
+          console.error(`Error pausing worker for ${queueName}:`, error);
+        }
+      },
+    );
 
     await Promise.all(pausePromises);
-    console.log("All queues paused");
+    console.log("All workers paused");
   }
 
   /**
@@ -62,12 +67,11 @@ export class QueueProcessor {
       return;
     }
 
-    const queue = this.registry.getQueue(queueName);
     const definition = this.registry.getQueueDefinition(queueName);
 
-    if (!queue || !definition) {
+    if (!definition) {
       console.error(
-        `Cannot initialize processor for ${queueName}: queue or definition not found`,
+        `Cannot initialize processor for ${queueName}: definition not found`,
       );
       return;
     }
@@ -84,54 +88,61 @@ export class QueueProcessor {
       ? new definition.useClass(...definition.inject)
       : new definition.useClass();
 
-    // Configurar el procesamiento de trabajos
-    queue.process(async (job, done) => {
-      const requestId = job.data?.requestId || `job-${job.id}`;
+    // BullMQ usa Worker en lugar de queue.process()
+    const worker = new Worker(
+      queueName,
+      async (job) => {
+        const requestId = job.data?.requestId || `job-${job.id}`;
 
-      RequestContext.run({ requestId }, async () => {
-        try {
-          await workerInstance.handle(job.data);
-          done();
-        } catch (error: any) {
-          console.error(
-            `Error processing job ${job.id} in queue ${queueName}:`,
-            error,
-          );
-          done(error);
-        }
-      });
-    });
+        return RequestContext.run({ requestId }, async () => {
+          try {
+            await workerInstance.handle(job.data);
+          } catch (error: any) {
+            console.error(
+              `Error processing job ${job.id} in queue ${queueName}:`,
+              error,
+            );
+            throw error; // BullMQ maneja el error automáticamente
+          }
+        });
+      },
+      {
+        connection: this.redisConfig,
+      },
+    );
 
-    // Configurar listeners para eventos de la cola
-    this.configureQueueListeners(queue);
+    // Configurar listeners para eventos del worker
+    this.configureWorkerListeners(worker, queueName);
 
+    this.workers.set(queueName, worker);
     this.initialized.add(queueName);
     console.log(`Processor for ${queueName} initialized successfully`);
   }
 
   /**
-   * Configura los listeners para eventos de la cola
+   * Configura los listeners para eventos del worker
    */
-  private configureQueueListeners(queue: any): void {
-    // Remover listeners existentes para evitar duplicados
-    queue.removeAllListeners("failed");
-    queue.removeAllListeners("completed");
-
-    // Configurar nuevo listener para trabajos fallidos
-    queue.on("failed", (job: any, error: any) => {
-      const requestId = job.data?.requestId || `job-${job.id}`;
+  private configureWorkerListeners(worker: Worker, queueName: string): void {
+    // Configurar listener para trabajos fallidos
+    worker.on("failed", (job: any, error: any) => {
+      const requestId = job?.data?.requestId || `job-${job?.id}`;
 
       RequestContext.run({ requestId }, async () => {
-        console.error(`Job ${job.id} in queue ${queue.name} failed:`, error);
+        console.error(`Job ${job?.id} in queue ${queueName} failed:`, error);
 
         // Evitar ciclos recursivos en notificaciones de error
-        // if (queue.name !== QueueName.TelegramNotificationJob) {
+        // if (queueName !== QueueName.TelegramNotificationJob) {
         //   const queueDispatcher = QueueDispatcher.getInstance();
         //   queueDispatcher.dispatch(QueueName.TelegramNotificationJob, {
-        //     message: `Job failed: ${queue.name} - ${error.message} (RequestId: ${requestId})`,
+        //     message: `Job failed: ${queueName} - ${error.message} (RequestId: ${requestId})`,
         //   });
         // }
       });
+    });
+
+    // Listener para trabajos completados (opcional)
+    worker.on("completed", (job: any) => {
+      console.log(`Job ${job?.id} in queue ${queueName} completed`);
     });
   }
 }
