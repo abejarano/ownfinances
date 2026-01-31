@@ -3,7 +3,11 @@ import {
   UserMongoRepository,
   UserSettingsMongoRepository,
 } from "@desquadra/database"
-import { QueueDispatcher, QueueName } from "@desquadra/queue"
+import {
+  type CategorizerTransactionRequest,
+  QueueDispatcher,
+  QueueName,
+} from "@desquadra/queue"
 import {
   Body,
   type BunMultipartFile,
@@ -66,19 +70,18 @@ export class TransactionsImportController {
 
       const fileContent = await file.text!()
 
-      QueueDispatcher.getInstance().dispatch<{
-        userId: string
-        userName: string
-        accountId: string
-        countryCode: string
-        file: any
-      }>(QueueName.CategorizeTransactions, {
-        file: fileContent,
-        accountId,
-        userId,
-        userName: user.getName(),
-        countryCode: userSettings.getCountryCode()!,
-      })
+      QueueDispatcher.getInstance().dispatch<CategorizerTransactionRequest>(
+        QueueName.CategorizeTransactions,
+        {
+          file: fileContent,
+          accountId,
+          userId,
+          userName: user.getName(),
+          countryCode: userSettings.getCountryCode()!,
+          month: Number(body.month),
+          year: Number(body.year),
+        }
+      )
 
       return HttpResponse(res, { status: 200, value: { message: "ok" } })
     } catch (error: any) {

@@ -1,29 +1,18 @@
-import { type IJob, QueueDispatcher, QueueName } from "@desquadra/queue";
+import {
+  type CategorizerTransactionRequest,
+  type IJob,
+  QueueDispatcher,
+  QueueName,
+  type TransactionAI,
+  type TransactionGroupRequest,
+} from "@desquadra/queue";
 import { CategoryMongoRepository } from "@desquadra/database";
-import ClassifyTransactionService, {
-  type TransactionResponse,
-} from "./service/classify.transaction.service.ts";
-
-type TransactionGroup = {
-  userId: string;
-  accountId: string;
-  expense: TransactionResponse[];
-  income: TransactionResponse[];
-  transfer: TransactionResponse[];
-};
-
-export type CategorizerTransactionsJob = {
-  userId: string;
-  userName: string;
-  accountId: string;
-  countryCode: string;
-  file: any;
-};
+import ClassifyTransactionService from "./service/classify.transaction.service.ts";
 
 export class CategorizeTransactions implements IJob {
   constructor(private readonly categoryRepo: CategoryMongoRepository) {}
 
-  async handle(args: CategorizerTransactionsJob): Promise<any | void> {
+  async handle(args: CategorizerTransactionRequest): Promise<any | void> {
     const { userId, accountId, countryCode, file, userName } = args;
 
     const categories = await this.categoryRepo.search(userId);
@@ -36,7 +25,7 @@ export class CategorizeTransactions implements IJob {
       test: true,
     });
 
-    const items = response.reduce<Record<string, TransactionResponse[]>>(
+    const items = response.reduce<Record<string, TransactionAI[]>>(
       (acc, item) => {
         const key = item.type ?? "unknown";
         (acc[key] ??= []).push(item);
@@ -45,18 +34,18 @@ export class CategorizeTransactions implements IJob {
       {},
     );
 
-    const transactionGroup: TransactionGroup = {
+    const transactionGroup: TransactionGroupRequest = {
       ...items,
       userId,
       accountId,
-    } as TransactionGroup;
+    } as TransactionGroupRequest;
 
     console.log("user: ", userName);
     console.log("expense: ", transactionGroup.expense.length);
     console.log("income: ", transactionGroup.income.length);
     console.log("transfer: ", transactionGroup.transfer.length);
 
-    QueueDispatcher.getInstance().dispatch(
+    QueueDispatcher.getInstance().dispatch<TransactionGroupRequest>(
       QueueName.BankingCouncil,
       transactionGroup,
     );

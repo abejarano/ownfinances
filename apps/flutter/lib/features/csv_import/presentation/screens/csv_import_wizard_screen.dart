@@ -1,15 +1,19 @@
 import "dart:convert";
 import "dart:io";
-import "package:flutter/material.dart";
-import "package:provider/provider.dart";
+
 import "package:file_picker/file_picker.dart";
+import "package:flutter/material.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/pickers.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
-import "package:ownfinances/features/csv_import/application/controllers/csv_import_controller.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
+import "package:ownfinances/features/csv_import/application/controllers/csv_import_controller.dart";
 import "package:ownfinances/features/csv_import/application/csv_import_copy.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
+import "package:provider/provider.dart";
+
+import "../../../../core/presentation/components/fliter_chip.dart";
+import "../../../../core/utils/formatters.dart";
 
 class CsvImportWizardScreen extends StatefulWidget {
   const CsvImportWizardScreen({super.key});
@@ -59,6 +63,11 @@ class _CsvImportWizardScreenState extends State<CsvImportWizardScreen> {
     final canContinue = hasAccount && hasFile;
 
     final l10n = AppLocalizations.of(context)!;
+
+    final currentMonthLabel = formatMonth(
+      DateTime(importController.state.year, importController.state.month, 1),
+    ).toUpperCase();
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.transactionsActionImportCsv)),
       body: SingleChildScrollView(
@@ -67,7 +76,7 @@ class _CsvImportWizardScreenState extends State<CsvImportWizardScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              "Selecione a conta bancária e o arquivo CSV para importar suas transações.",
+              "Selecione o mês, a conta bancária e o arquivo CSV para importar suas transações.",
               style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -76,6 +85,16 @@ class _CsvImportWizardScreenState extends State<CsvImportWizardScreen> {
             if (accountsState.isLoading)
               const Center(child: CircularProgressIndicator())
             else ...[
+              CustomFilterChip(
+                label: currentMonthLabel,
+                icon: Icons.calendar_today,
+                isActive: true, // Always show active for the main date filter
+                onTap: () => pickMonth(context, (int year, int month) {
+                  importController.setMonth(month);
+                  importController.setYear(year);
+                }),
+              ),
+              const SizedBox(height: 20),
               AccountPicker(
                 label: "Conta",
                 value: importController.state.selectedAccountId,

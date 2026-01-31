@@ -1,4 +1,5 @@
 import "dart:convert";
+
 import "package:http/http.dart" as http;
 import "package:http_parser/http_parser.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
@@ -29,7 +30,12 @@ class CsvImportRemoteDataSource {
     return response as Map<String, dynamic>;
   }
 
-  Future<void> import(String accountId, String csvContent) async {
+  Future<void> import(
+    String accountId,
+    String csvContent,
+    int month,
+    year,
+  ) async {
     final file = http.MultipartFile.fromBytes(
       "file",
       utf8.encode(csvContent),
@@ -37,7 +43,13 @@ class CsvImportRemoteDataSource {
       contentType: MediaType("text", "csv"),
     );
 
-    final formData = {"accountId": accountId, "file": file};
+    final formData = {
+      "accountId": accountId,
+      "file": file,
+      "month": month,
+      "year": year,
+    };
+
     await apiClient.post("/transactions/import", formData, isMultipart: true);
   }
 

@@ -1,22 +1,17 @@
-import "package:ownfinances/features/csv_import/domain/entities/import_preview.dart";
-import "package:ownfinances/features/csv_import/domain/entities/import_job.dart";
-
 class CsvImportState {
   final bool isLoading;
   final String? selectedAccountId;
+  final int month;
+  final int year;
   final String? csvContent;
-  final ImportPreview? preview;
-  final String? jobId;
-  final ImportJob? importJob;
   final String? error;
 
   const CsvImportState({
     required this.isLoading,
+    required this.month,
+    required this.year,
     this.selectedAccountId,
     this.csvContent,
-    this.preview,
-    this.jobId,
-    this.importJob,
     this.error,
   });
 
@@ -24,23 +19,23 @@ class CsvImportState {
     bool? isLoading,
     String? selectedAccountId,
     String? csvContent,
-    ImportPreview? preview,
-    String? jobId,
-    ImportJob? importJob,
     String? error,
+    int? month,
+    int? year,
   }) {
     return CsvImportState(
       isLoading: isLoading ?? this.isLoading,
       selectedAccountId: selectedAccountId ?? this.selectedAccountId,
       csvContent: csvContent ?? this.csvContent,
-      preview: preview ?? this.preview,
-      jobId: jobId ?? this.jobId,
-      importJob: importJob ?? this.importJob,
       error: error,
+      month: month ?? this.month,
+      year: year ?? this.year,
     );
   }
 
   factory CsvImportState.initial() {
-    return const CsvImportState(isLoading: false);
+    var now = DateTime.now();
+
+    return CsvImportState(isLoading: false, month: now.month, year: now.year);
   }
 }

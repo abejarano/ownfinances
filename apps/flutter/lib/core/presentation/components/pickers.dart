@@ -1,9 +1,33 @@
-import "package:flutter/material.dart";
 import "package:flutter/cupertino.dart";
 import "package:flutter/foundation.dart";
+import "package:flutter/material.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/currency_utils.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
+
+import "month_picker_dialog.dart";
+
+typedef AsyncDateRangeCallback = void Function(int year, int month);
+
+Future<void> pickMonth(
+  BuildContext context,
+  AsyncDateRangeCallback onValue, {
+  DateTime? initialDate,
+}) async {
+  final selected = await showDialog<DateTime>(
+    context: context,
+    builder: (context) => MonthPickerDialog(
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    ),
+  );
+  if (selected == null) return;
+
+  if (!context.mounted) return;
+
+  onValue(selected.year, selected.month);
+}
 
 class PickerItem {
   final String id;
@@ -86,15 +110,9 @@ class CurrencyPickerField extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                _displayValue(l10n),
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(_displayValue(l10n), overflow: TextOverflow.ellipsis),
             ),
-            const Icon(
-              Icons.expand_more,
-              color: AppColors.textTertiary,
-            ),
+            const Icon(Icons.expand_more, color: AppColors.textTertiary),
           ],
         ),
       ),

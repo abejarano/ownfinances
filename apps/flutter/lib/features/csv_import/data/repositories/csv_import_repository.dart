@@ -1,5 +1,5 @@
-import "package:ownfinances/features/csv_import/domain/entities/import_preview.dart";
 import "package:ownfinances/features/csv_import/data/datasources/csv_import_remote_data_source.dart";
+import "package:ownfinances/features/csv_import/domain/entities/import_preview.dart";
 
 class CsvImportRepository {
   final CsvImportRemoteDataSource remote;
@@ -11,7 +11,12 @@ class CsvImportRepository {
     return ImportPreview.fromJson(result);
   }
 
-  Future<void> import(String accountId, String csvContent) async {
-    await remote.import(accountId, csvContent);
+  Future<void> import(
+    String accountId,
+    String csvContent,
+    int month,
+    year,
+  ) async {
+    await remote.import(accountId, csvContent, month, year);
   }
 }

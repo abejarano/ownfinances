@@ -1,15 +1,6 @@
 import { DesquadraAI } from "./gemini.service.ts";
 import { type Schema, SchemaType } from "@google/generative-ai";
-
-export type TransactionResponse = {
-  originalDate: string;
-  originalDescription: string;
-  amount: number;
-  categoryId: string;
-  categoryName: string;
-  type: "income" | "expense" | "transfer";
-  reasoning: string;
-};
+import type { TransactionAI } from "@desquadra/queue";
 
 export default async (params: {
   userName: string;
@@ -17,7 +8,7 @@ export default async (params: {
   csv: string;
   categories: string;
   test: boolean;
-}): Promise<TransactionResponse[]> => {
+}): Promise<TransactionAI[]> => {
   const { userName, csv, categories, userCountry, test } = params;
 
   if (test) {

@@ -1,21 +1,20 @@
-import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
-import "package:provider/provider.dart";
 import "package:intl/intl.dart";
+import 'package:ownfinances/core/presentation/components/fliter_chip.dart';
+import "package:ownfinances/core/presentation/components/pickers.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
-import "package:ownfinances/core/presentation/components/month_picker_dialog.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
 import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
-
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
-
+import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 // Import the new widget
 import "package:ownfinances/features/transactions/presentation/widgets/transaction_list_item.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
+import "package:provider/provider.dart";
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -130,28 +129,28 @@ class TransactionsScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
         children: [
-          _FilterChip(
+          CustomFilterChip(
             label: currentMonthLabel,
             icon: Icons.calendar_today,
             isActive: true, // Always show active for the main date filter
             onTap: () => _pickMonth(context, filters),
           ),
           const SizedBox(width: AppSpacing.sm),
-          _FilterChip(
+          CustomFilterChip(
             label: AppLocalizations.of(context)!.transactionsLabelAccount,
             isActive:
                 filters.accountId != null && filters.accountId!.isNotEmpty,
             onTap: () => _showAccountPicker(context, filters),
           ),
           const SizedBox(width: AppSpacing.sm),
-          _FilterChip(
+          CustomFilterChip(
             label: AppLocalizations.of(context)!.transactionsLabelCategory,
             isActive:
                 filters.categoryId != null && filters.categoryId!.isNotEmpty,
             onTap: () => _showCategoryPicker(context, filters),
           ),
           const SizedBox(width: AppSpacing.sm),
-          _FilterChip(
+          CustomFilterChip(
             label: AppLocalizations.of(context)!.transactionsLabelStatus,
             isActive: filters.status != null,
             onTap: () => _showStatusPicker(context, filters),
@@ -313,24 +312,15 @@ class TransactionsScreen extends StatelessWidget {
     TransactionFilters filters,
   ) async {
     final initial = filters.dateFrom ?? DateTime.now();
-    final selected = await showDialog<DateTime>(
-      context: context,
-      builder: (context) => MonthPickerDialog(
-        initialDate: initial,
-        firstDate: DateTime(2020),
-        lastDate: DateTime(2100),
-      ),
-    );
-    if (selected == null) return;
 
-    if (!context.mounted) return;
+    pickMonth(context, initialDate: initial, (int year, int month) {
+      final start = DateTime(year, month, 1);
+      final end = DateTime(year, month + 1, 0, 23, 59, 59);
 
-    final start = DateTime(selected.year, selected.month, 1);
-    final end = DateTime(selected.year, selected.month + 1, 0, 23, 59, 59);
-
-    context.read<TransactionsController>().setFilters(
-      filters.copyWith(dateFrom: start, dateTo: end),
-    );
+      context.read<TransactionsController>().setFilters(
+        filters.copyWith(dateFrom: start, dateTo: end),
+      );
+    });
   }
 
   Future<void> _showAccountPicker(
@@ -521,59 +511,5 @@ class TransactionsScreen extends StatelessWidget {
     } else {
       await reportsController.load();
     }
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.onTap,
-    this.icon,
-    this.isActive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.primary.withOpacity(0.2)
-              : AppColors.surface1,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.borderSoft,
-          ),
-        ),
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
-              ),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? AppColors.primary : AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
