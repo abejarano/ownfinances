@@ -1,7 +1,7 @@
 import type { IJob } from "./Job.interface";
 
 export interface IListQueue {
-  name?: string;
+  name: string;
   useClass?: new (...args: any[]) => IJob;
   inject?: any[];
   /**

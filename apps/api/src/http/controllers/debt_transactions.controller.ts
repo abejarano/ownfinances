@@ -1,3 +1,8 @@
+import type {
+  DebtTransactionMongoRepository,
+  DebtTransactionPrimitives,
+} from "@desquadra/database"
+import { DebtTransaction } from "@desquadra/database"
 import {
   Body,
   Controller,
@@ -9,21 +14,18 @@ import {
   Query,
   Req,
   Res,
-  Use,
   type ServerResponse,
+  Use,
 } from "bun-platform-kit"
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { DebtTransactionPrimitives } from "@desquadra/database"
-import { DebtTransaction } from "@desquadra/database"
-import type { DebtTransactionMongoRepository } from "@desquadra/database"
 import type { DebtTransactionsService } from "../../services/debt_transactions_service"
 import { buildDebtTransactionsCriteria } from "../criteria/debt_transactions.criteria"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 import {
-  validateDebtTransactionPayload,
   type DebtTransactionCreatePayload,
+  validateDebtTransactionPayload,
 } from "../validation/debt_transactions.validation"
 
 @Controller("/debt_transactions")
@@ -44,7 +46,7 @@ export class DebtTransactionsController {
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const criteria = buildDebtTransactionsCriteria(query, req.userId)
+    const criteria = buildDebtTransactionsCriteria(query, req.userId!)
     const result = await this.repo.list<DebtTransactionPrimitives>(criteria)
     return HttpResponse(res, {
       value: {

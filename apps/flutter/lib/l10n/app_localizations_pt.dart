@@ -1453,6 +1453,24 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transactionsActionImportCsv => 'Importar CSV';
 
   @override
+  String get csvImportSuccessTitle => 'Obrigado por enviar seu arquivo';
+
+  @override
+  String get csvImportSuccessMessage =>
+      'Estamos processando e categorizando cada transação através da IA Desquadra';
+
+  @override
+  String get csvImportSuccessSubMessage =>
+      'Quando estiver pronto, notificaremos você para que possa visualizar suas transações.';
+
+  @override
+  String get csvImportSuccessButton => 'Entendi';
+
+  @override
+  String get csvImportErrorSelectAccountAndFile =>
+      'Selecione uma conta e carregue o arquivo CSV';
+
+  @override
   String get transactionFormRecurringError =>
       'Transação salva, mas não foi possível criar a recorrência.';
 

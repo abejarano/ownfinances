@@ -24,10 +24,7 @@ export class QueueService {
     return QueueService.instance;
   }
 
-  async initialize(
-    queueDefinitions: IListQueue[],
-    runProcessing: boolean = true,
-  ): Promise<void> {
+  async initialize(queueDefinitions: IListQueue[]): Promise<void> {
     if (this.initialized) {
       console.log("Queue system already initialized");
       return;
@@ -42,10 +39,7 @@ export class QueueService {
       // Inicializar colas
       await this.registry.initializeQueues();
 
-      // Iniciar procesamiento
-      if (runProcessing) {
-        await this.processor.startProcessing();
-      }
+      await this.processor.startProcessing();
 
       this.initialized = true;
       console.log("Queue system initialized successfully");

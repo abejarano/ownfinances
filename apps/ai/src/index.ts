@@ -1,23 +1,17 @@
 import { QueueName, StartQueueService } from "@desquadra/queue";
 
-import {
-  CategoryMongoRepository,
-  UserMongoRepository,
-  UserSettingsMongoRepository,
-} from "@desquadra/database";
-import { CategorizerTransactions } from "./categorizerTransaccions.job.ts";
+import { CategoryMongoRepository } from "@desquadra/database";
+import { CategorizeTransactions } from "./categorizerTransaccions.job.ts";
 
 StartQueueService({
-  runProcessing: true,
   listQueues: [
     {
+      name: QueueName.BankingCouncil,
+    },
+    {
       name: QueueName.CategorizeTransactions,
-      useClass: CategorizerTransactions,
-      inject: [
-        CategoryMongoRepository.getInstance(),
-        UserMongoRepository.getInstance(),
-        UserSettingsMongoRepository.getInstance(),
-      ],
+      useClass: CategorizeTransactions,
+      inject: [CategoryMongoRepository.getInstance()],
     },
   ],
 });

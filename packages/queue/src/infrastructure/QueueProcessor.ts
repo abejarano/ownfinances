@@ -1,5 +1,4 @@
 import { Worker } from "bullmq";
-import { QueueName } from "../domain";
 import { QueueRegistry } from "./QueueRegistry";
 import { RequestContext } from "@abejarano/ts-express-server";
 

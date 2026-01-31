@@ -8,6 +8,7 @@ import { controllersModule } from "./bootstrap/controllers"
 import { env } from "./shared/env"
 
 import { QueueName, StartQueueService } from "@desquadra/queue"
+import { BankingCouncil } from "./jobs/banking.council.job.ts"
 
 const server = new BunKitServer(Number(env.PORT))
 
@@ -30,10 +31,13 @@ server.addModules([
 
 await StartQueueService({
   app: server.getApp(),
-  runProcessing: false,
   listQueues: [
     {
       name: QueueName.CategorizeTransactions,
+    },
+    {
+      name: QueueName.BankingCouncil,
+      useClass: BankingCouncil,
     },
   ],
 })

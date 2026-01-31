@@ -8,7 +8,8 @@ import "package:ownfinances/core/presentation/components/pickers.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/features/csv_import/application/controllers/csv_import_controller.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
-import "package:ownfinances/features/csv_import/presentation/screens/csv_preview_screen.dart";
+import "package:ownfinances/features/csv_import/application/csv_import_copy.dart";
+import "package:ownfinances/l10n/app_localizations.dart";
 
 class CsvImportWizardScreen extends StatefulWidget {
   const CsvImportWizardScreen({super.key});
@@ -32,6 +33,13 @@ class _CsvImportWizardScreenState extends State<CsvImportWizardScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final l10n = AppLocalizations.of(context)!;
+    context.read<CsvImportController>().setCopy(CsvImportCopy.fromL10n(l10n));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final importController = context.watch<CsvImportController>();
     final accountsController = context.watch<AccountsController>();
@@ -50,8 +58,9 @@ class _CsvImportWizardScreenState extends State<CsvImportWizardScreen> {
     final hasFile = importController.state.csvContent != null;
     final canContinue = hasAccount && hasFile;
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text("Importar CSV")),
+      appBar: AppBar(title: Text(l10n.transactionsActionImportCsv)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -165,16 +174,7 @@ class _CsvImportWizardScreenState extends State<CsvImportWizardScreen> {
                 label: "Visualizar e Importar",
                 onPressed: canContinue
                     ? () async {
-                        final preview = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CsvPreviewScreen(),
-                          ),
-                        );
-
-                        if (preview == true && context.mounted) {
-                          Navigator.pop(context);
-                        }
+                        await importController.import(context);
                       }
                     : null,
               ),

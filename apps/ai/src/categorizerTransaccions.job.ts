@@ -1,42 +1,64 @@
-import type { IJob } from "@desquadra/queue";
-import {
-  CategoryMongoRepository,
-  UserMongoRepository,
-  UserSettingsMongoRepository,
-} from "@desquadra/database";
-import { categorizeCsvWithGemini } from "./service/clasificador.gemini.service.ts";
+import { type IJob, QueueDispatcher, QueueName } from "@desquadra/queue";
+import { CategoryMongoRepository } from "@desquadra/database";
+import ClassifyTransactionService, {
+  type TransactionResponse,
+} from "./service/classify.transaction.service.ts";
 
-export class CategorizerTransactions implements IJob {
-  constructor(
-    private readonly categoryRepo: CategoryMongoRepository,
-    private readonly userRepo: UserMongoRepository,
-    private readonly userSettingsRepo: UserSettingsMongoRepository,
-  ) {}
+type TransactionGroup = {
+  userId: string;
+  accountId: string;
+  expense: TransactionResponse[];
+  income: TransactionResponse[];
+  transfer: TransactionResponse[];
+};
 
-  async handle(args: any): Promise<any | void> {
-    const categories = await this.categoryRepo.search(args.userId);
+export type CategorizerTransactionsJob = {
+  userId: string;
+  userName: string;
+  accountId: string;
+  countryCode: string;
+  file: any;
+};
 
-    const user = await this.userRepo.one({ userId: args.userId });
+export class CategorizeTransactions implements IJob {
+  constructor(private readonly categoryRepo: CategoryMongoRepository) {}
 
-    if (!user) {
-      throw Error(`No user with id ${args.userId}`);
-    }
+  async handle(args: CategorizerTransactionsJob): Promise<any | void> {
+    const { userId, accountId, countryCode, file, userName } = args;
 
-    const userSettings = await this.userSettingsRepo.one({
-      userId: args.userId,
-    });
+    const categories = await this.categoryRepo.search(userId);
 
-    if (!userSettings) {
-      throw Error(`No user settings with id ${args.userId}`);
-    }
-
-    const response = await categorizeCsvWithGemini({
-      userName: user.getName(),
-      userCountry: userSettings.getCountryCode() || "BR",
-      csv: args.file,
+    const response = await ClassifyTransactionService({
+      userName: userName,
+      userCountry: countryCode,
+      csv: file,
       categories: JSON.stringify(categories),
+      test: true,
     });
 
-    console.log(response);
+    const items = response.reduce<Record<string, TransactionResponse[]>>(
+      (acc, item) => {
+        const key = item.type ?? "unknown";
+        (acc[key] ??= []).push(item);
+        return acc;
+      },
+      {},
+    );
+
+    const transactionGroup: TransactionGroup = {
+      ...items,
+      userId,
+      accountId,
+    } as TransactionGroup;
+
+    console.log("user: ", userName);
+    console.log("expense: ", transactionGroup.expense.length);
+    console.log("income: ", transactionGroup.income.length);
+    console.log("transfer: ", transactionGroup.transfer.length);
+
+    QueueDispatcher.getInstance().dispatch(
+      QueueName.BankingCouncil,
+      transactionGroup,
+    );
   }
 }

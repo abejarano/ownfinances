@@ -1,6 +1,7 @@
 import "dart:convert";
 
 import "package:http/http.dart" as http;
+import "package:http_parser/http_parser.dart";
 import "package:ownfinances/features/auth/domain/entities/auth_models.dart";
 import "package:ownfinances/features/auth/data/datasources/token_storage.dart";
 import "package:ownfinances/core/infrastructure/api/api_exception.dart";
@@ -70,13 +71,20 @@ class ApiClient {
       multipartRequest.headers.addAll(headers);
 
       body.forEach((key, value) {
-        if (value is String && key == "file") {
-          // CSV content as file - convert string to bytes
+        if (value is http.MultipartFile) {
+          multipartRequest.files.add(value);
+        } else if (value is String && key == "file") {
+          // Legacy support or direct string upload
           final bytes = utf8.encode(value);
           multipartRequest.files.add(
-            http.MultipartFile.fromBytes(key, bytes, filename: "import.csv"),
+            http.MultipartFile.fromBytes(
+              key,
+              bytes,
+              filename: "import.csv",
+              contentType: MediaType("application", "octet-stream"),
+            ),
           );
-        } else {
+        } else if (value != null) {
           multipartRequest.fields[key] = value.toString();
         }
       });

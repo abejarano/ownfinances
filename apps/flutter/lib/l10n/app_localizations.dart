@@ -2738,6 +2738,36 @@ abstract class AppLocalizations {
   /// **'Importar CSV'**
   String get transactionsActionImportCsv;
 
+  /// No description provided for @csvImportSuccessTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigado por enviar seu arquivo'**
+  String get csvImportSuccessTitle;
+
+  /// No description provided for @csvImportSuccessMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estamos processando e categorizando cada transação através da IA Desquadra'**
+  String get csvImportSuccessMessage;
+
+  /// No description provided for @csvImportSuccessSubMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando estiver pronto, notificaremos você para que possa visualizar suas transações.'**
+  String get csvImportSuccessSubMessage;
+
+  /// No description provided for @csvImportSuccessButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entendi'**
+  String get csvImportSuccessButton;
+
+  /// No description provided for @csvImportErrorSelectAccountAndFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione uma conta e carregue o arquivo CSV'**
+  String get csvImportErrorSelectAccountAndFile;
+
   /// No description provided for @transactionFormRecurringError.
   ///
   /// In pt, this message translates to:

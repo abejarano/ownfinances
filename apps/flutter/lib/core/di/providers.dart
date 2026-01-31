@@ -224,10 +224,8 @@ class AppProviders extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider<CsvImportController>(
-          create: (context) => CsvImportController(
-            context.read<CsvImportRepository>(),
-            webSocketClient: context.read<WebSocketClient>(),
-          ),
+          create: (context) =>
+              CsvImportController(context.read<CsvImportRepository>()),
         ),
         ChangeNotifierProvider<MonthSummaryController>(
           create: (context) => MonthSummaryController(
@@ -282,8 +280,8 @@ class AppProviders extends StatelessWidget {
             categoriesController: context.read<CategoriesController>(),
             accountsController: context.read<AccountsController>(),
             transactionsController: context.read<TransactionsController>(),
-            pendingTransactionsController:
-                context.read<PendingTransactionsController>(),
+            pendingTransactionsController: context
+                .read<PendingTransactionsController>(),
             reportsController: context.read<ReportsController>(),
             dashboardController: context.read<DashboardController>(),
             budgetController: context.read<BudgetController>(),

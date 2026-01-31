@@ -1448,6 +1448,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionsActionImportCsv => 'Import CSV';
 
   @override
+  String get csvImportSuccessTitle => 'Thank you for sending your file';
+
+  @override
+  String get csvImportSuccessMessage =>
+      'We are processing it and categorizing each transaction through Desquadra AI';
+
+  @override
+  String get csvImportSuccessSubMessage =>
+      'When it\'s ready, we\'ll notify you so you can view your transactions.';
+
+  @override
+  String get csvImportSuccessButton => 'Understood';
+
+  @override
+  String get csvImportErrorSelectAccountAndFile =>
+      'Select an account and load the CSV file';
+
+  @override
   String get transactionFormRecurringError =>
       'Transaction saved, but recurrence could not be created.';
 

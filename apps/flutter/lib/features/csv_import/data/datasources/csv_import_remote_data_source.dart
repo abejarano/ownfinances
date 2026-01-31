@@ -1,3 +1,6 @@
+import "dart:convert";
+import "package:http/http.dart" as http;
+import "package:http_parser/http_parser.dart";
 import "package:ownfinances/core/infrastructure/api/api_client.dart";
 
 class CsvImportRemoteDataSource {
@@ -10,7 +13,14 @@ class CsvImportRemoteDataSource {
     String csvContent,
   ) async {
     // Crear FormData para multipart
-    final formData = {"accountId": accountId, "file": csvContent};
+    final file = http.MultipartFile.fromBytes(
+      "file",
+      utf8.encode(csvContent),
+      filename: "import.csv",
+      contentType: MediaType("text", "csv"),
+    );
+
+    final formData = {"accountId": accountId, "file": file};
     final response = await apiClient.post(
       "/transactions/import/preview",
       formData,
@@ -19,17 +29,16 @@ class CsvImportRemoteDataSource {
     return response as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> import(
-    String accountId,
-    String csvContent,
-  ) async {
-    final formData = {"accountId": accountId, "file": csvContent};
-    final response = await apiClient.post(
-      "/transactions/import",
-      formData,
-      isMultipart: true,
+  Future<void> import(String accountId, String csvContent) async {
+    final file = http.MultipartFile.fromBytes(
+      "file",
+      utf8.encode(csvContent),
+      filename: "import.csv",
+      contentType: MediaType("text", "csv"),
     );
-    return response as Map<String, dynamic>;
+
+    final formData = {"accountId": accountId, "file": file};
+    await apiClient.post("/transactions/import", formData, isMultipart: true);
   }
 
   Future<Map<String, dynamic>> getImportJob(String jobId) async {

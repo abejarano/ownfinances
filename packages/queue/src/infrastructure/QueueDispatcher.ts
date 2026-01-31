@@ -21,7 +21,7 @@ export class QueueDispatcher implements IQueueService {
   /**
    * Envía un trabajo a una cola específica
    */
-  dispatch(queueName: QueueName, args: any): void {
+  dispatch<T>(queueName: QueueName, args: T): void {
     const currentRequestId = RequestContext.requestId;
     const requestId = currentRequestId || crypto.randomUUID();
 

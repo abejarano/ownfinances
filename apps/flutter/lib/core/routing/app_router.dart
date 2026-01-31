@@ -29,7 +29,7 @@ import "package:ownfinances/core/routing/onboarding_controller.dart";
 import "package:ownfinances/features/debts/presentation/screens/debts_screen.dart";
 import "package:ownfinances/features/goals/presentation/screens/goals_screen.dart";
 import "package:ownfinances/features/csv_import/presentation/screens/csv_import_wizard_screen.dart";
-import "package:ownfinances/features/csv_import/presentation/screens/csv_import_result_screen.dart";
+import "package:ownfinances/features/csv_import/presentation/screens/csv_import_success_screen.dart";
 import "package:ownfinances/features/month_summary/presentation/screens/month_summary_screen.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
 
@@ -45,8 +45,7 @@ GoRouter createRouter({
       final hasVoiceQuery =
           state.uri.queryParameters.containsKey("intent") ||
           state.uri.queryParameters.containsKey("feature");
-      final isVoicePath =
-          location == "/voice" || location == "/voice-capture";
+      final isVoicePath = location == "/voice" || location == "/voice-capture";
       final isVoiceDeepLink =
           (state.uri.scheme == "desquadra" && state.uri.host == "voice") ||
           (isVoicePath && hasVoiceQuery) ||
@@ -194,11 +193,8 @@ GoRouter createRouter({
         builder: (context, state) => const CsvImportWizardScreen(),
       ),
       GoRoute(
-        path: "/csv-import/result/:jobId",
-        builder: (context, state) {
-          final jobId = state.pathParameters["jobId"]!;
-          return CsvImportResultScreen(jobId: jobId);
-        },
+        path: "/csv-import/success",
+        builder: (context, state) => const CsvImportSuccessScreen(),
       ),
 
       ShellRoute(

@@ -26,7 +26,7 @@ export class QueueRegistry {
     console.log(`Registering ${definitions.length} queue definitions`);
 
     definitions.forEach((definition) => {
-      const queueName = definition.name || definition.useClass?.name;
+      const queueName = definition.name;
 
       if (!queueName) {
         throw new Error(

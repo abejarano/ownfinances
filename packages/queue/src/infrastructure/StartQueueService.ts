@@ -78,12 +78,11 @@ const registerBunRoutes = (
 export const StartQueueService = async (params: {
   app?: ServerApp;
   listQueues: IListQueue[];
-  runProcessing?: boolean;
 }) => {
-  const { app, listQueues, runProcessing = true } = params;
+  const { app, listQueues } = params;
 
   const queueService = QueueService.getInstance();
-  await queueService.initialize(listQueues, runProcessing);
+  await queueService.initialize(listQueues);
 
   if (app) {
     const queueRegistry = queueService["registry"];
