@@ -1,6 +1,6 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { BankType } from "./bank_type"
-import { createMongoId } from "./shared/mongo_id"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
+import { BankType } from "./bank_type";
+import { createMongoId } from "./shared/mongo_id";
 
 export enum AccountType {
   Cash = "cash",
@@ -11,37 +11,37 @@ export enum AccountType {
 }
 
 export type AccountPrimitives = {
-  id?: string
-  accountId: string
-  userId: string
-  name: string
-  type: AccountType
-  bankType?: BankType | null
-  currency: string
-  isActive: boolean
-  createdAt: Date
-  updatedAt?: Date
-}
+  id?: string;
+  accountId: string;
+  userId: string;
+  name: string;
+  type: AccountType;
+  bankType?: BankType | null;
+  currency: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+};
 
 export type AccountCreateProps = {
-  userId: string
-  name: string
-  type: AccountType
-  bankType?: BankType | null
-  currency?: string
-  isActive?: boolean
-}
+  userId: string;
+  name: string;
+  type: AccountType;
+  bankType?: BankType | null;
+  currency?: string;
+  isActive?: boolean;
+};
 
 export class Account extends AggregateRoot {
-  private readonly props: AccountPrimitives
+  private readonly props: AccountPrimitives;
 
   private constructor(props: AccountPrimitives) {
-    super()
-    this.props = props
+    super();
+    this.props = props;
   }
 
   static create(props: AccountCreateProps): Account {
-    const now = new Date()
+    const now = new Date();
 
     return new Account({
       accountId: createMongoId(),
@@ -54,30 +54,34 @@ export class Account extends AggregateRoot {
       isActive: props.isActive ?? true,
       createdAt: now,
       updatedAt: now,
-    })
-  }
-
-  getId(): string {
-    return this.props.id ?? this.props.accountId
-  }
-
-  getAccountId(): string {
-    return this.props.accountId
-  }
-
-  getBankType(): BankType | null {
-    return this.props.bankType ?? null
-  }
-
-  getType(): AccountType {
-    return this.props.type
-  }
-
-  toPrimitives(): AccountPrimitives {
-    return this.props
+    });
   }
 
   static override fromPrimitives(primitives: AccountPrimitives): Account {
-    return new Account(primitives)
+    return new Account(primitives);
+  }
+
+  getId(): string {
+    return this.props.id ?? this.props.accountId;
+  }
+
+  getAccountId(): string {
+    return this.props.accountId;
+  }
+
+  getBankType(): BankType | null {
+    return this.props.bankType ?? null;
+  }
+
+  getType(): AccountType {
+    return this.props.type;
+  }
+
+  toPrimitives(): AccountPrimitives {
+    return this.props;
+  }
+
+  getCurrencry() {
+    return this.props.currency;
   }
 }

@@ -1,5 +1,5 @@
 import {
-  CategoryMongoRepository,
+  AccountMongoRepository,
   UserMongoRepository,
   UserSettingsMongoRepository,
 } from "@desquadra/database"
@@ -26,11 +26,11 @@ import { AuthMiddleware } from "../middleware/auth.middleware"
 @Controller("/transactions")
 export class TransactionsImportController {
   constructor(
-    private readonly categoryRepo: CategoryMongoRepository,
     private readonly userRepo: UserMongoRepository,
-    private readonly userSettingsRepo: UserSettingsMongoRepository
+    private readonly userSettingsRepo: UserSettingsMongoRepository,
+    private readonly accountRepo: AccountMongoRepository
   ) {
-    this.categoryRepo = Deps.resolve<CategoryMongoRepository>("categoryRepo")
+    this.accountRepo = Deps.resolve<AccountMongoRepository>("accountRepo")
     this.userRepo = Deps.resolve<UserMongoRepository>("userRepo")
     this.userSettingsRepo =
       Deps.resolve<UserSettingsMongoRepository>("userSettingsRepo")
@@ -44,6 +44,7 @@ export class TransactionsImportController {
     @Res() res: ServerResponse
   ) {
     try {
+      console.log(`Importa controller `, body)
       const accountId = body.accountId
       const file = req?.files?.file as BunMultipartFile
       const userId = req.userId!
@@ -68,6 +69,8 @@ export class TransactionsImportController {
         })
       }
 
+      const account = (await this.accountRepo.one({ accountId }))!
+
       const fileContent = await file.text!()
 
       QueueDispatcher.getInstance().dispatch<CategorizerTransactionRequest>(
@@ -76,9 +79,10 @@ export class TransactionsImportController {
           file: fileContent,
           accountId,
           userId,
+          currency: account.getCurrencry(),
           userName: user.getName(),
           countryCode: userSettings.getCountryCode()!,
-          month: Number(body.month),
+          month: Number(body.month) - 1,
           year: Number(body.year),
         }
       )

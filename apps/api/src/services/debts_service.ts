@@ -1,9 +1,9 @@
 import {
   Criteria,
+  type FilterInputValue,
   Filters,
   Operator,
   Order,
-  type FilterInputValue,
   type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
 import type { Result } from "../bootstrap/response"
@@ -13,16 +13,14 @@ import type {
   DebtUpdatePayload,
 } from "../http/validation/debts.validation"
 
-import type { DebtPrimitives } from "@desquadra/database"
-import { Debt } from "@desquadra/database"
-import type { DebtTransactionPrimitives } from "@desquadra/database"
-import {
-  DebtTransaction,
-  DebtTransactionType,
+import type {
+  DebtMongoRepository,
+  DebtPrimitives,
+  DebtTransactionMongoRepository,
+  DebtTransactionPrimitives,
 } from "@desquadra/database"
-import type { DebtMongoRepository } from "@desquadra/database"
-import type { DebtTransactionMongoRepository } from "@desquadra/database"
-import { computePeriodRange, type DateInput } from "../shared/dates"
+import { Debt, DebtTransaction, DebtTransactionType } from "@desquadra/database"
+import { computePeriodRange, type DateInput } from "../helpers/dates"
 
 export class DebtsService {
   constructor(
@@ -215,25 +213,6 @@ export class DebtsService {
     }
   }
 
-  private nextDueDate(dueDay?: number, now?: Date) {
-    if (!dueDay) return null
-    const today = now ?? new Date()
-    const year = today.getFullYear()
-    const month = today.getMonth()
-
-    const candidate = this.buildDueDate(year, month, dueDay)
-    if (candidate >= startOfDay(today)) {
-      return candidate
-    }
-    return this.buildDueDate(year, month + 1, dueDay)
-  }
-
-  private buildDueDate(year: number, month: number, dueDay: number) {
-    const maxDay = new Date(year, month + 1, 0).getDate()
-    const day = Math.min(dueDay, maxDay)
-    return new Date(year, month, day)
-  }
-
   async history(
     userId: string,
     debtId: string,
@@ -410,6 +389,25 @@ export class DebtsService {
       },
       status: 200,
     }
+  }
+
+  private nextDueDate(dueDay?: number, now?: Date) {
+    if (!dueDay) return null
+    const today = now ?? new Date()
+    const year = today.getFullYear()
+    const month = today.getMonth()
+
+    const candidate = this.buildDueDate(year, month, dueDay)
+    if (candidate >= startOfDay(today)) {
+      return candidate
+    }
+    return this.buildDueDate(year, month + 1, dueDay)
+  }
+
+  private buildDueDate(year: number, month: number, dueDay: number) {
+    const maxDay = new Date(year, month + 1, 0).getDate()
+    const day = Math.min(dueDay, maxDay)
+    return new Date(year, month, day)
   }
 }
 

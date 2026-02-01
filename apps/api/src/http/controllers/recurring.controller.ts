@@ -9,20 +9,20 @@ import {
   Query,
   Req,
   Res,
-  Use,
   type ServerResponse,
+  Use,
 } from "bun-platform-kit"
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
+import { computePeriodRange } from "../../helpers/dates"
 import type { RecurringService } from "../../services/recurring_service"
-import { computePeriodRange } from "../../shared/dates"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 import {
+  type RecurringRuleCreatePayload,
   validateRecurringMaterializePayload,
   validateRecurringRulePayload,
   validateRecurringSplitPayload,
-  type RecurringRuleCreatePayload,
 } from "../validation/recurring.validation"
 
 @Controller("/recurring_rules")
@@ -223,7 +223,6 @@ export class RecurringController {
   async materialize(
     @Param("id") id: string,
     @Body() body: { date: string },
-
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {

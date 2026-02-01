@@ -1,9 +1,9 @@
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BunAdapter } from "@bull-board/bun";
-import type { ServerApp } from "@abejarano/ts-express-server";
 import type { IListQueue } from "../domain";
 import { QueueService } from "./QueueService";
+import { ServerApp } from "bun-platform-kit";
 
 type BunRoutes = ReturnType<BunAdapter["getRoutes"]>;
 
@@ -31,9 +31,13 @@ const registerBunRoutes = (
   app: ServerApp,
   basePath: string,
   routes: BunRoutes,
+  credentials?: {
+    user: string;
+    password: string;
+  },
 ) => {
-  const user = process.env.BULL_USER || "";
-  const pass = process.env.BULL_PASS || "";
+  const user = credentials?.user || "";
+  const pass = credentials?.password || "";
   const hasAuth = user.length > 0 && pass.length > 0;
 
   app.use(basePath, async (req: any, res: any, next: () => void) => {
@@ -78,8 +82,12 @@ const registerBunRoutes = (
 export const StartQueueService = async (params: {
   app?: ServerApp;
   listQueues: IListQueue[];
+  credentials?: {
+    user: string;
+    password: string;
+  };
 }) => {
-  const { app, listQueues } = params;
+  const { app, listQueues, credentials } = params;
 
   const queueService = QueueService.getInstance();
   await queueService.initialize(listQueues);
@@ -99,6 +107,11 @@ export const StartQueueService = async (params: {
       },
     });
 
-    registerBunRoutes(app, "/ui/queues", serverAdapter.getRoutes());
+    registerBunRoutes(
+      app,
+      "/ui/queues",
+      serverAdapter.getRoutes(),
+      credentials,
+    );
   }
 };

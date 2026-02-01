@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { QueueRegistry } from "./QueueRegistry";
-import { RequestContext } from "@abejarano/ts-express-server";
+import { RequestContext } from "bun-platform-kit";
 
 export class QueueProcessor {
   private static instance: QueueProcessor;

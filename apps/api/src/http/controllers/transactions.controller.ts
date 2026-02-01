@@ -1,3 +1,8 @@
+import type {
+  TransactionMongoRepository,
+  TransactionPrimitives,
+} from "@desquadra/database"
+import { Transaction } from "@desquadra/database"
 import {
   Body,
   Controller,
@@ -10,24 +15,21 @@ import {
   Query,
   Req,
   Res,
-  Use,
   type ServerResponse,
+  Use,
 } from "bun-platform-kit"
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { TransactionPrimitives } from "@desquadra/database"
-import { Transaction } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
+import { computePeriodRange } from "../../helpers/dates"
 import type { ReportsService } from "../../services/reports_service"
-import { computePeriodRange } from "../../shared/dates"
 import type { TransactionsService } from "../../services/transactions_service"
 import { buildTransactionsCriteria } from "../criteria/transactions.criteria"
 import { AuthMiddleware } from "../middleware/auth.middleware"
 import {
-  validateTransactionPayload,
   type TransactionCreatePayload,
   type TransactionUpdatePayload,
+  validateTransactionPayload,
 } from "../validation/transactions.validation"
 
 @Controller("/transactions")
@@ -165,24 +167,6 @@ export class TransactionsController {
     return HttpResponse(res, { value: payload, status: result.status })
   }
 
-  private async _impactFor(
-    userId: string,
-    transaction: TransactionPrimitives,
-    query?: Record<string, string | undefined>
-  ) {
-    const includeImpact =
-      query?.includeImpact === "true" || query?.impact === "true"
-    if (!includeImpact) return null
-    const period = (query.period as any) ?? "monthly"
-    const date = transaction.date ?? new Date()
-    const summary = await this.reports.summary(userId, period, date)
-    const balances = await this.reports.balances(userId, period, date)
-    return {
-      summary,
-      balances,
-    }
-  }
-
   @Get("/pending")
   @Use([AuthMiddleware])
   async listPending(
@@ -264,5 +248,23 @@ export class TransactionsController {
     )
 
     return HttpResponse(res, { value: { confirmed }, status: 200 })
+  }
+
+  private async _impactFor(
+    userId: string,
+    transaction: TransactionPrimitives,
+    query?: Record<string, string | undefined>
+  ) {
+    const includeImpact =
+      query?.includeImpact === "true" || query?.impact === "true"
+    if (!includeImpact) return null
+    const period = (query.period as any) ?? "monthly"
+    const date = transaction.date ?? new Date()
+    const summary = await this.reports.summary(userId, period, date)
+    const balances = await this.reports.balances(userId, period, date)
+    return {
+      summary,
+      balances,
+    }
   }
 }

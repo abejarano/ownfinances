@@ -1,15 +1,16 @@
+import type {
+  AccountMongoRepository,
+  CategoryMongoRepository,
+  RefreshTokenMongoRepository,
+  UserMongoRepository,
+} from "@desquadra/database"
+import { RefreshToken, User, type UserPrimitives } from "@desquadra/database"
 import appleSignin from "apple-signin-auth"
 import argon2 from "argon2"
 import { OAuth2Client } from "google-auth-library"
 import crypto from "node:crypto"
+import { env } from "../bootstrap/env.ts"
 import type { Result } from "../bootstrap/response"
-import { RefreshToken } from "@desquadra/database"
-import { User, type UserPrimitives } from "@desquadra/database"
-import type { AccountMongoRepository } from "@desquadra/database"
-import type { CategoryMongoRepository } from "@desquadra/database"
-import type { RefreshTokenMongoRepository } from "@desquadra/database"
-import type { UserMongoRepository } from "@desquadra/database"
-import { env } from "../shared/env"
 
 export type UserRegisterResponse = {
   user: { id: string; userId: string; email: string; name?: string | null }

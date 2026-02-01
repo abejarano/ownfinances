@@ -13,7 +13,16 @@ export class CategorizeTransactions implements IJob {
   constructor(private readonly categoryRepo: CategoryMongoRepository) {}
 
   async handle(args: CategorizerTransactionRequest): Promise<any | void> {
-    const { userId, accountId, countryCode, file, userName } = args;
+    const {
+      userId,
+      accountId,
+      countryCode,
+      file,
+      userName,
+      month,
+      year,
+      currency,
+    } = args;
 
     const categories = await this.categoryRepo.search(userId);
 
@@ -22,7 +31,6 @@ export class CategorizeTransactions implements IJob {
       userCountry: countryCode,
       csv: file,
       categories: JSON.stringify(categories),
-      test: true,
     });
 
     const items = response.reduce<Record<string, TransactionAI[]>>(
@@ -38,6 +46,9 @@ export class CategorizeTransactions implements IJob {
       ...items,
       userId,
       accountId,
+      year,
+      month,
+      currency,
     } as TransactionGroupRequest;
 
     console.log("user: ", userName);

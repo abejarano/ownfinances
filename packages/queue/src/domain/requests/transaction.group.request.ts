@@ -12,6 +12,7 @@ export type TransactionGroupRequest = {
   accountId: string;
   year: number;
   month: number;
+  currency: string;
   expense: TransactionAI[];
   income: TransactionAI[];
   transfer: TransactionAI[];

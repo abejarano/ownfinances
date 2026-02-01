@@ -1,7 +1,7 @@
 import type { IQueueService } from "../domain";
 import { QueueName } from "../domain";
-import { RequestContext } from "@abejarano/ts-express-server";
 import { QueueRegistry } from "./QueueRegistry";
+import { RequestContext } from "bun-platform-kit";
 
 export class QueueDispatcher implements IQueueService {
   private static instance: QueueDispatcher;

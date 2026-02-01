@@ -1,11 +1,12 @@
 import { GoogleGenerativeAI, type Schema } from "@google/generative-ai";
+import { env } from "../config";
 
 export class DesquadraAI {
   private static _instance: DesquadraAI | null = null;
   private genAI: GoogleGenerativeAI;
 
   constructor() {
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    this.genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
   }
 
   static getInstance() {

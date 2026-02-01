@@ -5,7 +5,7 @@ import {
   SecurityModule,
 } from "bun-platform-kit"
 import { controllersModule } from "./bootstrap/controllers"
-import { env } from "./shared/env"
+import { env } from "./bootstrap/env.ts"
 
 import { QueueName, StartQueueService } from "@desquadra/queue"
 import { BankingCouncil } from "./jobs/banking.council.job.ts"
@@ -24,12 +24,16 @@ server.addModules([
       "application/csv",
       "application/vnd.ms-excel",
     ],
-    maxBodyBytes: Number(process.env.UPLOAD_MAX_BODY_BYTES ?? 25 * 1024 * 1024),
-    maxFileBytes: Number(process.env.UPLOAD_MAX_FILE_BYTES ?? 25 * 1024 * 1024),
+    maxBodyBytes: env.MAX_BODY_SIZE,
+    maxFileBytes: env.MAX_FILE_SIZE,
   }),
 ])
 
 await StartQueueService({
+  credentials: {
+    user: env.BULL_USER,
+    password: env.BULL_PASSWORD,
+  },
   app: server.getApp(),
   listQueues: [
     {

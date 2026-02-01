@@ -9,7 +9,6 @@
       "name": "@desquada/ai",
       "version": "1.0.0",
       "dependencies": {
-        "@abejarano/ts-express-server": "^2.0.3",
         "@desquadra/database": "workspace:*",
         "@desquadra/queue": "workspace:*",
         "@google/generative-ai": "^0.24.1",
@@ -25,6 +24,7 @@
     "apps/api": {
       "name": "desquadra",
       "dependencies": {
+        "@abejarano/ts-mongodb-criteria": "^1.8.3",
         "@desquadra/database": "workspace:*",
         "@desquadra/queue": "workspace:*",
         "apple-signin-auth": "^2.0.0",
@@ -47,7 +47,7 @@
       "name": "@desquadra/database",
       "version": "1.0.0",
       "dependencies": {
-        "@abejarano/ts-mongodb-criteria": "^1.8.2",
+        "@abejarano/ts-mongodb-criteria": "^1.8.3",
         "@desquadra/database": "workspace:*",
         "migrate-mongo": "^14.0.7",
         "mongodb": "^7.0.0",
@@ -61,11 +61,11 @@
       "name": "@desquadra/queue",
       "version": "1.0.0",
       "dependencies": {
-        "@abejarano/ts-express-server": "^2.0.3",
         "@bull-board/api": "^6.16.4",
         "@bull-board/bun": "^6.16.4",
         "@bull-board/ui": "^6.16.4",
         "bullmq": "^5.67.2",
+        "bun-platform-kit": "^1.0.0",
         "ioredis": "^5.9.2",
       },
       "devDependencies": {
@@ -74,9 +74,7 @@
     },
   },
   "packages": {
-    "@abejarano/ts-express-server": ["@abejarano/ts-express-server@2.0.3", "", { "dependencies": { "cors": "^2.8.5", "helmet": "^8.1.0", "reflect-metadata": "^0.2.2", "uuid": "^13.0.0" } }, "sha512-w3WM915TvPzhQwK8lfPigoxRcx+wi5ua53+DVGwqhzerXxuf/i6zPPbOuMXc0thyRsR4GUxbdCE4RQhmGqi2Iw=="],
-
-    "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.8.2", "", { "dependencies": { "migrate-mongo": "14.0.7" }, "peerDependencies": { "mongodb": ">=6" }, "bin": { "ts-mongo": "dist/cjs/bin/cli.js" } }, "sha512-dlQNob3DlqnxcoFvyYwJ/kMmkDMFECVbHsJoBx5Zww/FLAhnhMV9mMOfVSIwSvI+KM/Zw62O3e/cT439+HT93A=="],
+    "@abejarano/ts-mongodb-criteria": ["@abejarano/ts-mongodb-criteria@1.8.3", "", { "dependencies": { "migrate-mongo": "14.0.7" }, "peerDependencies": { "mongodb": ">=6" }, "bin": { "ts-mongo": "dist/cjs/bin/cli.js" } }, "sha512-T9O8dto134qLJZccaFYAXAYyfELOIduNFwXJojgS66fJz5BBLQxo/DJvZO+LqukZJXd56/+D/MJQZ0+GfQiklA=="],
 
     "@bull-board/api": ["@bull-board/api@6.16.4", "", { "dependencies": { "redis-info": "^3.1.0" }, "peerDependencies": { "@bull-board/ui": "6.16.4" } }, "sha512-fn4O+QbA3mRj0rEE41mvwbvtiiv0UYgnxQ9ErWb9n74EwIC/yZbiyxQ+Gh/ehU9u7B0PuaNyR0IOG/h3DGo1Mg=="],
 
@@ -356,7 +354,7 @@
 
     "undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
 
-    "uuid": ["uuid@13.0.0", "", { "bin": { "uuid": "dist-node/bin/uuid" } }, "sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w=="],
+    "uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
 
     "valibot": ["valibot@1.2.0", "", { "peerDependencies": { "typescript": ">=5" }, "optionalPeers": ["typescript"] }, "sha512-mm1rxUsmOxzrwnX5arGS+U4T25RdvpPjPN4yR0u9pUBov9+zGVtO84tif1eY4r6zWxVxu3KzIyknJy3rxfRZZg=="],
 
@@ -379,8 +377,6 @@
     "@isaacs/cliui/string-width": ["string-width@5.1.2", "", { "dependencies": { "eastasianwidth": "^0.2.0", "emoji-regex": "^9.2.2", "strip-ansi": "^7.0.1" } }, "sha512-HnLOCR3vjcY8beoNLtcjZ5/nxn2afmME6lhrDrebokqMap+XbeW8n9TXpPDOqdGK5qcI3oT0GKTW6wC7EMiVqA=="],
 
     "@isaacs/cliui/strip-ansi": ["strip-ansi@7.1.2", "", { "dependencies": { "ansi-regex": "^6.0.1" } }, "sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA=="],
-
-    "bullmq/uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
 
     "bun-types/@types/node": ["@types/node@25.0.9", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-/rpCXHlCWeqClNBwUhDcusJxXYDjZTyE8v5oTO7WbL8eij2nKhUeU89/6xgjU7N4/Vh3He0BtyhJdQbDyhiXAw=="],
 

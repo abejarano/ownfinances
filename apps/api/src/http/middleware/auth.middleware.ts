@@ -4,7 +4,7 @@ import type {
   ServerResponse,
 } from "bun-platform-kit"
 import { jwtVerify } from "jose"
-import { env } from "../../shared/env"
+import { env } from "../../bootstrap/env.ts"
 
 const encoder = new TextEncoder()
 
