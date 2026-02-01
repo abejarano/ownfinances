@@ -1,19 +1,17 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
-import "package:provider/provider.dart";
-
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/features/dashboard/application/controllers/dashboard_controller.dart";
 import "package:ownfinances/features/dashboard/application/state/dashboard_state.dart";
-import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_shortcut_card.dart";
 import "package:ownfinances/features/dashboard/presentation/widgets/account_card_standard.dart";
-import "package:ownfinances/features/dashboard/presentation/widgets/other_accounts_list.dart";
-
-import "package:ownfinances/features/dashboard/presentation/widgets/debts_section.dart";
 import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_quick_actions.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/dashboard_shortcut_card.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/debts_section.dart";
+import "package:ownfinances/features/dashboard/presentation/widgets/other_accounts_list.dart";
 import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction_filters.dart";
 import 'package:ownfinances/l10n/app_localizations.dart';
+import "package:provider/provider.dart";
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -28,8 +26,9 @@ class DashboardScreen extends StatelessWidget {
       onRefresh: controller.load,
       color: AppColors.primary,
       backgroundColor: AppColors.surface1,
-      child:
-          state.isLoading ? const _DashboardSkeleton() : _buildContent(context, state, l10n),
+      child: state.isLoading
+          ? const _DashboardSkeleton()
+          : _buildContent(context, state, l10n),
     );
   }
 
@@ -341,10 +340,7 @@ class _SkeletonBox extends StatelessWidget {
   final double height;
   final double? width;
 
-  const _SkeletonBox({
-    required this.height,
-    this.width,
-  });
+  const _SkeletonBox({required this.height, this.width});
 
   @override
   Widget build(BuildContext context) {

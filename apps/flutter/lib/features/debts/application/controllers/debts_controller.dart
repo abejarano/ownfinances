@@ -198,6 +198,7 @@ class DebtsController extends ChangeNotifier {
       );
       if (!_isDisposed) notifyListeners();
       await _refreshSummary(debtId);
+      await load();
       return null;
     } catch (error) {
       return _message(error);

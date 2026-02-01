@@ -1,7 +1,5 @@
 import "package:flutter/material.dart";
-import "package:provider/provider.dart";
 import "package:go_router/go_router.dart";
-
 import "package:ownfinances/core/presentation/components/snackbar.dart";
 import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
@@ -11,6 +9,7 @@ import "package:ownfinances/features/debts/presentation/widgets/debt_form_sheet.
 import "package:ownfinances/features/debts/presentation/widgets/debts_header.dart";
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/l10n/app_localizations.dart";
+import "package:provider/provider.dart";
 
 class DebtsScreen extends StatelessWidget {
   const DebtsScreen({super.key});
@@ -174,7 +173,7 @@ class DebtsScreen extends StatelessWidget {
     Debt debt,
     String operation, // "charge" or "payment"
   ) {
-    if (debt.linkedAccountId == null) {
+    if (debt.paymentAccountId == null) {
       showStandardSnackbar(
         context,
         AppLocalizations.of(context)!.debtsErrorNoLinkedAccount,
@@ -183,18 +182,24 @@ class DebtsScreen extends StatelessWidget {
     }
 
     final transaction = Transaction(
-      id: "", // Temporary
+      id: "",
+      // Temporary
       type: operation == "charge" ? "expense" : "transfer",
       date: DateTime.now(),
       amount: 0,
       currency: debt.currency,
       categoryId: null,
-      fromAccountId: operation == "charge" ? debt.linkedAccountId : null,
-      toAccountId: operation == "payment" ? debt.linkedAccountId : null,
+      fromAccountId: operation == "charge"
+          ? debt.linkedAccountId
+          : operation == "payment"
+          ? debt.paymentAccountId
+          : null,
+      toAccountId: null,
       note: "",
       tags: [],
       status: "pending",
       clearedAt: null,
+      debtId: operation == "payment" ? debt.id : null,
     );
 
     context.push("/transactions/new", extra: transaction);

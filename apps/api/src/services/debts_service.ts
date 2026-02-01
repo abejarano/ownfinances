@@ -20,12 +20,15 @@ import type {
   DebtTransactionPrimitives,
 } from "@desquadra/database"
 import { Debt, DebtTransaction, DebtTransactionType } from "@desquadra/database"
+import type { CategoryMongoRepository, CategoryKind } from "@desquadra/database"
+import { Category } from "@desquadra/database"
 import { computePeriodRange, type DateInput } from "../helpers/dates"
 
 export class DebtsService {
   constructor(
     private readonly debts: DebtMongoRepository,
-    private readonly debtTransactions: DebtTransactionMongoRepository
+    private readonly debtTransactions: DebtTransactionMongoRepository,
+    private readonly categories: CategoryMongoRepository
   ) {}
 
   async list(
@@ -92,6 +95,10 @@ export class DebtsService {
     })
 
     await this.debts.upsert(debt)
+
+    if (payload.type === "loan") {
+      await this._ensureLoanCategory(userId)
+    }
 
     if (payload.initialBalance && payload.initialBalance > 0) {
       const initialTx = DebtTransaction.create({
@@ -389,6 +396,39 @@ export class DebtsService {
       },
       status: 200,
     }
+  }
+
+  private async _ensureLoanCategory(userId: string): Promise<string> {
+    const keywords = [
+      "prestamo",
+      "préstamo",
+      "prestamos",
+      "préstamos",
+      "loan",
+      "loans",
+      "debt",
+      "debts",
+      "dívida",
+      "dívidas",
+    ]
+    const categories = await this.categories.search(userId)
+    const existing = categories.find((cat) => {
+      if (cat.kind !== "expense") return false
+      const normalized = cat.name.toLowerCase()
+      return keywords.some((term) => normalized.includes(term))
+    })
+    if (existing) {
+      return existing.categoryId
+    }
+    const category = Category.create({
+      userId,
+      name: "Préstamos",
+      kind: CategoryKind.Expense,
+      icon: "attach_money",
+      isActive: true,
+    })
+    await this.categories.upsert(category)
+    return category.categoryId
   }
 
   private nextDueDate(dueDay?: number, now?: Date) {

@@ -1,12 +1,14 @@
+import type {
+  AccountMongoRepository,
+  AccountPrimitives,
+  TransactionMongoRepository,
+} from "@desquadra/database"
+import { Account } from "@desquadra/database"
 import type { Result } from "../bootstrap/response"
 import type {
   AccountCreatePayload,
   AccountUpdatePayload,
 } from "../http/validation/accounts.validation"
-import type { AccountPrimitives } from "@desquadra/database"
-import { Account } from "@desquadra/database"
-import type { AccountMongoRepository } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class AccountsService {
   constructor(
@@ -67,15 +69,13 @@ export class AccountsService {
       return { error: "Cuenta no encontrada", status: 404 }
     }
 
-    const deletedTransactions = await this.transactions.deleteManyByAccount(
-      userId,
-      accountId
-    )
+    await this.transactions.deleteManyByAccount(userId, accountId)
 
     const deleted = await this.accounts.delete(userId, accountId)
     if (!deleted) {
       return { error: "Cuenta no encontrada", status: 404 }
     }
+
     return { value: { ok: true }, status: 200 }
   }
 }

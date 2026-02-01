@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
-import "package:provider/provider.dart";
 import "package:ownfinances/core/presentation/components/buttons.dart";
 import "package:ownfinances/core/presentation/components/money_input.dart";
 import "package:ownfinances/core/presentation/components/pickers.dart";
@@ -9,15 +8,16 @@ import "package:ownfinances/core/theme/app_theme.dart";
 import "package:ownfinances/core/utils/formatters.dart";
 import "package:ownfinances/features/accounts/application/controllers/accounts_controller.dart";
 import "package:ownfinances/features/categories/application/controllers/categories_controller.dart";
-import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
-import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
-import "package:ownfinances/features/recurring/application/controllers/recurring_controller.dart";
-import "package:ownfinances/features/templates/application/controllers/templates_controller.dart";
-import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
-import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import "package:ownfinances/features/debts/application/controllers/debts_controller.dart";
 import "package:ownfinances/features/debts/domain/entities/debt.dart";
+import "package:ownfinances/features/recurring/application/controllers/recurring_controller.dart";
+import "package:ownfinances/features/reports/application/controllers/reports_controller.dart";
+import "package:ownfinances/features/templates/application/controllers/templates_controller.dart";
+import "package:ownfinances/features/templates/domain/entities/transaction_template.dart";
+import "package:ownfinances/features/transactions/application/controllers/transactions_controller.dart";
+import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import 'package:ownfinances/l10n/app_localizations.dart';
+import "package:provider/provider.dart";
 
 class TransactionFormScreen extends StatefulWidget {
   final String? initialType;
@@ -45,6 +45,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   String? _toAccountId;
   DateTime _date = DateTime.now();
   String _status = "pending"; // pending, cleared
+  String? _debtId;
 
   // Optional / Advanced
   bool _isRecurring = false;
@@ -99,6 +100,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _tags = t.tags ?? [];
       _tagsController.text = _tags.join(", ");
       _status = t.status;
+      _debtId = t.debtId;
     } else if (widget.initialTemplate != null) {
       final t = widget.initialTemplate!;
       _type = t.type;
@@ -198,16 +200,45 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
   Debt? _findLinkedDebt(String? accountId) {
-    if (accountId == null) return null;
     final debts = context.read<DebtsController>().state.items;
+    return _findDebtByAccount(accountId, debts);
+  }
+
+  Debt? _findDebtById(String? debtId, List<Debt> debts) {
+    if (debtId == null) return null;
     try {
-      return debts.firstWhere((d) => d.linkedAccountId == accountId);
+      return debts.firstWhere((d) => d.id == debtId);
     } catch (_) {
       return null;
     }
   }
 
+  Debt? _findDebtByAccount(String? accountId, List<Debt> debts) {
+    if (accountId == null) return null;
+    try {
+      return debts.firstWhere((d) =>
+          d.linkedAccountId == accountId ||
+          d.paymentAccountId == accountId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Debt? _findDebtForTransfer(List<Debt> debts) {
+    final byId = _findDebtById(_debtId, debts);
+    if (byId != null) {
+      return byId;
+    }
+    return _findDebtByAccount(_toAccountId, debts);
+  }
+
   bool get _isValid {
+    if (_debtId != null) {
+      if (_fromAccountId == null) return false;
+      if (_amount <= 0) return false;
+      return true;
+    }
+
     if (_type == 'transfer') {
       if (_fromAccountId == null || _toAccountId == null) return false;
       if (_fromAccountId == _toAccountId) return false;
@@ -224,8 +255,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     // Debt Mode Validations
     final debt = _findLinkedDebt(_fromAccountId);
-    if (_type == "expense" && debt != null) {
-      // Must have category for "Compra"
+    if (_type == "expense" && debt != null && _debtId == null) {
+      // Must have category for "Compra" when creating a new debt charge
       if (_categoryId == null) return false;
     }
 
@@ -301,7 +332,9 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     // Case 2: Transfer to Credit Card -> Payment
     final transferDebt = _type == "transfer"
-        ? _findLinkedDebt(_toAccountId)
+        ? _findDebtForTransfer(
+            context.read<DebtsController>().state.items,
+          )
         : null;
     if (transferDebt != null) {
       setState(() => _isSaving = true);
@@ -311,8 +344,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
           debtId: transferDebt.id,
           date: _date,
           type: "payment",
-          amount:
-              _amount, // Assuming no conversion for simple payment flow or it handles it
+          amount: _amount,
+          // Assuming no conversion for simple payment flow or it handles it
           accountId: _fromAccountId,
           note: _noteController.text.trim().isEmpty
               ? null
@@ -367,6 +400,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             ? _tagsController.text.split(",").map((e) => e.trim()).toList()
             : null,
         "status": _status,
+        if (_debtId != null) "debtId": _debtId,
       };
 
       final reportsController = context.read<ReportsController>();
@@ -570,9 +604,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(
-                    context,
-                  )!.recurringNewRule, // Or similar "You are creating a recurring rule"
+                  AppLocalizations.of(context)!.recurringNewRule,
+                  // Or similar "You are creating a recurring rule"
                   style: const TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 12),
@@ -863,11 +896,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   InputDecoration _darkInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(
-        color: Color.fromRGBO(255, 255, 255, 0.45),
-      ), // Tertiary
+      labelStyle: const TextStyle(color: Color.fromRGBO(255, 255, 255, 0.45)),
+      // Tertiary
       filled: true,
-      fillColor: const Color(0xFF14213A), // Inputs
+      fillColor: const Color(0xFF14213A),
+      // Inputs
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(
@@ -891,6 +924,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Widget build(BuildContext context) {
     final categoriesState = context.watch<CategoriesController>().state;
     final accountsState = context.watch<AccountsController>().state;
+    final debtsState = context.watch<DebtsController>().state;
 
     final categoryItems = categoriesState.items
         .where((cat) => cat.kind == _type)
@@ -901,11 +935,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         .map((acc) => PickerItem(id: acc.id, label: acc.name))
         .toList();
 
+    final debtsItems = debtsState.items;
+
     // Determine Modes
     final isExpenseCard =
         _type == 'expense' && _findLinkedDebt(_fromAccountId) != null;
+    final transferDebt =
+        _type == 'transfer' ? _findDebtForTransfer(debtsItems) : null;
     final isTransferCardPayment =
-        _type == 'transfer' && _findLinkedDebt(_toAccountId) != null;
+        _type == 'transfer' && transferDebt != null;
 
     // --- Dynamic Title Checking ---
     String screenTitle = widget.initialTransaction != null
@@ -1009,6 +1047,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       }
     }
 
+    if (_debtId != null) {
+      showValueSection = true;
+      showGuideBlock = false;
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B1220), // App BG
       appBar: AppBar(
@@ -1019,7 +1062,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFF0D172A), // Top
+        backgroundColor: const Color(0xFF0D172A),
+        // Top
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -1132,19 +1176,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       onSelected: (item) => _onAccountChanged(true, item.id),
                     ),
                     const SizedBox(height: 16),
-                    AccountPicker(
-                      label: isTransferCardPayment
-                          ? AppLocalizations.of(
-                              context,
-                            )!.transactionFormInvoiceSource
-                          : AppLocalizations.of(
-                              context,
-                            )!.transactionsLabelDestination,
-                      items:
-                          accountItems, // Should we filter? No, standard list is fine. Blockers handled in selection.
-                      value: _toAccountId,
-                      onSelected: (item) => _onAccountChanged(false, item.id),
-                    ),
+                    _debtId == null
+                        ? AccountPicker(
+                            label: isTransferCardPayment
+                                ? AppLocalizations.of(
+                                    context,
+                                  )!.transactionFormInvoiceSource
+                                : AppLocalizations.of(
+                                    context,
+                                  )!.transactionsLabelDestination,
+                            items: accountItems,
+                            // Should we filter? No, standard list is fine. Blockers handled in selection.
+                            value: _toAccountId,
+                            onSelected: (item) =>
+                                _onAccountChanged(false, item.id),
+                          )
+                        : SizedBox(),
 
                     if (_fromAccountId != null &&
                         _fromAccountId == _toAccountId)

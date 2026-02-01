@@ -226,7 +226,8 @@ export class Deps {
         if (!debtsService) {
           debtsService = new DebtsService(
             this.debtRepo,
-            this.debtTransactionRepo
+            this.debtTransactionRepo,
+            this.categoryRepo
           )
         }
         return debtsService

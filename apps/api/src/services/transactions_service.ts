@@ -4,14 +4,16 @@ import type {
   TransactionUpdatePayload,
 } from "../http/validation/transactions.validation"
 
-import type { TransactionPrimitives } from "@desquadra/database"
+import type {
+  AccountMongoRepository,
+  TransactionMongoRepository,
+  TransactionPrimitives,
+} from "@desquadra/database"
 import {
   Transaction,
   TransactionStatus,
   TransactionType,
 } from "@desquadra/database"
-import type { AccountMongoRepository } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class TransactionsService {
   constructor(
@@ -23,9 +25,6 @@ export class TransactionsService {
     userId: string,
     payload: TransactionCreatePayload
   ): Promise<Result<TransactionPrimitives>> {
-    const error = await this.validatePayload(userId, payload, false)
-    if (error) return { error, status: 400 }
-
     const date = payload.date ? new Date(payload.date) : new Date()
     const currency =
       payload.currency ?? (await this.resolveCurrency(userId, payload)) ?? "BRL"
@@ -136,7 +135,6 @@ export class TransactionsService {
     userId: string,
     id: string
   ): Promise<Result<TransactionPrimitives>> {
-    
     const updated = await this.transactions.one({ userId, transactionId: id })
     if (!updated) {
       return { error: "Transacao nao encontrada", status: 404 }

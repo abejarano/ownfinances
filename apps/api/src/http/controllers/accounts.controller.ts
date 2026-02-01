@@ -1,7 +1,9 @@
+import {
+  AccountMongoRepository,
+  type AccountPrimitives,
+} from "@desquadra/database"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import { type AccountPrimitives } from "@desquadra/database"
-import { AccountMongoRepository } from "@desquadra/database"
 import type { AccountsService } from "../../services/accounts_service"
 import { buildAccountsCriteria } from "../criteria/accounts.criteria"
 import { AuthMiddleware } from "../middleware/auth.middleware"
@@ -102,13 +104,13 @@ export class AccountsController {
   }
 
   @Delete("/:id")
+  @Use([AuthMiddleware])
   async remove(
     @Param("id") id: string,
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const respoonse = await this.service.remove(req.userId ?? "", id)
-    return HttpResponse(res, respoonse)
+    return HttpResponse(res, await this.service.remove(req.userId ?? "", id))
   }
 
   @Get("/test/:id")

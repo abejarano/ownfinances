@@ -124,21 +124,16 @@ export class DebtTransactionsService {
         })
         await this.transactions.upsert(transaction)
       } else {
-        // --- CASO PRESTAMO: Gasto desde Banco (paymentAccountId) ---
-        if (!payload.categoryId) {
-          return {
-            error: "Pagamento de empréstimo requer categoria.",
-            status: 400,
-          }
-        }
-
+        // --- CASO PRESTAMO: Gasto desde la cuenta pagadora ---
+        const loanCategoryId =
+          payload.categoryId ?? (await this._findLoanCategoryId(userId))
         const transaction = Transaction.create({
           userId,
           type: TransactionType.Expense,
           date,
           amount: payload.amount!,
           currency,
-          categoryId: payload.categoryId,
+          categoryId: loanCategoryId,
           fromAccountId: payload.accountId, // Sale del Banco
           toAccountId: null,
           note: payload.note ?? `Pagamento empréstimo ${debtPrimitives.name}`,
@@ -254,13 +249,37 @@ export class DebtTransactionsService {
           }
         } else {
           // Loan / Other
-          if (!payload.categoryId) {
-            return { error: "Falta escolher uma categoria", status: 400 }
-          }
+          // No se requiere categoría ni cuenta destino, solo debe existir la deuda
         }
       }
     }
 
     return { value: undefined, status: 200 }
+  }
+
+  private async _findLoanCategoryId(userId: string): Promise<string | null> {
+    const keywords = [
+      "loan",
+      "loans",
+      "prestamo",
+      "préstamo",
+      "prestamos",
+      "préstamos",
+      "deuda",
+      "deudas",
+      "debt",
+      "debts",
+      "dívida",
+      "dívidas",
+    ]
+    const categories = await this.categories.search(userId)
+    for (const category of categories) {
+      if (category.kind !== "expense") continue
+      const normalized = category.name.toLowerCase()
+      if (keywords.some((keyword) => normalized.includes(keyword))) {
+        return category.categoryId
+      }
+    }
+    return null
   }
 }

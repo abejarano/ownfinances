@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ownfinances/core/presentation/components/buttons.dart';
 import 'package:ownfinances/core/theme/app_theme.dart';
 import 'package:ownfinances/core/utils/formatters.dart';
 import 'package:ownfinances/features/debts/domain/entities/debt.dart';
-import 'package:ownfinances/core/presentation/components/buttons.dart';
 import 'package:ownfinances/l10n/app_localizations.dart';
 
 class DebtsSection extends StatelessWidget {
