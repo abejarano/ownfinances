@@ -18,6 +18,8 @@ import "package:ownfinances/features/transactions/application/controllers/transa
 import "package:ownfinances/features/transactions/domain/entities/transaction.dart";
 import 'package:ownfinances/l10n/app_localizations.dart';
 import "package:provider/provider.dart";
+import "package:ownfinances/features/transactions/presentation/helpers/transaction_form_validator.dart";
+import "package:ownfinances/features/transactions/presentation/widgets/transaction_form_sections.dart";
 
 class TransactionFormScreen extends StatefulWidget {
   final String? initialType;
@@ -233,47 +235,18 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   }
 
   bool get _isValid {
-    if (_debtId != null) {
-      if (_fromAccountId == null) return false;
-      if (_amount <= 0) return false;
-      return true;
-    }
-
-    if (_type == 'transfer') {
-      if (_fromAccountId == null || _toAccountId == null) return false;
-      if (_fromAccountId == _toAccountId) return false;
-
-      // UX Hard Block: Card cannot be origin
-      if (_findLinkedDebt(_fromAccountId) != null) return false;
-
-      if (_amount <= 0) return false;
-      if (_isConversionMode &&
-          (_destinationAmount == null || _destinationAmount! <= 0))
-        return false;
-      return true;
-    }
-
-    // Debt Mode Validations
-    final debt = _findLinkedDebt(_fromAccountId);
-    if (_type == "expense" && debt != null && _debtId == null) {
-      // Must have category for "Compra" when creating a new debt charge
-      if (_categoryId == null) return false;
-    }
-
-    if (_type == "income" && debt != null) {
-      // Technically invalid to have Income on a Debt Account in this simplified model?
-      // Or assume it's a refund? Let's keep it simple and maybe block or warn.
-      // Requirement said: "Bloqueio duro de combinaciones inválidas".
-      // Generic Income on Debt Card is ambiguous. Refunds usually handled differently.
-      // For now, let's allow it but maybe the user will be confused.
-      // Actually the prompt says: "Cartão nunca puede ser “De (Origem)” en Transferência."
-      // It doesn't explicitly block Income on Card, but "Compra no cartão" implies Expense.
-      // Let's strictly validate Expense.
-    }
-
-    // Basic check for other types
-    if (_amount <= 0) return false;
-    return true;
+    final linkedDebt = _findLinkedDebt(_fromAccountId);
+    return TransactionFormValidator.validate(
+      type: _type,
+      amount: _amount,
+      fromAccountId: _fromAccountId,
+      toAccountId: _toAccountId,
+      categoryId: _categoryId,
+      linkedDebt: linkedDebt,
+      debtId: _debtId,
+      isConversionMode: _isConversionMode,
+      destinationAmount: _destinationAmount,
+    );
   }
 
   Future<void> _save() async {
@@ -1115,98 +1088,45 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
                   // 2. Account Selectors (Always Visible)
                   if (_type == "expense") ...[
-                    AccountPicker(
-                      label: isExpenseCard
-                          ? AppLocalizations.of(
-                              context,
-                            )!.transactionFormInvoiceSource
-                          : AppLocalizations.of(
-                              context,
-                            )!.transactionFormLabelSource,
-                      items: accountItems,
-                      value: _fromAccountId,
-                      onSelected: (item) => _onAccountChanged(
-                        true,
-                        item.id,
-                      ), // Changed to _onAccountChanged to support logic
-                    ),
-                    const SizedBox(height: 16),
-                    CategoryPicker(
-                      label: isExpenseCard
-                          ? AppLocalizations.of(
-                              context,
-                            )!.transactionFormCategoryPurchase
-                          : AppLocalizations.of(
-                              context,
-                            )!.transactionsLabelCategory,
-                      items: categoryItems,
-                      value: _categoryId,
-                      onSelected: (item) =>
+                    ExpenseTransactionSection(
+                      accountItems: accountItems,
+                      categoryItems: categoryItems,
+                      fromAccountId: _fromAccountId,
+                      categoryId: _categoryId,
+                      isCard: isExpenseCard,
+                      onAccountSelected: (item) =>
+                          _onAccountChanged(true, item.id),
+                      onCategorySelected: (item) =>
                           setState(() => _categoryId = item.id),
                     ),
                   ],
                   if (_type == "income") ...[
-                    AccountPicker(
-                      label: AppLocalizations.of(
-                        context,
-                      )!.transactionsLabelEntryAccount,
-                      items: accountItems,
-                      value: _toAccountId,
-                      onSelected: (item) =>
+                    IncomeTransactionSection(
+                      accountItems: accountItems,
+                      categoryItems: categoryItems,
+                      toAccountId: _toAccountId,
+                      categoryId: _categoryId,
+                      onAccountSelected: (item) =>
                           setState(() => _toAccountId = item.id),
-                    ),
-                    const SizedBox(height: 16),
-                    CategoryPicker(
-                      label: AppLocalizations.of(
-                        context,
-                      )!.transactionsLabelCategoryOptional,
-                      items: categoryItems,
-                      value: _categoryId,
-                      onSelected: (item) =>
+                      onCategorySelected: (item) =>
                           setState(() => _categoryId = item.id),
                     ),
                   ],
                   if (_type == "transfer") ...[
-                    AccountPicker(
-                      label: AppLocalizations.of(
-                        context,
-                      )!.transactionsLabelSource,
-                      items: accountItems,
-                      value: _fromAccountId,
-                      onSelected: (item) => _onAccountChanged(true, item.id),
+                    TransferTransactionSection(
+                      accountItems: accountItems,
+                      fromAccountId: _fromAccountId,
+                      toAccountId: _toAccountId,
+                      isTransferCardPayment: isTransferCardPayment,
+                      showDestinationPicker: _debtId == null,
+                      showSameAccountError: _fromAccountId != null &&
+                          _toAccountId != null &&
+                          _fromAccountId == _toAccountId,
+                      onFromAccountSelected: (item) =>
+                          _onAccountChanged(true, item.id),
+                      onToAccountSelected: (item) =>
+                          _onAccountChanged(false, item.id),
                     ),
-                    const SizedBox(height: 16),
-                    _debtId == null
-                        ? AccountPicker(
-                            label: isTransferCardPayment
-                                ? AppLocalizations.of(
-                                    context,
-                                  )!.transactionFormInvoiceSource
-                                : AppLocalizations.of(
-                                    context,
-                                  )!.transactionsLabelDestination,
-                            items: accountItems,
-                            // Should we filter? No, standard list is fine. Blockers handled in selection.
-                            value: _toAccountId,
-                            onSelected: (item) =>
-                                _onAccountChanged(false, item.id),
-                          )
-                        : SizedBox(),
-
-                    if (_fromAccountId != null &&
-                        _fromAccountId == _toAccountId)
-                      Padding(
-                        padding: EdgeInsets.only(top: 8, left: 4),
-                        child: Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.transactionFormValidationSameAccount,
-                          style: TextStyle(
-                            color: AppColors.danger,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
                   ],
 
                   const SizedBox(height: 32),

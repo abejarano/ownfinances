@@ -58,6 +58,7 @@ Presentation (Widgets)
 
 Domain no importa Flutter, Riverpod, Dio.
 Widgets deben ser reusables, pequenos y con un solo objetivo.
+- Validaciones y decisiones de negocio deben vivir en helpers o servicios fuera del widget; estos reciben el estado del formulario y retornan si los datos son válidos para que la UI solo los consuma sin mezclar lógica.
 
 ---
 

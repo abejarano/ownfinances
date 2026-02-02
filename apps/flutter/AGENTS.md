@@ -11,6 +11,7 @@ Meta: consistencia visual + arquitectura limpia + UX absurdamente fácil.
 - pt-BR copy (según docs/ux.md)
 - Widgets reusables, pequenos y con un solo objetivo
 - Soluciones paliativas PROHIBIDAS (atacar causa raíz)
+- Separar validaciones y reglas de negocio fuera de los widgets, delegándolas a helpers o servicios que toman el estado y devuelven decisiones claras; la UI solo debe renderizar y reaccionar.
 
 ---
 
