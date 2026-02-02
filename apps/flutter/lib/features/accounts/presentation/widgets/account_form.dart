@@ -138,7 +138,7 @@ class _AccountFormState extends State<AccountForm> {
                 ),
                 items: [
                   ...banksState.banks.map(
-                    (b) => DropdownMenuItem(value: b.id, child: Text(b.name)),
+                    (b) => DropdownMenuItem(value: b.name, child: Text(b.name)),
                   ),
                 ],
                 onChanged: widget.onBankTypeChanged,

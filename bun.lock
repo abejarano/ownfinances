@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "ownfinances",
+      "dependencies": {
+        "bullmq": "^5.67.2",
+      },
     },
     "apps/ai": {
       "name": "@desquada/ai",

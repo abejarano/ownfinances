@@ -6,6 +6,7 @@ export type TransactionAI = {
   categoryName: string;
   type: "income" | "expense" | "transfer";
   reasoning: string;
+  toAccount: string | null;
 };
 export type TransactionGroupRequest = {
   userId: string;
@@ -13,7 +14,7 @@ export type TransactionGroupRequest = {
   year: number;
   month: number;
   currency: string;
-  expense: TransactionAI[];
-  income: TransactionAI[];
-  transfer: TransactionAI[];
+  expense: TransactionAI[] | null;
+  income: TransactionAI[] | null;
+  transfer: TransactionAI[] | null;
 };

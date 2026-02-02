@@ -35,7 +35,6 @@ export class AccountsController {
   private service: AccountsService
 
   constructor() {
-    const deps = Deps.getInstance()
     this.repo = Deps.resolve<AccountMongoRepository>("accountRepo")
     this.service = Deps.resolve<AccountsService>("accountsService")
   }
