@@ -45,3 +45,13 @@ export function computePeriodRange(period: BudgetPeriodType, date: DateInput) {
 
   return { start, end }
 }
+
+export const formatDate = (originalDate: string) => {
+  const parts = originalDate.split("/")
+
+  const dd = Number(parts[0])
+  const mm = Number(parts[1])
+  const yyyy = Number(parts[2])
+
+  return new Date(Date.UTC(yyyy, mm - 1, dd, 0, 0, 0, 0))
+}

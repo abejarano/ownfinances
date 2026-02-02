@@ -9,7 +9,7 @@ import * as v from "valibot"
 export type AccountCreatePayload = {
   name: string
   type: AccountType
-  bankType?: BankType | string | null
+  bankType?: string | null
   currency?: string
   isActive?: boolean
 }

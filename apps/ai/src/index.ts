@@ -1,6 +1,9 @@
 import { QueueName, StartQueueService } from "@desquadra/queue";
 
-import { CategoryMongoRepository } from "@desquadra/database";
+import {
+  AccountMongoRepository,
+  CategoryMongoRepository,
+} from "@desquadra/database";
 import { CategorizeTransactions } from "./categorizerTransaccions.job.ts";
 import { env } from "./config";
 
@@ -16,7 +19,10 @@ StartQueueService({
     {
       name: QueueName.CategorizeTransactions,
       useClass: CategorizeTransactions,
-      inject: [CategoryMongoRepository.getInstance()],
+      inject: [
+        CategoryMongoRepository.getInstance(),
+        AccountMongoRepository.getInstance(),
+      ],
     },
   ],
 });

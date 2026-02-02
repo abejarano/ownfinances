@@ -1,5 +1,4 @@
 import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
-import { BankType } from "./bank_type";
 import { createMongoId } from "./shared/mongo_id";
 
 export enum AccountType {
@@ -16,7 +15,7 @@ export type AccountPrimitives = {
   userId: string;
   name: string;
   type: AccountType;
-  bankType?: BankType | null;
+  bankType?: string | null;
   currency: string;
   isActive: boolean;
   createdAt: Date;
@@ -27,7 +26,7 @@ export type AccountCreateProps = {
   userId: string;
   name: string;
   type: AccountType;
-  bankType?: BankType | null;
+  bankType?: string | null;
   currency?: string;
   isActive?: boolean;
 };
@@ -48,8 +47,7 @@ export class Account extends AggregateRoot {
       userId: props.userId,
       name: props.name,
       type: props.type,
-      bankType:
-        props.type === AccountType.Bank ? (props.bankType ?? null) : null,
+      bankType: props.bankType,
       currency: props.currency ?? "BRL",
       isActive: props.isActive ?? true,
       createdAt: now,
@@ -69,7 +67,7 @@ export class Account extends AggregateRoot {
     return this.props.accountId;
   }
 
-  getBankType(): BankType | null {
+  getBankType(): string | null {
     return this.props.bankType ?? null;
   }
 
