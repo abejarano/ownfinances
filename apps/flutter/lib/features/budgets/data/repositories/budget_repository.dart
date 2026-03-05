@@ -32,7 +32,7 @@ class BudgetRepository {
     required DateTime startDate,
     required DateTime endDate,
     required List<BudgetCategoryPlan> categories,
-    required List<BudgetDebtPayment> debtPayments,
+    required List<BudgetDebtPlan> plannedDebts,
   }) async {
     final payload = id == null
         ? await remote.create(
@@ -40,12 +40,12 @@ class BudgetRepository {
             startDate: startDate,
             endDate: endDate,
             categories: categories,
-            debtPayments: debtPayments,
+            plannedDebts: plannedDebts,
           )
         : await remote.update(
             id,
             categories: categories,
-            debtPayments: debtPayments,
+            plannedDebts: plannedDebts,
           );
     return Budget.fromJson(payload);
   }

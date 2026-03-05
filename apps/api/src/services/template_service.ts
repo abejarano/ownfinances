@@ -5,16 +5,16 @@ import {
   Order,
   type Paginate,
 } from "@abejarano/ts-mongodb-criteria"
+import {
+  TransactionTemplate,
+  TransactionTemplateMongoRepository,
+  type TransactionTemplatePrimitives,
+} from "@desquadra/database"
 import type { Result } from "../bootstrap/response"
 import type {
   TemplateCreatePayload,
   TemplateUpdatePayload,
 } from "../http/validation/templates.validation"
-import {
-  TransactionTemplate,
-  type TransactionTemplatePrimitives,
-} from "@desquadra/database"
-import { TransactionTemplateMongoRepository } from "@desquadra/database"
 
 export class TemplateService {
   constructor(

@@ -885,7 +885,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetsSaveCategoriesButton => 'Save monthly plan';
 
   @override
-  String get budgetsSaveDebtsButton => 'Save payment plan';
+  String get budgetsSaveDebtsButton => 'Save debt plan';
 
   @override
   String get budgetsSuccessSaved => 'All set. Your month plan was saved.';
@@ -898,7 +898,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Planned spending (categories)';
 
   @override
-  String get budgetsMonthSummaryPlannedDebts => 'Planned debt payments';
+  String get budgetsMonthSummaryPlannedDebts => 'Planned debts';
 
   @override
   String get budgetsMonthSummaryTotalOutflow => 'Total planned outflow';
@@ -908,7 +908,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Other currencies (no conversion)';
 
   @override
-  String get budgetsDebtPlannedTitle => 'Planned debt payments';
+  String get budgetsDebtPlannedTitle => 'Planned debts';
 
   @override
   String get budgetsDebtPlannedSubtitle =>
@@ -957,7 +957,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get budgetsDebtEmptyState =>
-      'You haven’t added any payments for this month yet.';
+      'You haven’t planned any debts for this month yet.';
 
   @override
   String get budgetsDebtMinimumWarning => 'Your plan is below the minimum.';
@@ -971,7 +971,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetsSummaryCategoriesTitle => 'Spending by category';
 
   @override
-  String get budgetsSummaryDebtsTitle => 'Planned debt payments';
+  String get budgetsSummaryDebtsTitle => 'Planned debts';
 
   @override
   String get budgetsSummaryPlanTitle => 'Month overview';
@@ -986,7 +986,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetsSummaryEstimatedAvailable => 'Estimated available';
 
   @override
-  String get budgetsSummaryPlannedDebts => 'Planned debt payments';
+  String get budgetsSummaryPlannedDebts => 'Planned debts total';
 
   @override
   String get budgetsSummaryTotalPlanned => 'Total planned';
@@ -2080,7 +2080,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetsAmountZero => 'You’re around zero';
 
   @override
-  String get budgetsSummaryAffordOneLine => 'Income – Expenses – Debt payments';
+  String get budgetsSummaryAffordOneLine => 'Income – Expenses – Debts';
 
   @override
   String get budgetsSummaryAffordCalming =>
@@ -2162,10 +2162,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This doesn’t move money. It’s just a plan.';
 
   @override
-  String get budgetsDebtActionAdd => '+ Add payment';
+  String get budgetsDebtActionAdd => '+ Plan debt';
 
   @override
-  String get budgetsDebtEmptyAction => 'Add my first payment';
+  String get budgetsDebtEmptyAction => 'Add my first plan';
 
   @override
   String get budgetsDebtCardOwe => 'I owe:';
@@ -2179,10 +2179,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get budgetsDebtModalTitleAdd => 'Add payment';
+  String get budgetsDebtModalTitleAdd => 'Plan debt';
 
   @override
-  String get budgetsDebtModalTitleEdit => 'Edit payment';
+  String get budgetsDebtModalTitleEdit => 'Edit plan';
 
   @override
   String get budgetsDebtModalLabelDebt => 'Debt';

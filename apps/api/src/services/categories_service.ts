@@ -1,12 +1,14 @@
+import type {
+  CategoryMongoRepository,
+  CategoryPrimitives,
+  TransactionMongoRepository,
+} from "@desquadra/database"
+import { Category } from "@desquadra/database"
 import type { Result } from "../bootstrap/response"
 import type {
   CategoryCreatePayload,
   CategoryUpdatePayload,
 } from "../http/validation/categories.validation"
-import type { CategoryPrimitives } from "@desquadra/database"
-import { Category } from "@desquadra/database"
-import type { CategoryMongoRepository } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class CategoriesService {
   constructor(

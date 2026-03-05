@@ -3,7 +3,7 @@ import "package:ownfinances/features/reports/domain/entities/report_summary.dart
 
 class BudgetSnapshot {
   final List<BudgetCategoryPlan> categories;
-  final Map<String, BudgetDebtPayment> plannedByDebt;
+  final Map<String, BudgetDebtPlan> plannedByDebt;
 
   const BudgetSnapshot({required this.categories, required this.plannedByDebt});
 }
@@ -13,7 +13,7 @@ class BudgetState {
   final Budget? budget;
   final ReportRange? range;
   final List<BudgetCategoryPlan> planCategories;
-  final Map<String, BudgetDebtPayment> plannedByDebt;
+  final Map<String, BudgetDebtPlan> plannedByDebt;
   final BudgetSnapshot? snapshot;
   final bool snapshotDismissed;
   final bool hasChanges;
@@ -36,7 +36,7 @@ class BudgetState {
     Budget? budget,
     ReportRange? range,
     List<BudgetCategoryPlan>? planCategories,
-    Map<String, BudgetDebtPayment>? plannedByDebt,
+    Map<String, BudgetDebtPlan>? plannedByDebt,
     BudgetSnapshot? snapshot,
     bool overwriteSnapshot = false,
     bool? snapshotDismissed,

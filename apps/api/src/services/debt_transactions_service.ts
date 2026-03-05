@@ -1,23 +1,23 @@
+import type {
+  AccountMongoRepository,
+  CategoryMongoRepository,
+  DebtMongoRepository,
+  DebtTransactionMongoRepository,
+  DebtTransactionPrimitives,
+  TransactionMongoRepository,
+} from "@desquadra/database"
+import {
+  DebtTransaction,
+  DebtTransactionType,
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from "@desquadra/database"
 import type { Result } from "../bootstrap/response"
 import type {
   DebtTransactionCreatePayload,
   DebtTransactionUpdatePayload,
 } from "../http/validation/debt_transactions.validation"
-import type { DebtTransactionPrimitives } from "@desquadra/database"
-import {
-  DebtTransaction,
-  DebtTransactionType,
-} from "@desquadra/database"
-import {
-  Transaction,
-  TransactionStatus,
-  TransactionType,
-} from "@desquadra/database"
-import type { AccountMongoRepository } from "@desquadra/database"
-import type { CategoryMongoRepository } from "@desquadra/database"
-import type { DebtMongoRepository } from "@desquadra/database"
-import type { DebtTransactionMongoRepository } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class DebtTransactionsService {
   constructor(

@@ -31,11 +31,11 @@ class BudgetController extends ChangeNotifier {
 
       if (_loadingDate != date) return;
 
-      final plannedDebts = <String, BudgetDebtPayment>{};
+      final plannedDebts = <String, BudgetDebtPlan>{};
       final budget = current.budget;
       if (budget != null) {
-        for (final payment in budget.debtPayments) {
-          plannedDebts[payment.debtId] = payment;
+        for (final plan in budget.plannedDebts) {
+          plannedDebts[plan.debtId] = plan;
         }
       }
 
@@ -104,8 +104,8 @@ class BudgetController extends ChangeNotifier {
     if (range == null) return "Periodo inválido";
 
     try {
-      final debtPayments = _state.plannedByDebt.values
-          .where((payment) => payment.amount > 0)
+      final plannedDebts = _state.plannedByDebt.values
+          .where((plan) => plan.plannedAmount > 0)
           .toList();
 
       final saved = await repository.save(
@@ -114,7 +114,7 @@ class BudgetController extends ChangeNotifier {
         startDate: range.start,
         endDate: range.end,
         categories: nextCategories,
-        debtPayments: debtPayments,
+        plannedDebts: plannedDebts,
       );
 
       _state = _state.copyWith(
@@ -166,7 +166,7 @@ class BudgetController extends ChangeNotifier {
   void clearPlan() {
     final hadData =
         _state.planCategories.isNotEmpty ||
-        _state.plannedByDebt.values.any((payment) => payment.amount > 0) ||
+        _state.plannedByDebt.values.any((plan) => plan.plannedAmount > 0) ||
         _state.budget != null;
     _state = _state.copyWith(
       planCategories: const [],
@@ -208,9 +208,9 @@ class BudgetController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setPlannedDebt(BudgetDebtPayment payment) {
-    final next = Map<String, BudgetDebtPayment>.from(_state.plannedByDebt);
-    next[payment.debtId] = payment;
+  void setPlannedDebt(BudgetDebtPlan plan) {
+    final next = Map<String, BudgetDebtPlan>.from(_state.plannedByDebt);
+    next[plan.debtId] = plan;
     _state = _state.copyWith(
       plannedByDebt: next,
       hasChanges: true,
@@ -223,8 +223,8 @@ class BudgetController extends ChangeNotifier {
     final range = _state.range ?? _fallbackRange(period, date);
     if (range == null) return "Periodo inválido";
     try {
-      final debtPayments = _state.plannedByDebt.values
-          .where((payment) => payment.amount > 0)
+      final plannedDebts = _state.plannedByDebt.values
+          .where((plan) => plan.plannedAmount > 0)
           .toList();
       final saved = await repository.save(
         id: _state.budget?.id,
@@ -232,7 +232,7 @@ class BudgetController extends ChangeNotifier {
         startDate: range.start,
         endDate: range.end,
         categories: _state.planCategories,
-        debtPayments: debtPayments,
+        plannedDebts: plannedDebts,
       );
       _state = _state.copyWith(budget: saved, range: range, hasChanges: false);
       notifyListeners();
@@ -256,10 +256,10 @@ class BudgetController extends ChangeNotifier {
     if (result.budget == null) return null;
 
     final categories = result.budget!.categories;
-    final plannedDebts = <String, BudgetDebtPayment>{};
-    for (final payment in result.budget!.debtPayments) {
-      if (payment.amount > 0) {
-        plannedDebts[payment.debtId] = payment;
+    final plannedDebts = <String, BudgetDebtPlan>{};
+    for (final plan in result.budget!.plannedDebts) {
+      if (plan.plannedAmount > 0) {
+        plannedDebts[plan.debtId] = plan;
       }
     }
 

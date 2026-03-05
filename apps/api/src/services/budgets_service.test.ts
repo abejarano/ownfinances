@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test"
-import { BudgetsService } from "./budgets_service"
 import type { BudgetCategoryPlanPayload } from "../http/validation/budgets.validation"
+import { BudgetsService } from "./budgets_service"
 
 // Mock repo
 const mockBudgetRepo = {
@@ -26,8 +26,8 @@ describe("BudgetsService", () => {
             { amount: 100, currency: "USD" },
             { amount: 50, currency: "BRL" },
             { amount: 200, currency: "USD" },
-          ]
-        }
+          ],
+        },
       ]
 
       const result = await service.create("user1", {
@@ -41,11 +41,11 @@ describe("BudgetsService", () => {
       const budget = result.value!
       expect(budget.categories.length).toBe(1)
       const cat = budget.categories[0]
-      
+
       // Check aggregation
       expect(cat.plannedTotal["USD"]).toBe(300) // 100 + 200
       expect(cat.plannedTotal["BRL"]).toBe(50)
-      
+
       // Check entries normalization
       expect(cat.entries.length).toBe(3)
       expect(cat.entries[0].currency).toBe("USD")

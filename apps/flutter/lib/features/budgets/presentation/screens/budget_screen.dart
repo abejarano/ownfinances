@@ -205,7 +205,7 @@ class _BudgetViewState extends State<BudgetView> {
         .toList();
     final plannedDebtTotals = <String, double>{};
     for (final debt in activeDebts) {
-      final planned = budgetState.plannedByDebt[debt.id]?.amount ?? 0;
+      final planned = budgetState.plannedByDebt[debt.id]?.plannedAmount ?? 0;
       if (planned <= 0) continue;
       plannedDebtTotals[debt.currency] =
           (plannedDebtTotals[debt.currency] ?? 0) + planned;
@@ -367,6 +367,9 @@ class _BudgetViewState extends State<BudgetView> {
                       primaryCurrency: primaryCurrency,
                       otherCurrenciesText: otherCurrenciesText,
                       onAddDebt: () => context.push("/debts"),
+                      canSave: canSave,
+                      showSave: showSave,
+                      onSave: () => saveBudget(showSuccess: true),
                     ),
                     BudgetSummaryTab(
                       plannedExpense: plannedExpenseTotal,

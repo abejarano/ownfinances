@@ -14,14 +14,19 @@ import type {
 } from "../http/validation/debts.validation"
 
 import type {
+  CategoryKind,
+  CategoryMongoRepository,
   DebtMongoRepository,
   DebtPrimitives,
   DebtTransactionMongoRepository,
   DebtTransactionPrimitives,
 } from "@desquadra/database"
-import { Debt, DebtTransaction, DebtTransactionType } from "@desquadra/database"
-import type { CategoryMongoRepository, CategoryKind } from "@desquadra/database"
-import { Category } from "@desquadra/database"
+import {
+  Category,
+  Debt,
+  DebtTransaction,
+  DebtTransactionType,
+} from "@desquadra/database"
 import { computePeriodRange, type DateInput } from "../helpers/dates"
 
 export class DebtsService {

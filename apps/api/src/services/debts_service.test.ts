@@ -1,6 +1,5 @@
+import { DebtTransactionType, DebtType } from "@desquadra/database"
 import { describe, expect, it, mock } from "bun:test"
-import { DebtType } from "@desquadra/database"
-import { DebtTransactionType } from "@desquadra/database"
 import { DebtsService } from "./debts_service"
 
 // Mock repositories

@@ -1,11 +1,13 @@
-import type { GoalPrimitives } from "@desquadra/database"
-import { Goal } from "@desquadra/database"
+import type {
+  GoalContributionMongoRepository,
+  GoalMongoRepository,
+  GoalPrimitives,
+} from "@desquadra/database"
 import {
+  Goal,
   GoalContribution,
   type GoalContributionPrimitives,
 } from "@desquadra/database"
-import type { GoalContributionMongoRepository } from "@desquadra/database"
-import type { GoalMongoRepository } from "@desquadra/database"
 import type { GoalContributionsService } from "../../services/goal_contributions_service"
 import type { GoalsService } from "../../services/goals_service"
 import { buildGoalContributionsCriteria } from "../criteria/goal_contributions.criteria"

@@ -22,14 +22,14 @@ class BudgetRemoteDataSource {
     required DateTime startDate,
     required DateTime endDate,
     required List<BudgetCategoryPlan> categories,
-    required List<BudgetDebtPayment> debtPayments,
+    required List<BudgetDebtPlan> plannedDebts,
   }) async {
     final response = await apiClient.post("/budgets", {
       "periodType": period,
       "startDate": startDate.toIso8601String(),
       "endDate": endDate.toIso8601String(),
       "categories": categories.map((category) => category.toJson()).toList(),
-      "debtPayments": debtPayments.map((line) => line.toJson()).toList(),
+      "plannedDebts": plannedDebts.map((line) => line.toJson()).toList(),
     });
     return response as Map<String, dynamic>;
   }
@@ -37,11 +37,11 @@ class BudgetRemoteDataSource {
   Future<Map<String, dynamic>> update(
     String id, {
     required List<BudgetCategoryPlan> categories,
-    required List<BudgetDebtPayment> debtPayments,
+    required List<BudgetDebtPlan> plannedDebts,
   }) async {
     final response = await apiClient.put("/budgets/$id", {
       "categories": categories.map((category) => category.toJson()).toList(),
-      "debtPayments": debtPayments.map((line) => line.toJson()).toList(),
+      "plannedDebts": plannedDebts.map((line) => line.toJson()).toList(),
     });
     return response as Map<String, dynamic>;
   }

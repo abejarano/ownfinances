@@ -1,13 +1,15 @@
+import type {
+  GoalContributionMongoRepository,
+  GoalMongoRepository,
+  GoalPrimitives,
+  TransactionMongoRepository,
+} from "@desquadra/database"
+import { Goal } from "@desquadra/database"
 import type { Result } from "../bootstrap/response"
 import type {
   GoalCreatePayload,
   GoalUpdatePayload,
 } from "../http/validation/goals.validation"
-import type { GoalPrimitives } from "@desquadra/database"
-import { Goal } from "@desquadra/database"
-import type { GoalContributionMongoRepository } from "@desquadra/database"
-import type { GoalMongoRepository } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class GoalsService {
   constructor(

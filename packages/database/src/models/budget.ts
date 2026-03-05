@@ -1,56 +1,60 @@
-import { AggregateRoot } from "@abejarano/ts-mongodb-criteria"
-import { createMongoId } from "./shared/mongo_id"
+import { AggregateRoot } from "@abejarano/ts-mongodb-criteria";
+import { createMongoId } from "./shared/mongo_id";
 
-export type BudgetPeriodType = "monthly" | "quarterly" | "semiannual" | "annual"
+export type BudgetPeriodType =
+  | "monthly"
+  | "quarterly"
+  | "semiannual"
+  | "annual";
 
 export type BudgetPlanEntry = {
-  entryId: string
-  amount: number
-  currency: string
-  description?: string | null
-  createdAt: Date
-}
+  entryId: string;
+  amount: number;
+  currency: string;
+  description?: string | null;
+  createdAt: Date;
+};
 
 export type BudgetCategoryPlan = {
-  categoryId: string
-  plannedTotal: Record<string, number>
-  entries: BudgetPlanEntry[]
-}
+  categoryId: string;
+  plannedTotal: Record<string, number>;
+  entries: BudgetPlanEntry[];
+};
 
-export type BudgetDebtPayment = {
-  debtId: string
-  plannedAmount: number
-}
+export type BudgetDebtPlan = {
+  debtId: string;
+  plannedAmount: number;
+};
 
 export type BudgetPrimitives = {
-  id?: string
-  budgetId: string
-  userId: string
-  periodType: BudgetPeriodType
-  startDate: Date
-  endDate: Date
-  categories: BudgetCategoryPlan[]
-  debtPayments?: BudgetDebtPayment[]
-  createdAt: Date
-  updatedAt?: Date
-}
+  id?: string;
+  budgetId: string;
+  userId: string;
+  periodType: BudgetPeriodType;
+  startDate: Date;
+  endDate: Date;
+  categories: BudgetCategoryPlan[];
+  plannedDebts?: BudgetDebtPlan[];
+  createdAt: Date;
+  updatedAt?: Date;
+};
 
 export type BudgetCreateProps = {
-  userId: string
-  periodType: BudgetPeriodType
-  startDate: Date
-  endDate: Date
-  categories?: BudgetCategoryPlan[]
-  debtPayments?: BudgetDebtPayment[]
-}
+  userId: string;
+  periodType: BudgetPeriodType;
+  startDate: Date;
+  endDate: Date;
+  categories?: BudgetCategoryPlan[];
+  plannedDebts?: BudgetDebtPlan[];
+};
 
 export class Budget extends AggregateRoot {
   private constructor(private readonly props: BudgetPrimitives) {
-    super()
+    super();
   }
 
   static create(props: BudgetCreateProps): Budget {
-    const now = new Date()
+    const now = new Date();
 
     return new Budget({
       budgetId: createMongoId(),
@@ -59,29 +63,29 @@ export class Budget extends AggregateRoot {
       startDate: props.startDate,
       endDate: props.endDate,
       categories: props.categories ?? [],
-      debtPayments: props.debtPayments ?? [],
+      plannedDebts: props.plannedDebts ?? [],
       createdAt: now,
       updatedAt: now,
-    })
+    });
   }
 
   getId(): string {
-    return this.props.id ?? this.props.budgetId
+    return this.props.id ?? this.props.budgetId;
   }
 
   getBudgetId(): string {
-    return this.props.budgetId
+    return this.props.budgetId;
   }
 
   toPrimitives(): BudgetPrimitives {
-    return this.props
+    return this.props;
   }
 
   static override fromPrimitives(primitives: BudgetPrimitives): Budget {
     return new Budget({
       ...primitives,
       categories: primitives.categories ?? [],
-      debtPayments: primitives.debtPayments ?? [],
-    })
+      plannedDebts: primitives.plannedDebts ?? [],
+    });
   }
 }

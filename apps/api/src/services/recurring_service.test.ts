@@ -1,9 +1,9 @@
-import { describe, expect, it, mock } from "bun:test"
-import { GeneratedInstance } from "@desquadra/database"
 import {
+  GeneratedInstance,
   RecurringFrequency,
   RecurringRule,
 } from "@desquadra/database"
+import { describe, expect, it, mock } from "bun:test"
 import { RecurringService } from "./recurring_service"
 
 // Mock repositories

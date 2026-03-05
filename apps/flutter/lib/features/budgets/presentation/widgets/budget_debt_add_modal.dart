@@ -14,13 +14,13 @@ import 'package:ownfinances/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class BudgetDebtAddModal extends StatefulWidget {
-  final BudgetDebtPayment? initialPayment;
+  final BudgetDebtPlan? initialPlan;
   final String period;
   final DateTime date;
 
   const BudgetDebtAddModal({
     super.key,
-    this.initialPayment,
+    this.initialPlan,
     required this.period,
     required this.date,
   });
@@ -48,8 +48,8 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialPayment != null) {
-      _selectedDebtId = widget.initialPayment!.debtId;
+    if (widget.initialPlan != null) {
+      _selectedDebtId = widget.initialPlan!.debtId;
       // MoneyInput expects user input format usually, or we set text directly.
       // If payment.amount is 100.00, we want "100,00" (if BRL).
       // We need the debt's currency to format correctly?
@@ -71,13 +71,12 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
           .firstWhere((d) => d?.id == _selectedDebtId, orElse: () => null);
       if (debt != null) {
         final fmt = NumberFormat.simpleCurrency(name: debt.currency);
-        _amountController.text = fmt.format(widget.initialPayment!.amount);
+        _amountController.text = fmt.format(widget.initialPlan!.plannedAmount);
       } else {
-        _amountController.text = widget.initialPayment!.amount.toStringAsFixed(
-          2,
-        );
+        _amountController.text = widget.initialPlan!.plannedAmount
+            .toStringAsFixed(2);
       }
-      _noteController.text = widget.initialPayment!.note ?? '';
+      _noteController.text = widget.initialPlan!.note ?? '';
     }
   }
 
@@ -97,9 +96,9 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
     setState(() => _isLoading = true);
 
     try {
-      final payment = BudgetDebtPayment(
+      final plan = BudgetDebtPlan(
         debtId: _selectedDebtId!,
-        amount: amount,
+        plannedAmount: amount,
         note: _noteController.text.trim().isEmpty
             ? null
             : _noteController.text.trim(),
@@ -125,11 +124,25 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
       // "BudgetScreen" has a global save.
       // I'll call `setPlannedDebt` and close. The `BudgetScreen` will show the "Save" button enabled.
 
-      context.read<BudgetController>().setPlannedDebt(payment);
+      context.read<BudgetController>().setPlannedDebt(plan);
+
+      // Save to backend immediately as the user expects from the modal "Agregar" button
+      final error = await context.read<BudgetController>().save(
+        widget.period,
+        date: widget.date,
+      );
+
+      if (error != null) {
+        throw Exception(error);
+      }
 
       if (mounted) context.pop();
     } catch (e) {
-      // Handle error
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -146,11 +159,11 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
     // If editing, include the current debt.
     final availableDebts = debtsState.items.where((d) {
       if (!d.isActive) return false;
-      if (widget.initialPayment != null &&
-          d.id == widget.initialPayment!.debtId)
+      if (widget.initialPlan != null && d.id == widget.initialPlan!.debtId)
         return true;
+      if (_selectedDebtId == d.id) return true;
       if (budgetState.plannedByDebt.containsKey(d.id) &&
-          budgetState.plannedByDebt[d.id]!.amount > 0)
+          budgetState.plannedByDebt[d.id]!.plannedAmount > 0)
         return false;
       return true;
     }).toList();
@@ -178,7 +191,7 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                widget.initialPayment == null
+                widget.initialPlan == null
                     ? l10n.budgetsDebtModalTitleAdd
                     : l10n.budgetsDebtModalTitleEdit,
                 style: Theme.of(context).textTheme.titleLarge,
@@ -186,7 +199,7 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
               const SizedBox(height: AppSpacing.md),
 
               // Debt Selector
-              if (widget.initialPayment == null)
+              if (widget.initialPlan == null)
                 DropdownButtonFormField<String>(
                   value: _selectedDebtId,
                   decoration: InputDecoration(
@@ -331,7 +344,7 @@ class _BudgetDebtAddModalState extends State<BudgetDebtAddModal> {
 
               PrimaryButton(
                 onPressed: _isLoading ? null : _submit,
-                label: widget.initialPayment == null
+                label: widget.initialPlan == null
                     ? l10n.budgetsDebtModalSubmitAdd
                     : l10n.budgetsDebtModalSubmitSave,
                 isLoading: _isLoading,

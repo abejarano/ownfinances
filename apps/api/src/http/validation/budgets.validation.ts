@@ -4,14 +4,14 @@ import type {
   ServerResponse,
 } from "bun-platform-kit"
 import * as v from "valibot"
-import type { BudgetDebtPayment, BudgetPeriodType } from "../../models/budget"
+import type { BudgetDebtPlan, BudgetPeriodType } from "../../models/budget"
 
 export type BudgetCreatePayload = {
   periodType: BudgetPeriodType
   startDate: string | Date
   endDate: string | Date
   categories?: BudgetCategoryPlanPayload[]
-  debtPayments?: BudgetDebtPayment[]
+  plannedDebts?: BudgetDebtPlan[]
 }
 
 export type BudgetUpdatePayload = Partial<BudgetCreatePayload>
@@ -34,7 +34,7 @@ const BudgetCategorySchema = v.strictObject({
   entries: v.optional(v.array(BudgetEntrySchema)),
 })
 
-const BudgetDebtPaymentSchema = v.strictObject({
+const BudgetDebtPlanSchema = v.strictObject({
   debtId: v.pipe(v.string(), v.minLength(1)),
   plannedAmount: v.pipe(v.number(), v.minValue(0)),
 })
@@ -44,7 +44,7 @@ const BudgetBaseSchema = v.strictObject({
   startDate: DateLikeSchema,
   endDate: DateLikeSchema,
   categories: v.optional(v.array(BudgetCategorySchema)),
-  debtPayments: v.optional(v.array(BudgetDebtPaymentSchema)),
+  plannedDebts: v.optional(v.array(BudgetDebtPlanSchema)),
 })
 
 const BudgetCreateSchema = BudgetBaseSchema
@@ -84,10 +84,10 @@ export function validateBudgetPayload(isUpdate: boolean) {
 
       if (!result.issues)
         return res.status(422).send({ error: "Payload invalido" })
-      
+
       const firstIssue = result.issues[0]
       const path = firstIssue.path?.map((p) => p.key).join(".")
-      
+
       if (path?.includes("periodType"))
         return res.status(422).send({ error: "Periodo invalido" })
       if (path?.includes("startDate"))
@@ -98,12 +98,14 @@ export function validateBudgetPayload(isUpdate: boolean) {
         return res
           .status(422)
           .send({ error: `Categorias inválidas: ${firstIssue.message}` })
-      if (path?.includes("debtPayments"))
+      if (path?.includes("plannedDebts"))
         return res
           .status(422)
           .send({ error: `Pagos de deuda inválidos: ${firstIssue.message}` })
 
-      return res.status(422).send({ error: `Payload invalido: ${firstIssue.message} en ${path}` })
+      return res
+        .status(422)
+        .send({ error: `Payload invalido: ${firstIssue.message} en ${path}` })
     }
 
     const maybePayload = payload as {
@@ -114,11 +116,9 @@ export function validateBudgetPayload(isUpdate: boolean) {
       const start = new Date(maybePayload.startDate)
       const end = new Date(maybePayload.endDate)
       if (start > end) {
-        return res
-          .status(422)
-          .send({
-            error: "La fecha de fin debe ser mayor a la fecha de inicio",
-          })
+        return res.status(422).send({
+          error: "La fecha de fin debe ser mayor a la fecha de inicio",
+        })
       }
     }
 

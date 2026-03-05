@@ -1,19 +1,21 @@
+import type {
+  AccountMongoRepository,
+  GoalContributionMongoRepository,
+  GoalContributionPrimitives,
+  GoalMongoRepository,
+  TransactionMongoRepository,
+} from "@desquadra/database"
+import {
+  GoalContribution,
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from "@desquadra/database"
 import type { Result } from "../bootstrap/response"
 import type {
   GoalContributionCreatePayload,
   GoalContributionUpdatePayload,
 } from "../http/validation/goal_contributions.validation"
-import type { GoalContributionPrimitives } from "@desquadra/database"
-import { GoalContribution } from "@desquadra/database"
-import {
-  Transaction,
-  TransactionStatus,
-  TransactionType,
-} from "@desquadra/database"
-import type { AccountMongoRepository } from "@desquadra/database"
-import type { GoalContributionMongoRepository } from "@desquadra/database"
-import type { GoalMongoRepository } from "@desquadra/database"
-import type { TransactionMongoRepository } from "@desquadra/database"
 
 export class GoalContributionsService {
   constructor(
@@ -123,7 +125,7 @@ export class GoalContributionsService {
       accountId:
         payload.accountId === undefined
           ? existingPrimitives.accountId
-          : payload.accountId ?? undefined,
+          : (payload.accountId ?? undefined),
       updatedAt: new Date(),
     }
 

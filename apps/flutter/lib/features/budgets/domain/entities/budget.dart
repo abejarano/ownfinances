@@ -67,31 +67,26 @@ class BudgetCategoryPlan {
   };
 }
 
-class BudgetDebtPayment {
+class BudgetDebtPlan {
   final String debtId;
-  final double amount;
+  final double plannedAmount;
   final String? note;
 
-  const BudgetDebtPayment({
+  const BudgetDebtPlan({
     required this.debtId,
-    required this.amount,
+    required this.plannedAmount,
     this.note,
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'debtId': debtId,
-      'amount': amount,
-      'plannedAmount': amount,
-      'note': note,
-    };
+    return {'debtId': debtId, 'plannedAmount': plannedAmount, 'note': note};
   }
 
-  factory BudgetDebtPayment.fromJson(Map<String, dynamic> map) {
-    return BudgetDebtPayment(
+  factory BudgetDebtPlan.fromJson(Map<String, dynamic> map) {
+    return BudgetDebtPlan(
       debtId: map['debtId'] as String,
-      amount:
-          ((map['amount'] ?? map['plannedAmount']) as num?)?.toDouble() ?? 0.0,
+      plannedAmount:
+          ((map['plannedAmount'] ?? map['amount']) as num?)?.toDouble() ?? 0.0,
       note: map['note'] as String?,
     );
   }
@@ -103,7 +98,7 @@ class Budget {
   final DateTime startDate;
   final DateTime endDate;
   final List<BudgetCategoryPlan> categories;
-  final List<BudgetDebtPayment> debtPayments;
+  final List<BudgetDebtPlan> plannedDebts;
 
   const Budget({
     required this.id,
@@ -111,7 +106,7 @@ class Budget {
     required this.startDate,
     required this.endDate,
     required this.categories,
-    required this.debtPayments,
+    required this.plannedDebts,
   });
 
   factory Budget.fromJson(Map<String, dynamic> json) {
@@ -125,10 +120,8 @@ class Budget {
             (item) => BudgetCategoryPlan.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
-      debtPayments: (json["debtPayments"] as List<dynamic>? ?? [])
-          .map(
-            (item) => BudgetDebtPayment.fromJson(item as Map<String, dynamic>),
-          )
+      plannedDebts: (json["plannedDebts"] as List<dynamic>? ?? [])
+          .map((item) => BudgetDebtPlan.fromJson(item as Map<String, dynamic>))
           .toList(),
     );
   }

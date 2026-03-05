@@ -1,3 +1,4 @@
+import type { ImportJobMongoRepository } from "@desquadra/database"
 import {
   Controller,
   Get,
@@ -9,7 +10,6 @@ import {
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { ImportJobMongoRepository } from "@desquadra/database"
 
 @Controller("/imports")
 export class ImportJobsController {

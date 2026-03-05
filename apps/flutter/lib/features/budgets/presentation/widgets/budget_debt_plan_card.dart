@@ -7,7 +7,7 @@ import 'package:ownfinances/features/debts/domain/entities/debt_summary.dart';
 import 'package:ownfinances/l10n/app_localizations.dart';
 
 class BudgetDebtPlanCard extends StatelessWidget {
-  final BudgetDebtPayment payment;
+  final BudgetDebtPlan plan;
   final Debt debt;
   final DebtSummary? summary;
   final VoidCallback onEdit;
@@ -15,7 +15,7 @@ class BudgetDebtPlanCard extends StatelessWidget {
 
   const BudgetDebtPlanCard({
     super.key,
-    required this.payment,
+    required this.plan,
     required this.debt,
     this.summary,
     required this.onEdit,
@@ -85,7 +85,7 @@ class BudgetDebtPlanCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      formatCurrency(payment.amount, debt.currency),
+                      formatCurrency(plan.plannedAmount, debt.currency),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.success,
@@ -96,7 +96,7 @@ class BudgetDebtPlanCard extends StatelessWidget {
               ],
             ),
 
-            if (payment.note != null && payment.note!.isNotEmpty) ...[
+            if (plan.note != null && plan.note!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.sm),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -105,7 +105,7 @@ class BudgetDebtPlanCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  payment.note!,
+                  plan.note!,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: AppColors.textPrimary,

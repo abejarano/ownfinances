@@ -1,3 +1,4 @@
+import type { DebtMongoRepository } from "@desquadra/database"
 import {
   Body,
   Controller,
@@ -15,7 +16,6 @@ import {
 import type { AuthenticatedRequest } from "../../@types/request"
 import { Deps } from "../../bootstrap/deps"
 import { HttpResponse } from "../../bootstrap/response"
-import type { DebtMongoRepository } from "@desquadra/database"
 import type { DebtsService } from "../../services/debts_service"
 import { buildDebtsCriteria } from "../criteria/debts.criteria"
 import { AuthMiddleware } from "../middleware/auth.middleware"
@@ -77,11 +77,7 @@ export class DebtsController {
     @Req() req: AuthenticatedRequest,
     @Res() res: ServerResponse
   ) {
-    const result = await this.service.summary(
-      req.userId ?? "",
-      id,
-      query.month
-    )
+    const result = await this.service.summary(req.userId ?? "", id, query.month)
     return HttpResponse(res, result)
   }
 

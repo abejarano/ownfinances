@@ -885,7 +885,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsSaveCategoriesButton => 'Guardar plan del mes';
 
   @override
-  String get budgetsSaveDebtsButton => 'Guardar planificación de pago';
+  String get budgetsSaveDebtsButton => 'Guardar plan de deudas';
 
   @override
   String get budgetsSuccessSaved => 'Listo. Tu plan del mes fue guardado.';
@@ -898,7 +898,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Gastos planificados (categorías)';
 
   @override
-  String get budgetsMonthSummaryPlannedDebts => 'Pagos de deudas planificados';
+  String get budgetsMonthSummaryPlannedDebts => 'Deudas planificadas (cuotas)';
 
   @override
   String get budgetsMonthSummaryTotalOutflow => 'Total de salidas planificadas';
@@ -908,7 +908,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Otras monedas (sin conversión)';
 
   @override
-  String get budgetsDebtPlannedTitle => 'Pagos planificados de deudas';
+  String get budgetsDebtPlannedTitle => 'Deudas planificadas';
 
   @override
   String get budgetsDebtPlannedSubtitle =>
@@ -956,7 +956,8 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get budgetsDebtEmptyState => 'Aún no agregaste pagos para este mes.';
+  String get budgetsDebtEmptyState =>
+      'Aún no planificaste deudas para este mes.';
 
   @override
   String get budgetsDebtMinimumWarning => 'Tu plan está por debajo del mínimo.';
@@ -970,7 +971,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsSummaryCategoriesTitle => 'Gastos por categoría';
 
   @override
-  String get budgetsSummaryDebtsTitle => 'Pagos planificados de deudas';
+  String get budgetsSummaryDebtsTitle => 'Planificación de deudas';
 
   @override
   String get budgetsSummaryPlanTitle => 'Resumen del mes';
@@ -985,7 +986,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsSummaryEstimatedAvailable => 'Disponible estimado';
 
   @override
-  String get budgetsSummaryPlannedDebts => 'Total pagos planificados';
+  String get budgetsSummaryPlannedDebts => 'Total deudas planificadas';
 
   @override
   String get budgetsSummaryTotalPlanned => 'Total presupuestado';
@@ -2082,8 +2083,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsAmountZero => 'Estás en cero (aprox.)';
 
   @override
-  String get budgetsSummaryAffordOneLine =>
-      'Ingresos – Gastos – Pagos de deudas';
+  String get budgetsSummaryAffordOneLine => 'Ingresos – Gastos – Deudas';
 
   @override
   String get budgetsSummaryAffordCalming =>
@@ -2164,10 +2164,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get budgetsDebtPlannedHelper => 'No mueve dinero. Solo es un plan.';
 
   @override
-  String get budgetsDebtActionAdd => '+ Agregar pago';
+  String get budgetsDebtActionAdd => '+ Planificar deuda';
 
   @override
-  String get budgetsDebtEmptyAction => 'Agregar mi primer pago';
+  String get budgetsDebtEmptyAction => 'Agregar mi primer plan';
 
   @override
   String get budgetsDebtCardOwe => 'Debo:';
@@ -2181,10 +2181,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get budgetsDebtModalTitleAdd => 'Agregar pago';
+  String get budgetsDebtModalTitleAdd => 'Planificar deuda';
 
   @override
-  String get budgetsDebtModalTitleEdit => 'Editar pago';
+  String get budgetsDebtModalTitleEdit => 'Editar plan';
 
   @override
   String get budgetsDebtModalLabelDebt => 'Deuda';
